@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd larosa-website && npm install && npm run build",
+  "outputDirectory": "larosa-website/.next",
+  "installCommand": "cd larosa-website && npm install",
+  "framework": "nextjs"
+}
