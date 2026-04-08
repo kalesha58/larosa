@@ -73,7 +73,7 @@ export function StorySection() {
 
             <motion.div variants={item} className="space-y-4 text-base leading-relaxed text-muted-foreground sm:text-[17px] sm:leading-relaxed">
               <p>
-                Founded in 1987, La Rosa began as a singular vision: to craft a
+                Founded in 1987, Larosa began as a singular vision: to craft a
                 sanctuary that would honour the traveller who seeks not spectacle,
                 but substance. Nestled between heritage architecture and modern
                 sensibility, we have become a landmark of quiet distinction.
@@ -136,7 +136,7 @@ export function StorySection() {
             >
               <Image
                 src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=80"
-                alt="La Rosa Hotel exterior"
+                alt="Larosa Hotel exterior"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"

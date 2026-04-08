@@ -56,7 +56,7 @@ export default function RegisterPage() {
       await login(); 
       toast({
         title: "Account Created",
-        description: "Welcome to La Rosa Sanctuary, " + data.name,
+        description: "Welcome to Larosa Sanctuary, " + data.name,
       });
       router.push("/");
     } catch (error: any) {
@@ -78,7 +78,7 @@ export default function RegisterPage() {
       <div className="hidden lg:flex w-1/2 relative overflow-hidden">
         <Image 
           src="/room-presidential.png" 
-          alt="La Rosa Presidential Suite" 
+          alt="Larosa Presidential Suite" 
           fill
           className="object-cover"
           priority
@@ -95,7 +95,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="mb-12">
             <Link href="/" className="font-serif text-2xl font-bold tracking-widest text-primary block mb-8">
-              LA ROSA
+              LAROSA
             </Link>
             <h1 className="font-serif text-3xl text-foreground mb-2">Create Account</h1>
             <p className="text-muted-foreground">Register to manage your exclusive stays.</p>

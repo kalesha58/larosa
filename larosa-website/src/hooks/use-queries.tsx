@@ -86,7 +86,7 @@ let MOCK_ROOMS: Room[] = [
     price: 3500,
     images: ["/room-presidential.png"],
     description:
-      "The pinnacle of La Rosa hospitality with panoramic views and a private terrace.",
+      "The pinnacle of Larosa hospitality with panoramic views and a private terrace.",
     amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
     capacity: 4,
     sizeSqFt: 1400,

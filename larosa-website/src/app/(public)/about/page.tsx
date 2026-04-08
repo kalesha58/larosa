@@ -8,10 +8,10 @@ import { Award, Heart, Leaf, Star } from "lucide-react";
 import Image from "next/image";
 
 const MILESTONES = [
-  { year: "1987", title: "Founded", desc: "La Rosa opened its doors in Beverly Hills with 24 bespoke rooms, a singular vision: quiet luxury." },
+  { year: "1987", title: "Founded", desc: "Larosa opened its doors in Beverly Hills with 24 bespoke rooms, a singular vision: quiet luxury." },
   { year: "1995", title: "First Expansion", desc: "Added the East Wing — 40 additional suites and the Obsidian Spa, our acclaimed wellness sanctuary." },
   { year: "2003", title: "Michelin Recognition", desc: "Aureate, our flagship restaurant, earned its first Michelin star under Chef Isabelle Moreau." },
-  { year: "2012", title: "The Villas", desc: "Launched La Rosa Private Villas — five standalone estate residences for the most discerning guests." },
+  { year: "2012", title: "The Villas", desc: "Launched Larosa Private Villas — five standalone estate residences for the most discerning guests." },
   { year: "2019", title: "Global Award", desc: "Voted #1 Boutique Luxury Hotel in North America by Condé Nast Traveler readers for the third time." },
   { year: "2024", title: "Today", desc: "124 rooms, 5 private villas, two restaurants, and an unwavering commitment to the art of elevated stillness." },
 ];
@@ -50,7 +50,7 @@ export default function AboutPage() {
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80"
-            alt="La Rosa Hotel"
+            alt="Larosa Hotel"
             fill
             className="object-cover"
             priority
@@ -65,7 +65,7 @@ export default function AboutPage() {
           >
             <p className="text-primary uppercase tracking-[0.35em] text-xs mb-4">Our Heritage</p>
             <h1 className="font-serif text-5xl md:text-7xl text-foreground mb-4 leading-tight">
-              The La Rosa <br /><span className="italic text-primary/90">Story</span>
+              The Larosa <br /><span className="italic text-primary/90">Story</span>
             </h1>
           </motion.div>
         </div>
@@ -85,13 +85,13 @@ export default function AboutPage() {
               Born from a vision of <br /><span className="italic text-primary/80">timeless grace</span>
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              La Rosa was conceived by Élise Fontaine, a Parisian-born hotelier who believed that true luxury was not about abundance — it was about absence. Absence of noise. Absence of urgency. Absence of anything that did not serve the guest's deepest comfort.
+              Larosa was conceived by Élise Fontaine, a Parisian-born hotelier who believed that true luxury was not about abundance — it was about absence. Absence of noise. Absence of urgency. Absence of anything that did not serve the guest's deepest comfort.
             </p>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
               What began as a 24-room property on the edges of Beverly Hills grew, through four decades of patient refinement, into one of America's most celebrated luxury sanctuaries. Not through volume, but through virtue.
             </p>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Today, La Rosa is managed by the second generation of the Fontaine family, still committed to the same principle that guided Élise: to make every guest feel that the world has slowed down, just for them.
+              Today, Larosa is managed by the second generation of the Fontaine family, still committed to the same principle that guided Élise: to make every guest feel that the world has slowed down, just for them.
             </p>
           </motion.div>
         </div>
@@ -193,7 +193,7 @@ export default function AboutPage() {
           Be Part of the Story
         </h2>
         <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-          Every guest who chooses La Rosa adds a chapter to our legacy. We would be honoured to welcome you.
+          Every guest who chooses Larosa adds a chapter to our legacy. We would be honoured to welcome you.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button size="lg" className="h-14 px-12 rounded-none font-serif tracking-widest text-sm bg-primary hover:bg-primary/90 text-primary-foreground" asChild>

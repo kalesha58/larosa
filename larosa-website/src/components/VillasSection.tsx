@@ -118,7 +118,7 @@ export function VillasSection() {
             variants={item}
             className="font-serif text-[2rem] leading-[1.12] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[3.25rem] xl:text-7xl"
           >
-            La Rosa{" "}
+            Larosa{" "}
             <span className="bg-gradient-to-r from-primary via-primary/85 to-primary/60 bg-clip-text text-transparent">
               Villas
             </span>

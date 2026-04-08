@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { format } from "date-fns";
 import {
@@ -13,6 +13,9 @@ import {
   Wifi,
   Coffee,
   Wind,
+  Sparkles,
+  ShieldCheck,
+  Clock3,
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { useGetRoom, useGetRoomAvailability } from "@/hooks/use-queries";
@@ -27,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PLACEHOLDER = "/room-deluxe.png";
+const TAX_RATE = 0.15;
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export default function RoomDetailPage() {
   const params = useParams<{ id: string }>();
@@ -78,14 +83,7 @@ export default function RoomDetailPage() {
   };
 
   if (!Number.isFinite(roomId) || roomId <= 0) {
-    return (
-      <div className="container py-32 text-center">
-        <p className="text-muted-foreground">Invalid room.</p>
-        <Button asChild className="mt-6 rounded-none">
-          <Link href="/rooms">View rooms</Link>
-        </Button>
-      </div>
-    );
+    notFound();
   }
 
   if (isRoomLoading) {
@@ -105,14 +103,7 @@ export default function RoomDetailPage() {
   }
 
   if (!room) {
-    return (
-      <div className="container py-32 text-center">
-        <h1 className="font-serif text-2xl mb-4">Room not found</h1>
-        <Button asChild variant="outline" className="rounded-none">
-          <Link href="/rooms">Back to accommodations</Link>
-        </Button>
-      </div>
-    );
+    notFound();
   }
 
   const iconMap: Record<string, React.ReactNode> = {
@@ -125,6 +116,24 @@ export default function RoomDetailPage() {
   const mainImage = room.images[0] ?? PLACEHOLDER;
   const altImage1 = room.images[1] ?? room.images[0] ?? PLACEHOLDER;
   const altImage2 = room.images[2] ?? room.images[0] ?? PLACEHOLDER;
+  const nights =
+    date?.from && date?.to
+      ? Math.ceil((date.to.getTime() - date.from.getTime()) / MILLISECONDS_PER_DAY)
+      : 0;
+  const roomSubtotal = nights > 0 ? room.price * nights : 0;
+  const taxes = nights > 0 ? Math.floor(roomSubtotal * TAX_RATE) : 0;
+  const total = roomSubtotal + taxes;
+  const stayHighlights = [
+    "Private concierge for dining and city experiences",
+    "Signature turn-down ritual and in-room wellness setup",
+    "Early check-in priority (subject to availability)",
+    "Complimentary artisan breakfast for all guests",
+  ];
+  const stayPolicies = [
+    "Flexible cancellation up to 48 hours before check-in",
+    "Check-in from 3:00 PM, check-out by 12:00 PM",
+    "A refundable incidental hold is authorized at arrival",
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -210,6 +219,60 @@ export default function RoomDetailPage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-14 grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-serif text-2xl text-foreground">Signature Stay</h3>
+              </div>
+              <ul className="space-y-3">
+                {stayHighlights.map((highlight) => (
+                  <li
+                    key={highlight}
+                    className="text-sm text-muted-foreground flex items-start gap-3"
+                  >
+                    <Check className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                <h3 className="font-serif text-2xl text-foreground">Booking Policies</h3>
+              </div>
+              <ul className="space-y-3">
+                {stayPolicies.map((policy) => (
+                  <li
+                    key={policy}
+                    className="text-sm text-muted-foreground flex items-start gap-3"
+                  >
+                    <Clock3 className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                    <span>{policy}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-14 border border-border bg-card/60 p-8">
+            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground mb-3">
+              Need a curated itinerary?
+            </p>
+            <h3 className="font-serif text-3xl text-foreground mb-4">
+              Let our concierge design your stay.
+            </h3>
+            <p className="text-muted-foreground max-w-2xl mb-6">
+              From private dining reservations to bespoke city experiences, our
+              team crafts every detail around your preferences before arrival.
+            </p>
+            <Button asChild variant="outline" className="rounded-none h-12 px-8">
+              <Link href="/contact">Speak to Concierge</Link>
+            </Button>
+          </div>
         </div>
 
         <div className="lg:col-span-1">
@@ -273,49 +336,17 @@ export default function RoomDetailPage() {
                 <div className="bg-background/50 p-4 border border-border space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      ${room.price} x{" "}
-                      {Math.ceil(
-                        (date.to.getTime() - date.from.getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      )}{" "}
-                      nights
+                      ${room.price} x {nights} nights
                     </span>
-                    <span className="text-foreground">
-                      $
-                      {room.price *
-                        Math.ceil(
-                          (date.to.getTime() - date.from.getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )}
-                    </span>
+                    <span className="text-foreground">${roomSubtotal}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="text-foreground">
-                      $
-                      {Math.floor(
-                        room.price *
-                          0.15 *
-                          Math.ceil(
-                            (date.to.getTime() - date.from.getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          )
-                      )}
-                    </span>
+                    <span className="text-foreground">${taxes}</span>
                   </div>
                   <div className="pt-3 border-t border-border flex justify-between font-serif text-lg text-primary">
                     <span>Total</span>
-                    <span>
-                      $
-                      {Math.floor(
-                        room.price *
-                          1.15 *
-                          Math.ceil(
-                            (date.to.getTime() - date.from.getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          )
-                      )}
-                    </span>
+                    <span>${total}</span>
                   </div>
                 </div>
               )}

@@ -34,7 +34,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <aside className="w-64 bg-card border-r border-border flex flex-col fixed inset-y-0 left-0 z-10">
         <div className="h-20 flex items-center px-6 border-b border-border">
           <Link href="/" className="font-serif text-xl font-bold tracking-widest text-primary">
-            LA ROSA Admin
+            LAROSA Admin
           </Link>
         </div>
         <nav className="flex-1 py-8 px-4 space-y-2">

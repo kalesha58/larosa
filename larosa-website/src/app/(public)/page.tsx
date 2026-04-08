@@ -9,6 +9,7 @@ import { BookingWidget } from "@/components/BookingWidget";
 import { SignatureSuitesSection } from "@/components/SignatureSuitesSection";
 import { VillasSection } from "@/components/VillasSection";
 import { ExperiencesSection } from "@/components/ExperiencesSection";
+import { VillaAmenitiesSection } from "@/components/VillaAmenitiesSection";
 import { StorySection } from "@/components/StorySection";
 import { HomeContactSection } from "@/components/HomeContactSection";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,8 @@ export default function Home() {
       <VillasSection />
 
       <ExperiencesSection />
+
+      <VillaAmenitiesSection />
 
       <StorySection />
 

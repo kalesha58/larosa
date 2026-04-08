@@ -42,7 +42,7 @@ export function Footer() {
               <Sparkles className="h-5 w-5 text-primary opacity-80" />
               <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-primary">The Sanctuary</span>
             </div>
-            <h2 className="font-serif text-4xl font-bold tracking-[0.15em] text-primary mb-6">LA ROSA</h2>
+            <h2 className="font-serif text-4xl font-bold tracking-[0.15em] text-primary mb-6">LAROSA</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-lg">
               Where quiet opulence meets unhurried elegance. Our sanctuary is designed for those who seek the extraordinary in every detail.
             </p>
@@ -151,10 +151,10 @@ export function Footer() {
         <div className="pt-12 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col items-center md:items-start gap-2">
             <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              &copy; {new Date().getFullYear()} La Rosa Sanctuary
+              &copy; {new Date().getFullYear()} Larosa Sanctuary
             </p>
             <p className="text-[9px] tracking-widest text-muted-foreground/50 uppercase">
-              Part of the La Rosa Hospitality Collective
+              Part of the Larosa Hospitality Collective
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/70">

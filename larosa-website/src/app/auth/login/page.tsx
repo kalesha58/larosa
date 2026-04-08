@@ -53,7 +53,7 @@ export default function LoginPage() {
       await login(); // use our existing mock login
       toast({
         title: "Welcome Back",
-        description: "You have successfully signed in to La Rosa.",
+        description: "You have successfully signed in to Larosa.",
       });
       router.push("/");
     } catch (error: any) {
@@ -75,7 +75,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex w-1/2 relative overflow-hidden">
         <Image 
           src="/hero.png" 
-          alt="La Rosa Lobby" 
+          alt="Larosa Lobby" 
           fill
           className="object-cover"
           priority
@@ -92,7 +92,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-12">
             <Link href="/" className="font-serif text-2xl font-bold tracking-widest text-primary block mb-8">
-              LA ROSA
+              LAROSA
             </Link>
             <h1 className="font-serif text-3xl text-foreground mb-2">Sign In</h1>
             <p className="text-muted-foreground">Access your reservations and preferences.</p>

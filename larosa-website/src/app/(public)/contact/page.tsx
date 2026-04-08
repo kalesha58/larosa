@@ -37,7 +37,7 @@ export default function ContactPage() {
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=1920&q=80"
-            alt="La Rosa Hotel Concierge"
+            alt="Larosa Hotel Concierge"
             fill
             className="object-cover object-top"
             priority
@@ -143,7 +143,7 @@ export default function ContactPage() {
                   </div>
                   <h3 className="font-serif text-2xl text-foreground">Message Received</h3>
                   <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
-                    Thank you for reaching out to La Rosa. Our concierge team will be in touch within 2–4 hours. For urgent matters, please call us directly.
+                    Thank you for reaching out to Larosa. Our concierge team will be in touch within 2–4 hours. For urgent matters, please call us directly.
                   </p>
                   <Button
                     variant="outline"

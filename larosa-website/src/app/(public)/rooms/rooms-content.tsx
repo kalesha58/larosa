@@ -379,7 +379,7 @@ function RoomsInner() {
                     </h3>
                     <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
                       Try widening your price range or clearing filters to see
-                      more of La Rosa.
+                      more of Larosa.
                     </p>
                     <Button
                       type="button"
