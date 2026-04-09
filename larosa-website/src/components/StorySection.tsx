@@ -135,7 +135,7 @@ export function StorySection() {
               )}
             >
               <Image
-                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&q=80"
+                src="/hotel-facade.png"
                 alt="Larosa Hotel exterior"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"

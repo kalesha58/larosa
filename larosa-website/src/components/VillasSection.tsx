@@ -14,7 +14,7 @@ const VILLAS = [
     desc: "Secluded one-bedroom villa with private plunge pool surrounded by lush tropical gardens.",
     size: "120 m²",
     guests: "2 Guests",
-    img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80",
+    img: "/aqua-1.png",
     highlights: [
       "Private plunge pool",
       "Garden-facing master suite",
@@ -27,7 +27,7 @@ const VILLAS = [
     desc: "Elevated two-bedroom villa with breathtaking panoramic ocean views and a private terrace.",
     size: "200 m²",
     guests: "4 Guests",
-    img: "https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?w=1200&q=80",
+    img: "/aqua-2.png",
     highlights: [
       "Panoramic ocean terrace",
       "Indoor-outdoor lounge",
@@ -40,7 +40,7 @@ const VILLAS = [
     desc: "The pinnacle of seclusion — a full three-bedroom estate with a private pool, chef, and butler.",
     size: "450 m²",
     guests: "6 Guests",
-    img: "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80",
+    img: "/villa-exterior.png",
     highlights: [
       "Three-suite private estate",
       "Butler and private chef",

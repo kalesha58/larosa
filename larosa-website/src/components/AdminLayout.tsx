@@ -7,8 +7,16 @@ import { LayoutDashboard, BedDouble, CalendarDays, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const pathname = usePathname();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground text-sm tracking-widest uppercase">Loading</p>
+      </div>
+    );
+  }
 
   if (!user || user.role !== "admin") {
     return (
@@ -56,7 +64,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="p-4 border-t border-border">
           <button 
-            onClick={() => logout()}
+            onClick={() => void logout()}
             className="flex items-center gap-3 px-4 py-3 text-sm font-medium tracking-wide text-destructive hover:bg-destructive/10 w-full transition-colors outline-none"
           >
             <LogOut className="w-5 h-5" />
