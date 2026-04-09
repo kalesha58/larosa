@@ -6,21 +6,9 @@ import {
   useQueryClient,
   type UseQueryOptions,
 } from "@tanstack/react-query";
+import { cloneInitialRooms, type Room } from "@/lib/room-catalog";
 
-export interface Room {
-  id: number;
-  title: string;
-  type: string;
-  price: number;
-  images: string[];
-  description: string;
-  amenities: string[];
-  capacity: number;
-  sizeSqFt: number;
-  /** Physical units available (admin inventory). */
-  totalRooms: number;
-  featured?: boolean;
-}
+export type { Room } from "@/lib/room-catalog";
 
 export interface AdminStats {
   totalRevenue: number;
@@ -64,76 +52,7 @@ export interface AvailabilityRange {
   checkOut: string;
 }
 
-let MOCK_ROOMS: Room[] = [
-  {
-    id: 1,
-    title: "Regal Suite",
-    type: "Suite",
-    price: 1200,
-    images: ["/room-suite.png"],
-    description:
-      "A timeless masterpiece of comfort and elegance with bespoke furnishings and garden outlooks.",
-    amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
-    capacity: 2,
-    sizeSqFt: 750,
-    totalRooms: 8,
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Presidential Suite",
-    type: "Presidential",
-    price: 3500,
-    images: ["/room-presidential.png"],
-    description:
-      "The pinnacle of Larosa hospitality with panoramic views and a private terrace.",
-    amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
-    capacity: 4,
-    sizeSqFt: 1400,
-    totalRooms: 3,
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "Deluxe Heritage",
-    type: "Deluxe",
-    price: 850,
-    images: ["/room-deluxe.png"],
-    description:
-      "Intimate and refined for the modern traveler with Italian marble bathroom.",
-    amenities: ["Wifi", "Air Conditioning", "Room Service"],
-    capacity: 2,
-    sizeSqFt: 520,
-    totalRooms: 14,
-    featured: true,
-  },
-  {
-    id: 4,
-    title: "Garden Courtyard",
-    type: "Standard",
-    price: 450,
-    images: ["/room-deluxe.png"],
-    description:
-      "Quiet courtyard views and refined simplicity for short urban stays.",
-    amenities: ["Wifi", "Air Conditioning"],
-    capacity: 2,
-    sizeSqFt: 380,
-    totalRooms: 20,
-  },
-  {
-    id: 5,
-    title: "Ocean Penthouse",
-    type: "Deluxe",
-    price: 2100,
-    images: ["/room-suite.png"],
-    description:
-      "Elevated living with wraparound glass and a deep soaking tub.",
-    amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
-    capacity: 3,
-    sizeSqFt: 980,
-    totalRooms: 4,
-  },
-];
+let MOCK_ROOMS: Room[] = cloneInitialRooms();
 
 /** Mock booked ranges per room (inclusive check-in, exclusive check-out for night logic in UI). */
 const MOCK_AVAILABILITY: Record<number, AvailabilityRange[]> = {
@@ -147,20 +66,8 @@ const MOCK_AVAILABILITY: Record<number, AvailabilityRange[]> = {
   5: [{ checkIn: "2026-08-01", checkOut: "2026-08-10" }],
 };
 
-let MOCK_BOOKINGS: Booking[] = [
-  {
-    id: 1024,
-    roomId: 1,
-    room: MOCK_ROOMS[0],
-    guestName: "John Doe",
-    guestEmail: "john@example.com",
-    checkIn: "2026-05-15",
-    checkOut: "2026-05-18",
-    guests: 2,
-    totalPrice: 3600,
-    status: "confirmed",
-  },
-];
+/** In-memory bookings from user-created reservations only (no seeded sample data). */
+let MOCK_BOOKINGS: Booking[] = [];
 
 export interface RoomListFilters {
   type?: string;

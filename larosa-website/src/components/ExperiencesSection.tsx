@@ -89,7 +89,7 @@ export function ExperiencesSection() {
               )}
             >
               <Image
-                src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=900&q=80"
+                src="/aqua-3.png"
                 alt="Luxury spa interior"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -108,7 +108,7 @@ export function ExperiencesSection() {
                 )}
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80"
+                  src="/aqua-4.png"
                   alt="Spa treatment detail"
                   width={192}
                   height={192}

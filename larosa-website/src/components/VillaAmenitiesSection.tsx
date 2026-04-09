@@ -62,8 +62,16 @@ const QUICK_METRICS = [
   { label: "Curated Amenities", value: "20+" },
   { label: "Concierge Access", value: "24/7" },
 ] as const;
-// Single golden accent — consistent across all cards, works in light & dark
-const GOLDEN_ACCENT = "from-amber-400/90 to-yellow-600/70 dark:from-amber-300/80 dark:to-yellow-500/60";
+const AMENITY_ACCENT_STYLES = [
+  "from-emerald-400/80 to-teal-500/60",
+  "from-amber-400/85 to-orange-500/65",
+  "from-violet-400/80 to-fuchsia-500/60",
+  "from-sky-400/80 to-cyan-500/60",
+  "from-rose-400/80 to-pink-500/60",
+  "from-lime-400/80 to-emerald-500/60",
+  "from-blue-400/80 to-indigo-500/60",
+  "from-yellow-400/80 to-amber-500/60",
+] as const;
 
 const container = {
   hidden: { opacity: 0 },
@@ -88,14 +96,12 @@ export function VillaAmenitiesSection() {
       className="relative overflow-hidden border-t border-border/60 bg-muted/20 py-16 sm:py-20 md:py-24 lg:py-32"
       aria-labelledby="villa-amenities-heading"
     >
-      {/* Golden radial glow at top */}
       <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_90%_65%_at_50%_0%,hsl(45_90%_55%/0.10),transparent_55%)] dark:bg-[radial-gradient(ellipse_90%_65%_at_50%_0%,hsl(45_90%_55%/0.08),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_90%_65%_at_50%_0%,hsl(var(--primary)/0.12),transparent_55%)]"
         aria-hidden
       />
-      {/* Golden orb at bottom */}
       <div
-        className="pointer-events-none absolute -bottom-32 left-1/2 -z-10 h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-amber-400/8 blur-3xl dark:bg-amber-300/6"
+        className="pointer-events-none absolute -bottom-32 left-1/2 -z-10 h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
         aria-hidden
       />
 
@@ -108,7 +114,7 @@ export function VillaAmenitiesSection() {
             transition={{ duration: 0.55, ease: [0.21, 0.45, 0.32, 0.9] }}
             className="space-y-6"
           >
-            <p className="inline-flex border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-600 dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-300">
+            <p className="inline-flex border border-primary/25 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-primary">
               Your Comfort
             </p>
             <h2
@@ -142,19 +148,19 @@ export function VillaAmenitiesSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.55, ease: [0.21, 0.45, 0.32, 0.9], delay: 0.04 }}
-            className="relative overflow-hidden rounded-2xl border border-amber-400/25 bg-card/70 p-6 backdrop-blur-sm dark:border-amber-300/15"
+            className="relative overflow-hidden border border-border/70 bg-card/70 p-6 backdrop-blur-sm"
           >
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-400/12 via-transparent to-transparent dark:from-amber-300/8"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-transparent"
               aria-hidden
             />
             <div className="relative grid grid-cols-3 gap-3">
               {QUICK_METRICS.map((metric) => (
                 <div
                   key={metric.label}
-                  className="rounded-xl border border-border/60 bg-background/70 p-3 text-center"
+                  className="border border-border/60 bg-background/70 p-3 text-center"
                 >
-                  <p className="font-serif text-2xl text-amber-600 dark:text-amber-300">{metric.value}</p>
+                  <p className="font-serif text-2xl text-primary">{metric.value}</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {metric.label}
                   </p>
@@ -173,30 +179,32 @@ export function VillaAmenitiesSection() {
         >
           {VILLA_AMENITIES.map((amenity, index) => {
             const Icon = amenity.icon;
+            const accentStyle =
+              AMENITY_ACCENT_STYLES[
+                index % AMENITY_ACCENT_STYLES.length
+              ];
             return (
               <motion.article
                 key={amenity.title}
                 variants={item}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.4)] backdrop-blur-sm",
-                  "transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-[0_22px_46px_-24px_rgba(180,130,0,0.18)] dark:hover:border-amber-300/30 dark:hover:shadow-[0_22px_46px_-24px_rgba(180,130,0,0.12)]"
+                  "group relative overflow-hidden border border-border/70 bg-card/80 p-6 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.4)] backdrop-blur-sm",
+                  "transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_22px_46px_-24px_rgba(0,0,0,0.5)]"
                 )}
               >
-                {/* Golden corner glow */}
                 <div
-                  className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-400/10 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60 dark:bg-amber-300/8"
+                  className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/10 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-70"
                   aria-hidden
                 />
-                {/* Golden left accent bar — same shade for all cards */}
                 <div
                   className={cn(
-                    "pointer-events-none absolute inset-y-0 left-0 w-1.5 rounded-l-2xl rounded-r-full bg-gradient-to-b",
-                    GOLDEN_ACCENT
+                    "pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b",
+                    accentStyle
                   )}
                   aria-hidden
                 />
                 <div className="relative flex items-start gap-4 pl-2">
-                  <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-400/40 bg-amber-400/10 text-amber-600 shadow-sm dark:border-amber-300/30 dark:bg-amber-300/10 dark:text-amber-300">
+                  <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center border border-primary/35 bg-primary/10 text-primary shadow-sm">
                     <Icon className="h-[18px] w-[18px]" aria-hidden />
                   </div>
                   <div className="space-y-2">
@@ -215,4 +223,4 @@ export function VillaAmenitiesSection() {
       </div>
     </section>
   );
-}
+};

@@ -25,7 +25,7 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -34,10 +34,10 @@ export default function DashboardPage() {
   const cancelBooking = useCancelBooking();
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.replace("/auth/login");
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   const handleCancelStatus = async (id: number) => {
     try {
@@ -56,8 +56,15 @@ export default function DashboardPage() {
     }
   };
 
-  if (!user) {
-    return null;
+  if (loading || !user) {
+    return loading ? (
+      <div className="min-h-screen bg-background pt-32 pb-20 px-4">
+        <div className="container mx-auto px-4 max-w-5xl space-y-6">
+          <Skeleton className="h-12 w-64" />
+          <Skeleton className="h-48 w-full rounded-none" />
+        </div>
+      </div>
+    ) : null;
   }
 
   return (
@@ -69,7 +76,7 @@ export default function DashboardPage() {
             <h1 className="font-serif text-5xl text-foreground mb-4">Welcome, {user?.name || "Guest"}</h1>
             <p className="text-muted-foreground uppercase tracking-widest text-xs font-bold">Your private sanctuary account</p>
           </div>
-          <Button variant="ghost" onClick={() => logout()} className="text-destructive font-serif tracking-widest text-xs uppercase hover:bg-destructive/10">
+          <Button variant="ghost" onClick={() => void logout()} className="text-destructive font-serif tracking-widest text-xs uppercase hover:bg-destructive/10">
              <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
         </div>
@@ -112,7 +119,8 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-2 font-bold">
-                        {booking.room.type} • CONFIRMED #{booking.id.toString().padStart(6, '0')}
+                        {booking.room.type} • {booking.status.toUpperCase()} #
+                        {booking.id.toString().padStart(6, "0")}
                       </p>
                       <h3 className="font-serif text-3xl text-foreground">{booking.room.title}</h3>
                     </div>

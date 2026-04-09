@@ -14,15 +14,9 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Moon, Sun, Menu, X } from "lucide-react";
 
-interface User {
-  id: string;
-  name: string;
-  email?: string;
-  role: "admin" | "user";
-}
-
 export function Navbar() {
-  const { user, logout } = useAuth() as unknown as { user: User | null, logout: () => void };
+  const { user, logout, loading } = useAuth();
+  const showAuthUser = !loading && user;
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -86,13 +80,13 @@ export function Navbar() {
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
-            {user ? (
+            {showAuthUser && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                     <Avatar className="h-9 w-9 border border-primary/30">
                       <AvatarFallback className="bg-secondary text-secondary-foreground font-serif text-sm">
-                        {user.name?.charAt(0).toUpperCase() || "U"}
+                        {user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -112,7 +106,7 @@ export function Navbar() {
                     </DropdownMenuItem>
                   )}
                   <div className="h-px bg-border my-1" />
-                  <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer">
+                  <DropdownMenuItem onClick={() => void logout()} className="text-destructive cursor-pointer">
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -176,7 +170,7 @@ export function Navbar() {
             </nav>
 
             <div className="mt-auto pt-8">
-              {!user ? (
+              {!showAuthUser ? (
                 <div className="space-y-3">
                   <Link
                     href="/auth/login"
@@ -203,7 +197,7 @@ export function Navbar() {
                     type="button"
                     onClick={() => {
                       setMobileOpen(false);
-                      logout();
+                      void logout();
                     }}
                     className="block w-full rounded-xl bg-primary px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
                   >

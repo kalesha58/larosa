@@ -17,19 +17,19 @@ import { ArrowRight } from "lucide-react";
 
 const HERO_SLIDES = [
   {
-    src: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80",
+    src: "/villa-hero-1.png",
     label: "Grand Lobby",
   },
   {
-    src: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1920&q=80",
+    src: "/presidential-suite.png",
     label: "Presidential Suite",
   },
   {
-    src: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1920&q=80",
+    src: "/infinity-pool.png",
     label: "Infinity Pool",
   },
   {
-    src: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1920&q=80",
+    src: "/villa-hero-2.png",
     label: "Villa Terrace",
   },
 ];
