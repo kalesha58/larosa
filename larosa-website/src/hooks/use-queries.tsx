@@ -66,8 +66,69 @@ const MOCK_AVAILABILITY: Record<number, AvailabilityRange[]> = {
   5: [{ checkIn: "2026-08-01", checkOut: "2026-08-10" }],
 };
 
-/** In-memory bookings from user-created reservations only (no seeded sample data). */
-let MOCK_BOOKINGS: Booking[] = [];
+/** Seeded sample bookings for the admin panel demonstration. */
+let MOCK_BOOKINGS: Booking[] = [
+  {
+    id: 10425,
+    roomId: 1,
+    room: cloneInitialRooms().find(r => r.id === 1)!,
+    guestName: "Alexander Sterling",
+    guestEmail: "alex.sterling@example.com",
+    checkIn: "2026-04-20",
+    checkOut: "2026-04-25",
+    guests: 2,
+    totalPrice: 1250,
+    status: "confirmed"
+  },
+  {
+    id: 10426,
+    roomId: 3,
+    room: cloneInitialRooms().find(r => r.id === 3)!,
+    guestName: "Isabella Vance",
+    guestEmail: "bella.v@example.com",
+    checkIn: "2026-04-22",
+    checkOut: "2026-04-24",
+    guests: 1,
+    totalPrice: 800,
+    status: "confirmed"
+  },
+  {
+    id: 10427,
+    roomId: 2,
+    room: cloneInitialRooms().find(r => r.id === 2)!,
+    guestName: "Julian Cross",
+    guestEmail: "j.cross@tech-inc.org",
+    checkIn: "2026-04-18",
+    checkOut: "2026-04-21",
+    guests: 2,
+    totalPrice: 1800,
+    status: "confirmed"
+  },
+  {
+    id: 10428,
+    roomId: 4,
+    room: cloneInitialRooms().find(r => r.id === 4)!,
+    guestName: "Marcus Thorne",
+    guestEmail: "m.thorne@luxurytravel.com",
+    checkIn: "2026-04-21",
+    checkOut: "2026-04-28",
+    guests: 3,
+    totalPrice: 3500,
+    status: "cancelled"
+  },
+  {
+    id: 10429,
+    roomId: 5,
+    room: cloneInitialRooms().find(r => r.id === 5)!,
+    guestName: "Sophia Loren",
+    guestEmail: "sophia.l@cinema.it",
+    checkIn: "2026-04-19",
+    checkOut: "2026-04-22",
+    guests: 2,
+    totalPrice: 2200,
+    status: "confirmed"
+  }
+];
 
 export interface RoomListFilters {
   type?: string;
