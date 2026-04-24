@@ -20,7 +20,7 @@ export const INITIAL_ROOMS: Room[] = [
     title: "Regal Suite",
     type: "Suite",
     price: 10,
-    images: ["/room2.jpeg", "/DinningHall.jpeg"],
+    images: ["/poolview3.jpeg", "/DinningHall.jpeg"],
     description:
       "A timeless masterpiece of comfort and elegance with bespoke furnishings and garden outlooks.",
     amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
@@ -34,7 +34,7 @@ export const INITIAL_ROOMS: Room[] = [
     title: "Presidential Suite",
     type: "Presidential",
     price: 15,
-    images: ["/room3.jpeg"],
+    images: ["/Hero3.jpeg"],
     description:
       "The pinnacle of Larosa hospitality with panoramic views and a private terrace.",
     amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
@@ -48,7 +48,7 @@ export const INITIAL_ROOMS: Room[] = [
     title: "Deluxe Heritage",
     type: "Deluxe",
     price: 8,
-    images: ["/room4.jpeg", "/Bathroom.jpeg"],
+    images: ["/poolview2.jpeg", "/Bathroom.jpeg"],
     description:
       "Intimate and refined for the modern traveler with Italian marble bathroom.",
     amenities: ["Wifi", "Air Conditioning", "Room Service"],
