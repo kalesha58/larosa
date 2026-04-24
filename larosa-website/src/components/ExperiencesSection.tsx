@@ -93,8 +93,8 @@ export function ExperiencesSection() {
               )}
             >
               <Image
-                src="/WhatsApp Image 2026-04-24 at 12.19.21 PM.jpeg"
-                alt="Luxury spa interior"
+                src="/DinningHall.jpeg"
+                alt="Aureate Dining Experience"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover transition-transform duration-[1.2s] ease-out hover:scale-[1.02]"
