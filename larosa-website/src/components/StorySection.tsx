@@ -209,7 +209,7 @@ export function StorySection() {
             <div className="absolute -left-2 top-6 z-10 hidden sm:block sm:-left-4 lg:top-10">
               <div className="overflow-hidden rounded-2xl border-4 border-background shadow-xl ring-1 ring-border/40">
                 <Image
-                  src="/WhatsApp Image 2026-04-24 at 12.19.08 PM.jpeg"
+                  src="/Hero5.jpeg"
                   alt="Architectural detail"
                   width={160}
                   height={160}
