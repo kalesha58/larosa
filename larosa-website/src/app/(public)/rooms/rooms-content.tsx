@@ -28,27 +28,27 @@ import { cn } from "@/lib/utils";
 
 const HERO_SLIDES = [
   {
-    src: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80",
+    src: "/room2.jpeg",
     label: "Presidential Suite",
     caption: "Unparalleled luxury for the most discerning guest",
   },
   {
-    src: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1920&q=80",
+    src: "/room4.jpeg",
     label: "Grand Suite",
     caption: "Sweeping views and timeless elegance",
   },
   {
-    src: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1920&q=80",
+    src: "/room3.jpeg",
     label: "Deluxe Room",
     caption: "Refined comfort, thoughtfully designed",
   },
   {
-    src: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=1920&q=80",
+    src: "/villa-hero-2.png",
     label: "Garden Suite",
     caption: "A private retreat amid lush greenery",
   },
   {
-    src: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1920&q=80",
+    src: "/villa-hero-1.png",
     label: "Pool Villa",
     caption: "Your own corner of paradise",
   },
@@ -113,9 +113,9 @@ function RoomsInner() {
               fill
               priority={heroIndex === 0}
               sizes="100vw"
-              className="object-cover"
+              className="object-cover saturate-[1.1]"
             />
-            <div className="absolute inset-0 bg-background/55 dark:bg-background/65" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/50" />
           </motion.div>
         </AnimatePresence>
 
@@ -128,13 +128,13 @@ function RoomsInner() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.7 }}
             >
-              <p className="text-primary uppercase tracking-[0.3em] text-xs mb-4">
+              <p className="text-white/90 uppercase tracking-[0.3em] text-xs mb-4 font-medium">
                 {HERO_SLIDES[heroIndex].label}
               </p>
-              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-foreground mb-4 leading-tight">
+              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-white mb-4 leading-tight drop-shadow-md">
                 Our Accommodations
               </h1>
-              <p className="text-foreground/70 text-lg md:text-xl max-w-xl mx-auto font-light">
+              <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-light drop-shadow-sm">
                 {HERO_SLIDES[heroIndex].caption}
               </p>
             </motion.div>
@@ -144,7 +144,7 @@ function RoomsInner() {
         <button
           type="button"
           onClick={() => goTo(heroIndex - 1)}
-          className="absolute left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 border border-foreground/30 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-colors bg-background/20 backdrop-blur-sm"
+          className="absolute left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
           aria-label="Previous slide"
         >
           <ChevronLeft size={20} />
@@ -152,7 +152,7 @@ function RoomsInner() {
         <button
           type="button"
           onClick={() => goTo(heroIndex + 1)}
-          className="absolute right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 border border-foreground/30 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-colors bg-background/20 backdrop-blur-sm"
+          className="absolute right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
           aria-label="Next slide"
         >
           <ChevronRight size={20} />
@@ -166,15 +166,15 @@ function RoomsInner() {
               onClick={() => goTo(i)}
               className={`transition-all duration-500 rounded-full ${
                 i === heroIndex
-                  ? "w-8 h-1 bg-primary"
-                  : "w-2 h-1 bg-foreground/35"
+                  ? "w-8 h-1 bg-white"
+                  : "w-2 h-1 bg-white/40"
               }`}
               aria-label={`Go to slide ${i + 1}`}
             />
           ))}
         </div>
 
-        <div className="absolute bottom-8 right-8 z-20 text-xs text-foreground/50 font-serif tracking-widest">
+        <div className="absolute bottom-8 right-8 z-20 text-xs text-white/70 font-serif tracking-widest drop-shadow-sm">
           {String(heroIndex + 1).padStart(2, "0")} /{" "}
           {String(HERO_SLIDES.length).padStart(2, "0")}
         </div>
