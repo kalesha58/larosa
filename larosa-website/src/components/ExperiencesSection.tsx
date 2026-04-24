@@ -93,7 +93,7 @@ export function ExperiencesSection() {
               )}
             >
               <Image
-                src="/aqua-3.png"
+                src="/WhatsApp Image 2026-04-24 at 12.19.21 PM.jpeg"
                 alt="Luxury spa interior"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -112,7 +112,7 @@ export function ExperiencesSection() {
                 )}
               >
                 <Image
-                  src="/aqua-4.png"
+                  src="/Accessories.jpeg"
                   alt="Spa treatment detail"
                   width={192}
                   height={192}

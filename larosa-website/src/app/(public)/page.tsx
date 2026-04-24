@@ -11,26 +11,35 @@ import { VillasSection } from "@/components/VillasSection";
 import { ExperiencesSection } from "@/components/ExperiencesSection";
 import { VillaAmenitiesSection } from "@/components/VillaAmenitiesSection";
 import { StorySection } from "@/components/StorySection";
+import { VideoSection } from "@/components/VideoSection";
 import { HomeContactSection } from "@/components/HomeContactSection";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 const HERO_SLIDES = [
   {
-    src: "/villa-hero-1.png",
-    label: "Grand Lobby",
+    src: "/Hero1.jpeg",
+    label: "Grand Entry",
   },
   {
-    src: "/presidential-suite.png",
-    label: "Presidential Suite",
+    src: "/Hero2.jpeg",
+    label: "Luxury Stay",
   },
   {
-    src: "/infinity-pool.png",
-    label: "Infinity Pool",
+    src: "/Hero3.jpeg",
+    label: "Serene Views",
   },
   {
-    src: "/villa-hero-2.png",
-    label: "Villa Terrace",
+    src: "/Hero4.jpeg",
+    label: "Exclusive Experience",
+  },
+  {
+    src: "/Hero5.jpeg",
+    label: "Premium Comfort",
+  },
+  {
+    src: "/WhatsApp Image 2026-04-24 at 12.18.54 PM.jpeg",
+    label: "Larosa Sanctuary",
   },
 ];
 
@@ -146,6 +155,8 @@ export default function Home() {
       <VillaAmenitiesSection />
 
       <StorySection />
+
+      <VideoSection />
 
       <HomeContactSection />
 
