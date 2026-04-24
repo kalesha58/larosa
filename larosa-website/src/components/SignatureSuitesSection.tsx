@@ -12,16 +12,20 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 30, scale: 0.98 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.55, ease: [0.21, 0.45, 0.32, 0.9] as const },
+    scale: 1,
+    transition: { 
+      duration: 0.8, 
+      ease: [0.16, 1, 0.3, 1] as const 
+    },
   },
 };
 
@@ -36,7 +40,7 @@ export function SignatureSuitesSection({
 }: SignatureSuitesSectionProps) {
   return (
     <section
-      className="relative overflow-hidden py-16 sm:py-20 md:py-28 lg:py-36"
+      className="relative overflow-hidden py-12 sm:py-14 md:py-20 lg:py-24"
       aria-labelledby="signature-suites-heading"
     >
       {/* Ambient background */}
@@ -59,14 +63,14 @@ export function SignatureSuitesSection({
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
         <motion.div
-          className="mb-10 sm:mb-12 lg:mb-14"
+          className="mb-7 sm:mb-9 lg:mb-10"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
           variants={container}
         >
-          <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
-            <div className="max-w-3xl space-y-5 sm:space-y-6 text-center lg:text-left lg:mx-0 mx-auto">
+          <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+            <div className="max-w-3xl space-y-4 sm:space-y-5 text-center lg:text-left lg:mx-0 mx-auto">
               <motion.div
                 variants={item}
                 className="flex flex-wrap items-center justify-center gap-3 lg:justify-start"
@@ -77,7 +81,7 @@ export function SignatureSuitesSection({
                 </span>
               </motion.div>
 
-              <motion.div variants={item} className="space-y-4 sm:space-y-5">
+              <motion.div variants={item} className="space-y-3 sm:space-y-4">
                 <h2
                   id="signature-suites-heading"
                   className="font-serif text-[2rem] leading-[1.1] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[3.5rem] xl:text-7xl"
@@ -144,7 +148,7 @@ export function SignatureSuitesSection({
         {/* Cards grid */}
         {isLoading ? (
           <div
-            className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3"
             role="status"
             aria-label="Loading suites"
           >
@@ -156,7 +160,7 @@ export function SignatureSuitesSection({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
             {rooms?.map((room, idx) => (
               <RoomCard
                 key={room.id}

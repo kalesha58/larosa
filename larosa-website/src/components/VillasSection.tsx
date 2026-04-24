@@ -54,16 +54,20 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.09, delayChildren: 0.04 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.08 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 30, scale: 0.99 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.55, ease: [0.21, 0.45, 0.32, 0.9] as const },
+    scale: 1,
+    transition: { 
+      duration: 0.9, 
+      ease: [0.16, 1, 0.3, 1] as const 
+    },
   },
 };
 
@@ -74,7 +78,7 @@ export function VillasSection() {
   return (
     <section
       id="villas"
-      className="relative overflow-hidden border-y border-border/60 bg-muted/25 py-16 sm:py-20 md:py-28 lg:py-36"
+      className="relative overflow-hidden border-y border-border/60 bg-muted/25 py-12 sm:py-14 md:py-20 lg:py-24"
       aria-labelledby="villas-heading"
     >
       {/* Ambient layers — distinct from Signature Suites */}
@@ -97,7 +101,7 @@ export function VillasSection() {
 
       <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="mb-12 text-center sm:mb-16 lg:mb-20"
+          className="mb-9 text-center sm:mb-11 lg:mb-12"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
@@ -105,7 +109,7 @@ export function VillasSection() {
         >
           <motion.div
             variants={item}
-            className="mb-5 flex flex-wrap items-center justify-center gap-3 sm:mb-6"
+            className="mb-4 flex flex-wrap items-center justify-center gap-3 sm:mb-5"
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary shadow-sm backdrop-blur-md sm:px-4 sm:py-2 sm:text-[11px]">
               <Trees className="h-3.5 w-3.5 shrink-0 opacity-85" aria-hidden />
@@ -126,7 +130,7 @@ export function VillasSection() {
 
           <motion.p
             variants={item}
-            className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg lg:mt-8 lg:max-w-3xl lg:text-xl lg:leading-relaxed"
+            className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg lg:mt-6 lg:max-w-3xl lg:text-xl lg:leading-relaxed"
           >
             For those who seek the ultimate in seclusion and personalized
             luxury, our private villas offer an entirely separate world of
@@ -135,7 +139,7 @@ export function VillasSection() {
 
           <motion.div
             variants={item}
-            className="mt-8 flex justify-center sm:mt-10"
+            className="mt-6 flex justify-center sm:mt-7"
           >
             <Button
               asChild
@@ -154,12 +158,12 @@ export function VillasSection() {
           </motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.5 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-4 xl:col-span-3"
           >
             <div className="rounded-2xl border border-border/45 bg-background/70 p-3 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.22)] backdrop-blur-sm sm:rounded-3xl sm:p-4">
@@ -223,24 +227,24 @@ export function VillasSection() {
 
           <motion.article
             key={activeVilla.name}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-8 xl:col-span-9"
           >
-            <div className="grid grid-cols-1 gap-6 rounded-2xl border border-border/55 bg-card/65 p-4 shadow-[0_20px_50px_-22px_rgba(0,0,0,0.22)] backdrop-blur-md sm:rounded-3xl sm:p-6 lg:grid-cols-12 lg:gap-8 lg:p-8">
+            <div className="grid grid-cols-1 gap-5 rounded-2xl border border-border/55 bg-card/65 p-4 shadow-[0_20px_50px_-22px_rgba(0,0,0,0.22)] backdrop-blur-md sm:rounded-3xl sm:p-5 lg:grid-cols-12 lg:gap-6 lg:p-6">
               <div className="lg:col-span-7">
                 <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-[11px]">
                   Featured villa
                 </span>
-                <h3 className="mt-4 font-serif text-3xl leading-tight text-foreground sm:text-4xl">
+                <h3 className="mt-3 font-serif text-3xl leading-tight text-foreground sm:text-4xl">
                   {activeVilla.name}
                 </h3>
-                <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                   {activeVilla.desc}
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full border border-border/50 bg-background/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground sm:text-[11px]">
                     {activeVilla.size}
                   </span>
@@ -249,7 +253,7 @@ export function VillasSection() {
                   </span>
                 </div>
 
-                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {activeVilla.highlights.map((point) => (
                     <div
                       key={point}
@@ -264,7 +268,7 @@ export function VillasSection() {
                 <Button
                   asChild
                   size="lg"
-                  className="mt-7 h-12 rounded-full px-8 font-serif text-xs tracking-[0.2em] sm:h-14 sm:text-sm"
+                  className="mt-5 h-12 rounded-full px-8 font-serif text-xs tracking-[0.2em] sm:h-14 sm:text-sm"
                 >
                   <Link href="/rooms" className="inline-flex items-center gap-2">
                     Enquire {activeVilla.name}
@@ -283,7 +287,7 @@ export function VillasSection() {
                     className="object-cover"
                   />
                   <div
-                    className="absolute inset-0 bg-gradient-to-t from-background/25 via-transparent to-transparent"
+                    className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500"
                     aria-hidden
                   />
                 </div>
