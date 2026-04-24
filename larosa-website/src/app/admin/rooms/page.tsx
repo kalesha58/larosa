@@ -164,11 +164,11 @@ export default function AdminRooms() {
         
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
-            <Button className="rounded-none bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-8 uppercase tracking-widest text-xs font-bold shadow-lg shadow-primary/20">
+            <Button className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-8 uppercase tracking-widest text-xs font-bold shadow-lg shadow-primary/20">
               <Plus className="mr-2 h-4 w-4" /> Register New Room
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border rounded-none shadow-2xl p-0">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border rounded-2xl shadow-2xl p-0">
             <DialogHeader className="p-8 pb-4 border-b border-border/50">
               <DialogTitle className="font-serif text-3xl">{editingId ? "Modify Asset" : "New Inventory Item"}</DialogTitle>
               <DialogDescription className="text-xs uppercase tracking-widest mt-1">Fill in the details for the luxury room listing</DialogDescription>
@@ -180,7 +180,7 @@ export default function AdminRooms() {
                     <FormField control={form.control} name="title" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Room Title</FormLabel>
-                        <FormControl><Input className="rounded-none border-border h-11 focus:ring-1 ring-primary" placeholder="e.g. Imperial Suite" {...field} /></FormControl>
+                        <FormControl><Input className="rounded-xl border-border h-11 focus:ring-1 ring-primary" placeholder="e.g. Imperial Suite" {...field} /></FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />
@@ -188,8 +188,8 @@ export default function AdminRooms() {
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Category</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger className="rounded-none border-border h-11"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
-                          <SelectContent className="rounded-none border-border">
+                          <FormControl><SelectTrigger className="rounded-xl border-border h-11"><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                          <SelectContent className="rounded-xl border-border">
                             <SelectItem value="Standard">Standard</SelectItem>
                             <SelectItem value="Deluxe">Deluxe</SelectItem>
                             <SelectItem value="Suite">Suite</SelectItem>
@@ -202,26 +202,26 @@ export default function AdminRooms() {
                     <FormField control={form.control} name="price" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest text-primary">Base Price / Night</FormLabel>
-                        <FormControl><Input type="number" className="rounded-none border-border h-11" {...field} /></FormControl>
+                        <FormControl><Input type="number" className="rounded-xl border-border h-11" {...field} /></FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="capacity" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Max Guests</FormLabel>
-                        <FormControl><Input type="number" className="rounded-none border-border h-11" {...field} /></FormControl>
+                        <FormControl><Input type="number" className="rounded-xl border-border h-11" {...field} /></FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="totalRooms" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Physical Inventory</FormLabel>
-                        <FormControl><Input type="number" className="rounded-none border-border h-11" {...field} /></FormControl>
+                        <FormControl><Input type="number" className="rounded-xl border-border h-11" {...field} /></FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="featured" render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between border border-border p-5 bg-secondary/10">
+                      <FormItem className="flex flex-row items-center justify-between border border-border p-5 bg-secondary/10 rounded-xl">
                         <div className="space-y-0.5">
                           <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Featured Status</FormLabel>
                           <FormDescription className="text-[9px] uppercase tracking-wider">Showcase on homepage</FormDescription>
@@ -234,7 +234,7 @@ export default function AdminRooms() {
                   <FormField control={form.control} name="description" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Asset Narration</FormLabel>
-                      <FormControl><Textarea className="rounded-none border-border resize-none h-24" placeholder="Describe the luxury experience..." {...field} /></FormControl>
+                      <FormControl><Textarea className="rounded-xl border-border resize-none h-24" placeholder="Describe the luxury experience..." {...field} /></FormControl>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
                   )} />
@@ -243,7 +243,7 @@ export default function AdminRooms() {
                     <FormField control={form.control} name="images" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Image Portfolio (URLs)</FormLabel>
-                        <FormControl><Textarea className="rounded-none border-border resize-none h-24 font-mono text-[10px]" placeholder="url1, url2..." {...field} /></FormControl>
+                        <FormControl><Textarea className="rounded-xl border-border resize-none h-24 font-mono text-[10px]" placeholder="url1, url2..." {...field} /></FormControl>
                         <FormDescription className="text-[9px] uppercase tracking-wider">Comma separated URLs</FormDescription>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
@@ -251,7 +251,7 @@ export default function AdminRooms() {
                     <FormField control={form.control} name="amenities" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Luxury Features</FormLabel>
-                        <FormControl><Textarea className="rounded-none border-border h-24 font-mono text-[10px]" placeholder="WiFi, AC, Minibar..." {...field} /></FormControl>
+                        <FormControl><Textarea className="rounded-xl border-border h-24 font-mono text-[10px]" placeholder="WiFi, AC, Minibar..." {...field} /></FormControl>
                         <FormDescription className="text-[9px] uppercase tracking-wider">Comma separated list</FormDescription>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
@@ -259,8 +259,8 @@ export default function AdminRooms() {
                   </div>
 
                   <div className="pt-4 flex gap-4">
-                    <Button variant="outline" type="button" onClick={() => handleOpenChange(false)} className="flex-1 rounded-none uppercase tracking-widest text-[10px] h-12 font-bold">Cancel</Button>
-                    <Button type="submit" className="flex-[2] rounded-none bg-primary hover:bg-primary/90 h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg shadow-primary/20">
+                    <Button variant="outline" type="button" onClick={() => handleOpenChange(false)} className="flex-1 rounded-xl uppercase tracking-widest text-[10px] h-12 font-bold">Cancel</Button>
+                    <Button type="submit" className="flex-[2] rounded-xl bg-primary hover:bg-primary/90 h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg shadow-primary/20">
                       {editingId ? "Complete Update" : "Register Room"}
                     </Button>
                   </div>
@@ -271,7 +271,7 @@ export default function AdminRooms() {
         </Dialog>
       </div>
 
-      <div className="bg-card border border-border shadow-2xl relative overflow-hidden">
+      <div className="bg-card border border-border shadow-2xl relative overflow-hidden rounded-2xl">
         <div className="absolute inset-0 bg-grid-white/5 pointer-events-none" />
         <Table>
           <TableHeader className="bg-secondary/20">
@@ -303,9 +303,9 @@ export default function AdminRooms() {
               <TableRow key={room.id} className="border-border hover:bg-secondary/10 transition-colors group">
                 <TableCell className="py-6">
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 bg-secondary/30 border border-border flex items-center justify-center text-primary relative">
+                    <div className="h-12 w-12 bg-secondary/30 border border-border flex items-center justify-center text-primary relative rounded-xl">
                       {room.featured && (
-                        <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground p-1 shadow-md">
+                        <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground p-1 shadow-md rounded-full">
                           <Star className="h-2 w-2 fill-current" />
                         </div>
                       )}
@@ -338,7 +338,7 @@ export default function AdminRooms() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="rounded-none border-primary/20 bg-primary/5 text-primary text-[9px] uppercase tracking-widest font-bold px-2 py-0.5">
+                  <Badge variant="outline" className="rounded-lg border-primary/20 bg-primary/5 text-primary text-[9px] uppercase tracking-widest font-bold px-2 py-0.5">
                     {room.totalRooms} Units available
                   </Badge>
                 </TableCell>
@@ -348,14 +348,14 @@ export default function AdminRooms() {
                       variant="ghost" 
                       size="icon" 
                       onClick={() => handleEdit(room)}
-                      className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10 rounded-none"
+                      className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10 rounded-xl"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-9 w-9 text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-none" 
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-xl" 
                       onClick={() => handleDelete(room.id)}
                     >
                       <Trash2 className="h-4 w-4" />
