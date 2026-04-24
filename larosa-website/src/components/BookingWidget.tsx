@@ -26,7 +26,7 @@ const useCheckAvailability = () => {
   return async () => ({ available: true });
 };
 
-export function BookingWidget() {
+export function BookingWidget({ className }: { className?: string }) {
   const router = useRouter();
   const [date, setDate] = useState<DateRange | undefined>();
   const [guests, setGuests] = useState<string>("2");
@@ -45,7 +45,12 @@ export function BookingWidget() {
   };
 
   return (
-    <div className="bg-card/90 backdrop-blur-xl border border-border p-4 shadow-2xl w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4">
+    <div
+      className={cn(
+        "bg-card/90 backdrop-blur-xl border border-border p-4 shadow-2xl w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-4",
+        className
+      )}
+    >
       <div className="flex-1 w-full flex flex-col md:flex-row gap-4">
         <Popover>
           <PopoverTrigger asChild>

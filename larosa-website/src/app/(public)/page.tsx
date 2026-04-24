@@ -14,7 +14,6 @@ import { StorySection } from "@/components/StorySection";
 import { VideoSection } from "@/components/VideoSection";
 import { HomeContactSection } from "@/components/HomeContactSection";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 
 const HERO_SLIDES = [
   {
@@ -106,21 +105,21 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="relative z-10 text-center px-4 w-full">
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="max-w-4xl mx-auto"
+            className="mx-auto max-w-[1320px]"
           >
-            <p className="text-white/80 uppercase tracking-[0.35em] text-xs mb-4 font-medium">
+            <p className="mb-3 text-left text-[10px] font-medium uppercase tracking-[0.3em] text-white/80 sm:text-xs">
               Welcome to the extraordinary
             </p>
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white mb-5 leading-tight">
+            <h1 className="mb-4 max-w-2xl text-left font-serif text-4xl leading-[1.12] text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]">
               A Sanctuary of <br />
               <span className="italic text-white/90">Quiet Opulence</span>
             </h1>
-            <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-8 font-light">
+            <p className="mb-8 max-w-xl text-left text-sm font-light leading-relaxed text-white/70 sm:text-base md:text-lg">
               Experience an unhurried, elevated stay where every detail is
               meticulously crafted for your absolute comfort.
             </p>
@@ -130,9 +129,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="hidden w-full px-4 md:block md:-mb-24"
+            className="hidden w-full md:-mb-24 md:block"
           >
-            <BookingWidget />
+            <BookingWidget className="mx-0 max-w-3xl" />
           </motion.div>
         </div>
       </section>
