@@ -51,18 +51,18 @@ export default function AdminBookings() {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-            <Input className="rounded-none border-border h-10 w-64 pl-9 text-xs uppercase tracking-widest bg-secondary/5" placeholder="Search Guest Name..." />
+            <Input className="rounded-xl border-border h-10 w-64 pl-9 text-xs uppercase tracking-widest bg-secondary/5" placeholder="Search Guest Name..." />
           </div>
-          <Button variant="outline" className="rounded-none h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
+          <Button variant="outline" className="rounded-xl h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
             <Filter className="mr-2 h-3 w-3" /> Filter
           </Button>
-          <Button variant="outline" className="rounded-none h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
+          <Button variant="outline" className="rounded-xl h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
             <Download className="mr-2 h-3 w-3" /> Export
           </Button>
         </div>
       </div>
 
-      <div className="bg-card border border-border shadow-2xl relative overflow-hidden">
+      <div className="bg-card border border-border shadow-2xl relative overflow-hidden rounded-2xl">
         <div className="absolute inset-0 bg-grid-white/5 pointer-events-none" />
         <Table>
           <TableHeader className="bg-secondary/20">
@@ -128,7 +128,7 @@ export default function AdminBookings() {
                 <TableCell>
                   <Badge 
                     variant={booking.status === 'confirmed' ? 'default' : 'secondary'} 
-                    className={`rounded-none text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 border-none ${
+                    className={`rounded-lg text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 border-none ${
                     booking.status === 'confirmed' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
                   }`}>
                     {booking.status}
@@ -148,7 +148,7 @@ export default function AdminBookings() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-none h-9 w-9" 
+                        className="text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-xl h-9 w-9" 
                         onClick={() => handleCancel(booking.id)} 
                         title="Cancel Booking"
                       >

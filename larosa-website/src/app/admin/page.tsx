@@ -52,11 +52,11 @@ export default function AdminDashboard() {
           <Skeleton className="h-10 w-64" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-none" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-[400px] lg:col-span-2 rounded-none" />
-          <Skeleton className="h-[400px] rounded-none" />
+          <Skeleton className="h-[400px] lg:col-span-2 rounded-2xl" />
+          <Skeleton className="h-[400px] rounded-2xl" />
         </div>
       </div>
     );
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-10">
       {/* Header Section */}
-      <section className="relative overflow-hidden border border-border bg-card/40 p-8 lg:p-12 shadow-sm">
+      <section className="relative overflow-hidden border border-border bg-card/40 p-8 lg:p-12 shadow-sm rounded-3xl">
         <div className="absolute top-0 right-0 p-4 opacity-5">
           <TrendingUp size={120} />
         </div>
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
           const Icon = stat.icon;
           return (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="bg-card border-border rounded-none shadow-sm group hover:shadow-md transition-all hover:border-primary/50 relative overflow-hidden">
+              <Card className="bg-card border-border rounded-2xl shadow-sm group hover:shadow-md transition-all hover:border-primary/50 relative overflow-hidden">
                 <div className={cn("absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity", stat.bg)} />
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="text-3xl font-serif text-foreground mb-1 tracking-tight">{stat.value}</div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={cn("rounded-none border-none px-0 text-[10px] font-bold", stat.color)}>
+                    <Badge variant="outline" className={cn("rounded-lg border-none px-0 text-[10px] font-bold", stat.color)}>
                       {stat.trend}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none">
@@ -183,13 +183,13 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Main Chart */}
-        <Card className="xl:col-span-2 bg-card border-border rounded-none shadow-sm">
+        <Card className="xl:col-span-2 bg-card border-border rounded-2xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="font-serif text-2xl">Revenue Performance</CardTitle>
               <CardDescription className="text-xs uppercase tracking-widest mt-1 text-muted-foreground">Monthly growth analytics</CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="rounded-none text-[10px] font-bold uppercase tracking-widest gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl text-[10px] font-bold uppercase tracking-widest gap-2">
               Generate Report <ArrowUpRight className="h-3 w-3" />
             </Button>
           </CardHeader>
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Status Distribution */}
-        <Card className="bg-card border-border rounded-none shadow-sm flex flex-col">
+        <Card className="bg-card border-border rounded-2xl shadow-sm flex flex-col">
           <CardHeader>
             <CardTitle className="font-serif text-2xl">Distribution</CardTitle>
             <CardDescription className="text-xs uppercase tracking-widest text-muted-foreground">Booking status breakdown</CardDescription>
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Bookings Feed */}
-        <Card className="bg-card border-border rounded-none shadow-sm overflow-hidden">
+        <Card className="bg-card border-border rounded-2xl shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-secondary/5">
             <div>
               <CardTitle className="font-serif text-xl">Recent Reservations</CardTitle>
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
                           {format(new Date(booking.checkIn), "MMM dd")} - {format(new Date(booking.checkOut), "MMM dd")}
                         </span>
                       </div>
-                      <Badge variant={booking.status === "confirmed" ? "default" : "secondary"} className="rounded-none text-[8px] h-4 uppercase tracking-[0.2em] font-bold py-0">
+                      <Badge variant={booking.status === "confirmed" ? "default" : "secondary"} className="rounded-lg text-[8px] h-4 uppercase tracking-[0.2em] font-bold py-0">
                         {booking.status}
                       </Badge>
                     </div>
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Schedule / System Alerts */}
-        <Card className="bg-card border-border rounded-none shadow-sm">
+        <Card className="bg-card border-border rounded-2xl shadow-sm">
           <CardHeader className="border-b border-border/50 bg-secondary/5">
             <CardTitle className="font-serif text-xl">Property Status</CardTitle>
             <CardDescription className="text-[10px] uppercase tracking-widest font-bold">Real-time alerts & schedule</CardDescription>
@@ -386,12 +386,12 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground border-b pb-2">Operational Schedule</p>
                 <div className="grid grid-cols-2 gap-4">
-                   <div className="p-4 bg-secondary/20 flex flex-col items-center justify-center text-center">
+                   <div className="p-4 bg-secondary/20 flex flex-col items-center justify-center text-center rounded-xl">
                       <Users className="h-5 w-5 text-primary mb-2" />
                       <span className="text-2xl font-serif">12</span>
                       <span className="text-[8px] uppercase font-bold tracking-widest text-muted-foreground mt-1">Check-ins Today</span>
                    </div>
-                   <div className="p-4 bg-secondary/20 flex flex-col items-center justify-center text-center">
+                   <div className="p-4 bg-secondary/20 flex flex-col items-center justify-center text-center rounded-xl">
                       <Clock className="h-5 w-5 text-primary mb-2" />
                       <span className="text-2xl font-serif">8</span>
                       <span className="text-[8px] uppercase font-bold tracking-widest text-muted-foreground mt-1">Upcoming Departures</span>
@@ -399,10 +399,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="p-4 bg-primary/5 border border-primary/10">
+              <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Maintenance Tasks</span>
-                  <Badge className="bg-primary/10 text-primary border-none text-[8px] rounded-none">3 Pending</Badge>
+                  <Badge className="bg-primary/10 text-primary border-none text-[8px] rounded-lg">3 Pending</Badge>
                 </div>
                 <div className="space-y-3">
                   {[1,2,3].map(i => (

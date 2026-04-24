@@ -56,7 +56,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               This area is restricted to administrators only. Please verify your credentials if you believe this is an error.
             </p>
             <Link href="/">
-              <Button variant="outline" className="w-full rounded-none tracking-widest uppercase text-xs">
+              <Button variant="outline" className="w-full rounded-xl tracking-widest uppercase text-xs">
                 Return to Sanctuary
               </Button>
             </Link>
@@ -154,8 +154,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-border/50 bg-secondary/10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full h-14 px-2 hover:bg-secondary/30 rounded-none flex items-center justify-start gap-3 transition-all">
-                <Avatar className="h-9 w-9 rounded-none border border-border shadow-sm">
+              <Button variant="ghost" className="w-full h-14 px-2 hover:bg-secondary/30 rounded-xl flex items-center justify-start gap-3 transition-all">
+                <Avatar className="h-9 w-9 rounded-full border border-border shadow-sm">
                   <AvatarFallback className="bg-primary/5 text-primary text-xs font-serif">{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left hidden xl:block overflow-hidden">
@@ -164,7 +164,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-none border-border shadow-xl">
+            <DropdownMenuContent align="end" className="w-56 rounded-xl border-border shadow-xl">
               <DropdownMenuLabel className="font-serif">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-xs gap-2 py-2 cursor-pointer">
@@ -212,7 +212,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <ExternalLink className="h-3 w-3 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <div className="h-8 w-px bg-border/50" />
-            <Button variant="outline" size="sm" className="rounded-none h-9 text-[10px] px-4 font-bold uppercase tracking-[0.2em]">
+            <Button variant="outline" size="sm" className="rounded-xl h-9 text-[10px] px-4 font-bold uppercase tracking-[0.2em]">
               Support
             </Button>
           </div>

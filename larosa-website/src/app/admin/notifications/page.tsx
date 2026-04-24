@@ -74,10 +74,10 @@ export default function AdminNotifications() {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="rounded-none h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
+          <Button variant="outline" className="rounded-xl h-10 px-4 uppercase tracking-widest text-[10px] font-bold border-border">
             Mark all as read
           </Button>
-          <Button className="rounded-none bg-primary hover:bg-primary/90 h-10 px-6 uppercase tracking-widest text-[10px] font-bold">
+          <Button className="rounded-xl bg-primary hover:bg-primary/90 h-10 px-6 uppercase tracking-widest text-[10px] font-bold">
             Alert Settings
           </Button>
         </div>
@@ -88,13 +88,13 @@ export default function AdminNotifications() {
         <div className="flex items-center gap-4 py-4 border-y border-border/50">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input className="rounded-none border-border h-10 pl-10 text-xs uppercase tracking-widest bg-secondary/5" placeholder="Search alerts..." />
+            <Input className="rounded-xl border-border h-10 pl-10 text-xs uppercase tracking-widest bg-secondary/5" placeholder="Search alerts..." />
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className="rounded-none border-primary bg-primary/5 text-primary text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer">All</Badge>
-            <Badge variant="outline" className="rounded-none border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">Unread</Badge>
-            <Badge variant="outline" className="rounded-none border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">Bookings</Badge>
-            <Badge variant="outline" className="rounded-none border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">System</Badge>
+            <Badge variant="outline" className="rounded-xl border-primary bg-primary/5 text-primary text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer">All</Badge>
+            <Badge variant="outline" className="rounded-xl border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">Unread</Badge>
+            <Badge variant="outline" className="rounded-xl border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">Bookings</Badge>
+            <Badge variant="outline" className="rounded-xl border-border text-muted-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-bold cursor-pointer hover:border-primary/50">System</Badge>
           </div>
         </div>
 
@@ -103,9 +103,9 @@ export default function AdminNotifications() {
           {mockNotifications.map((notif) => (
             <div 
               key={notif.id} 
-              className={`p-6 border border-border flex gap-6 relative group transition-all duration-300 hover:shadow-lg ${notif.read ? 'bg-card/40 opacity-80' : 'bg-card shadow-md border-l-4 border-l-primary'}`}
+              className={`p-6 border border-border flex gap-6 relative group transition-all duration-300 hover:shadow-lg rounded-2xl ${notif.read ? 'bg-card/40 opacity-80' : 'bg-card shadow-md border-l-4 border-l-primary'}`}
             >
-              <div className={`h-12 w-12 flex items-center justify-center shrink-0 ${
+              <div className={`h-12 w-12 flex items-center justify-center shrink-0 rounded-xl ${
                 notif.type === 'booking' ? 'bg-blue-500/10 text-blue-500' :
                 notif.type === 'maintenance' ? 'bg-amber-500/10 text-amber-500' :
                 notif.type === 'payment' ? 'bg-emerald-500/10 text-emerald-500' :
@@ -137,7 +137,7 @@ export default function AdminNotifications() {
 
               {!notif.read && (
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-start">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-none hover:bg-primary/10 hover:text-primary">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl hover:bg-primary/10 hover:text-primary">
                     <Check size={16} />
                   </Button>
                 </div>
@@ -147,7 +147,7 @@ export default function AdminNotifications() {
         </div>
 
         <div className="py-12 flex justify-center">
-            <Button variant="outline" className="rounded-none uppercase tracking-widest text-[10px] font-bold h-12 px-12 border-border/50 text-muted-foreground hover:text-foreground">
+            <Button variant="outline" className="rounded-xl uppercase tracking-widest text-[10px] font-bold h-12 px-12 border-border/50 text-muted-foreground hover:text-foreground">
               Load Archive
             </Button>
         </div>
