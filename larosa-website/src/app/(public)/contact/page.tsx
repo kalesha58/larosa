@@ -1,7 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+import {
+  PreferredStayDatesField,
+  stayRangeToPayload,
+} from "@/components/contact/PreferredStayDatesField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,16 +23,56 @@ import Image from "next/image";
 
 export default function ContactPage() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  const { toast } = useToast();
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "", subject: "", message: "",
   });
   const [sent, setSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stayRange, setStayRange] = useState<DateRange | undefined>();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSent(true);
-    setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+    if (!form.subject) {
+      toast({
+        variant: "destructive",
+        title: "Subject required",
+        description: "Please select a subject so we can route your message.",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone || undefined,
+          subject: form.subject,
+          message: form.message,
+          ...stayRangeToPayload(stayRange),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Message not sent",
+          description:
+            data.error ??
+            "Something went wrong. Please try again or call us directly.",
+        });
+        return;
+      }
+      setSent(true);
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      setStayRange(undefined);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -50,7 +96,7 @@ export default function ContactPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9 }}
           >
-            <p className="text-primary uppercase tracking-[0.35em] text-xs mb-4">We're Here For You</p>
+            <p className="text-primary uppercase tracking-[0.35em] text-xs mb-4">We&apos;re Here For You</p>
             <h1 className="font-serif text-5xl md:text-6xl text-foreground leading-tight">
               Contact <span className="italic text-primary/90">Us</span>
             </h1>
@@ -212,6 +258,16 @@ export default function ContactPage() {
                     </div>
                   </div>
 
+                  <PreferredStayDatesField
+                    fieldId="contact-preferred-stay"
+                    value={stayRange}
+                    onChange={setStayRange}
+                    labelClassName="text-xs font-medium tracking-widest uppercase text-muted-foreground"
+                    triggerClassName="rounded-none bg-transparent border-border focus-visible:ring-primary h-12"
+                    description="Optional. Select the stay you have in mind — we will include it in your enquiry."
+                    numberOfMonths={2}
+                  />
+
                   <div className="space-y-2">
                     <label className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Message *</label>
                     <Textarea
@@ -225,9 +281,10 @@ export default function ContactPage() {
 
                   <Button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full h-13 font-serif tracking-widest rounded-none bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-4"
                   >
-                    SEND YOUR MESSAGE
+                    {isSubmitting ? "SENDING…" : "SEND YOUR MESSAGE"}
                   </Button>
                 </form>
               )}

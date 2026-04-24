@@ -3,47 +3,87 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type { DateRange } from "react-day-picker";
 import { ArrowRight, Mail, MapPin, MessageCircle, Phone, Star } from "lucide-react";
+import {
+  PreferredStayDatesField,
+  stayRangeToPayload,
+} from "@/components/contact/PreferredStayDatesField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.04 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 22 },
+  hidden: { opacity: 0, y: 30, scale: 0.99 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.21, 0.45, 0.32, 0.9] as const },
+    scale: 1,
+    transition: { 
+      duration: 0.8, 
+      ease: [0.16, 1, 0.3, 1] as const 
+    },
   },
 };
 
 export function HomeContactSection() {
+  const { toast } = useToast();
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
     message: "",
   });
   const [contactSent, setContactSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stayRange, setStayRange] = useState<DateRange | undefined>();
 
-  function handleContactSubmit(e: React.FormEvent) {
+  async function handleContactSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setContactSent(true);
-    setContactForm({ name: "", email: "", message: "" });
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: contactForm.name,
+          email: contactForm.email,
+          message: contactForm.message,
+          ...stayRangeToPayload(stayRange),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Message not sent",
+          description:
+            data.error ??
+            "Something went wrong. Please try again or call us directly.",
+        });
+        return;
+      }
+      setContactSent(true);
+      setContactForm({ name: "", email: "", message: "" });
+      setStayRange(undefined);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <section
       id="contact"
-      className="relative overflow-hidden border-t border-border/60 bg-background py-16 sm:py-20 md:py-28 lg:py-36"
+      className="relative overflow-hidden border-t border-border/60 bg-background py-12 sm:py-14 md:py-20 lg:py-24"
       aria-labelledby="contact-heading"
     >
       <div
@@ -57,7 +97,7 @@ export function HomeContactSection() {
 
       <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="mb-12 text-center sm:mb-14 lg:mb-16"
+          className="mb-8 text-center sm:mb-10 lg:mb-11"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
@@ -65,7 +105,7 @@ export function HomeContactSection() {
         >
           <motion.div
             variants={item}
-            className="mb-4 flex justify-center sm:mb-5"
+            className="mb-3 flex justify-center sm:mb-4"
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary sm:px-4 sm:py-2 sm:text-[11px]">
               <MessageCircle className="h-3.5 w-3.5 shrink-0 opacity-85" aria-hidden />
@@ -84,7 +124,7 @@ export function HomeContactSection() {
           </motion.h2>
           <motion.p
             variants={item}
-            className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg lg:text-xl"
+            className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg lg:text-xl"
           >
             Whether you have a special request, wish to arrange a bespoke
             experience, or simply need assistance — our team is always at your
@@ -92,15 +132,15 @@ export function HomeContactSection() {
           </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
           {/* Contact info */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "flex flex-col gap-10 rounded-2xl border border-border/50 bg-card/60 p-8 shadow-lg backdrop-blur-sm sm:rounded-3xl sm:p-10 lg:p-12",
+              "flex flex-col gap-8 rounded-2xl border border-border/50 bg-card/60 p-6 shadow-lg backdrop-blur-sm sm:rounded-3xl sm:p-8 lg:p-10",
               "dark:bg-card/40"
             )}
           >
@@ -111,7 +151,7 @@ export function HomeContactSection() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Reach the concierge directly — we respond within hours.
               </p>
-              <div className="mt-8 space-y-6 sm:space-y-7">
+              <div className="mt-6 space-y-5 sm:space-y-6">
                 <div className="flex gap-4 sm:gap-5">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/5">
                     <MapPin size={18} className="text-primary" aria-hidden />
@@ -135,9 +175,12 @@ export function HomeContactSection() {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
                       Phone
                     </p>
-                    <p className="mt-1 text-sm text-foreground sm:text-[15px]">
-                      +1 (800) LA-ROSA-1
-                    </p>
+                    <a
+                      href="tel:+917093939312"
+                      className="mt-1 block text-sm text-foreground underline-offset-4 hover:underline sm:text-[15px]"
+                    >
+                      +91 7093939312
+                    </a>
                   </div>
                 </div>
                 <div className="flex gap-4 sm:gap-5">
@@ -149,10 +192,10 @@ export function HomeContactSection() {
                       Email
                     </p>
                     <a
-                      href="mailto:concierge@larosahotel.com"
+                      href="mailto:info@larosa.co.in"
                       className="mt-1 block text-sm text-foreground underline-offset-4 hover:underline sm:text-[15px]"
                     >
-                      concierge@larosahotel.com
+                      info@larosa.co.in
                     </a>
                   </div>
                 </div>
@@ -161,33 +204,22 @@ export function HomeContactSection() {
 
             <div className="mt-auto rounded-2xl border border-border/40 bg-muted/30 p-5 sm:p-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
-                Concierge hours
+                Available
               </p>
-              <div className="mt-4 space-y-3 text-sm text-foreground">
-                <div className="flex flex-col justify-between gap-1 border-b border-border/50 pb-3 sm:flex-row sm:items-center">
-                  <span className="text-muted-foreground">Monday – Friday</span>
-                  <span className="font-medium tabular-nums">7:00 AM – 10:00 PM</span>
-                </div>
-                <div className="flex flex-col justify-between gap-1 border-b border-border/50 pb-3 sm:flex-row sm:items-center">
-                  <span className="text-muted-foreground">Saturday – Sunday</span>
-                  <span className="font-medium tabular-nums">8:00 AM – 9:00 PM</span>
-                </div>
-                <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-                  <span className="text-muted-foreground">Emergency line</span>
-                  <span className="font-medium text-primary tabular-nums">24 / 7</span>
-                </div>
-              </div>
+              <p className="mt-2 text-sm font-medium text-foreground sm:text-[15px]">
+                24/7 for Inquiries
+              </p>
             </div>
           </motion.div>
 
           {/* Form */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, delay: 0.08 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
             className={cn(
-              "rounded-2xl border border-border/50 bg-card/40 p-8 shadow-lg backdrop-blur-sm sm:rounded-3xl sm:p-10 lg:p-12",
+              "rounded-2xl border border-border/50 bg-card/40 p-6 shadow-lg backdrop-blur-sm sm:rounded-3xl sm:p-8 lg:p-10",
               "dark:bg-card/30"
             )}
           >
@@ -213,7 +245,7 @@ export function HomeContactSection() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleContactSubmit} className="space-y-6">
+              <form onSubmit={handleContactSubmit} className="space-y-5">
                 <div>
                   <h3 className="font-serif text-xl text-foreground sm:text-2xl">
                     Send a message
@@ -222,7 +254,7 @@ export function HomeContactSection() {
                     Share your dates, occasion, or questions — we&apos;ll handle the rest.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <label
                       htmlFor="home-contact-name"
@@ -261,6 +293,14 @@ export function HomeContactSection() {
                     />
                   </div>
                 </div>
+                <PreferredStayDatesField
+                  fieldId="home-preferred-stay"
+                  value={stayRange}
+                  onChange={setStayRange}
+                  labelClassName="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs"
+                  triggerClassName="rounded-xl border-border/60 bg-background/50 focus-visible:ring-primary"
+                  description="Optional — share the nights you have in mind."
+                />
                 <div className="space-y-2">
                   <label
                     htmlFor="home-contact-message"
@@ -282,9 +322,10 @@ export function HomeContactSection() {
                 <Button
                   type="submit"
                   size="lg"
+                  disabled={isSubmitting}
                   className="h-12 w-full rounded-xl font-serif text-xs tracking-[0.2em] sm:h-14 sm:text-sm"
                 >
-                  Send message
+                  {isSubmitting ? "Sending…" : "Send message"}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Button>
                 <p className="text-center text-[11px] text-muted-foreground sm:text-xs">

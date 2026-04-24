@@ -27,13 +27,13 @@ export function RoomCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-50px" }}
       transition={{
-        duration: 0.65,
-        delay: index * 0.08,
-        ease: [0.21, 0.45, 0.32, 0.9],
+        duration: 0.8,
+        delay: index * 0.1,
+        ease: [0.16, 1, 0.3, 1],
       }}
       className={cn(
         "group flex h-full flex-col overflow-hidden",
@@ -63,7 +63,7 @@ export function RoomCard({
         />
         {/* Image overlays */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/35 to-transparent opacity-95 dark:from-background dark:via-background/40"
+          className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"
           aria-hidden
         />
         {isShowcase && (
@@ -100,7 +100,7 @@ export function RoomCard({
       <div
         className={cn(
           "flex flex-1 flex-col",
-          isShowcase ? "p-5 sm:p-6" : "p-6 sm:p-7"
+          isShowcase ? "p-4 sm:p-5" : "p-6 sm:p-7"
         )}
       >
         <h3
@@ -116,7 +116,7 @@ export function RoomCard({
         <p
           className={cn(
             "text-muted-foreground line-clamp-2 leading-relaxed",
-            isShowcase ? "mb-5 text-sm" : "mb-5 text-sm sm:text-[15px]"
+            isShowcase ? "mb-4 text-sm" : "mb-5 text-sm sm:text-[15px]"
           )}
         >
           {room.description}
@@ -124,8 +124,8 @@ export function RoomCard({
 
         <div
           className={cn(
-            "mb-5 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:mb-6 sm:text-[11px]",
-            isShowcase ? "border-t border-border/50 pt-4 sm:pt-5" : "border-t border-border/45 pt-4"
+            "mb-4 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:mb-5 sm:text-[11px]",
+            isShowcase ? "border-t border-border/50 pt-3 sm:pt-4" : "border-t border-border/45 pt-4"
           )}
         >
           <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/35 px-3 py-1.5">

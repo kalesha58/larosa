@@ -38,16 +38,20 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 22 },
+  hidden: { opacity: 0, y: 30, scale: 0.96 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.21, 0.45, 0.32, 0.9] as const },
+    scale: 1,
+    transition: { 
+      duration: 0.8, 
+      ease: [0.16, 1, 0.3, 1] as const 
+    },
   },
 };
 
@@ -55,7 +59,7 @@ export function ExperiencesSection() {
   return (
     <section
       id="amenities"
-      className="relative overflow-hidden py-16 sm:py-20 md:py-28 lg:py-36"
+      className="relative overflow-hidden py-12 sm:py-14 md:py-20 lg:py-24"
       aria-labelledby="experiences-heading"
     >
       <div
@@ -72,13 +76,13 @@ export function ExperiencesSection() {
       />
 
       <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16 xl:gap-20">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
           {/* Images */}
           <motion.div
-            initial={{ opacity: 0, x: -28 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, ease: [0.21, 0.45, 0.32, 0.9] }}
+            initial={{ opacity: 0, x: -40, scale: 0.95 }}
+            whileInView={{ opacity: 1, x: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative order-2 lg:order-1"
           >
             <div
@@ -96,7 +100,7 @@ export function ExperiencesSection() {
                 className="object-cover transition-transform duration-[1.2s] ease-out hover:scale-[1.02]"
               />
               <div
-                className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent"
+                className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500"
                 aria-hidden
               />
             </div>
@@ -120,13 +124,13 @@ export function ExperiencesSection() {
 
           {/* Copy + features */}
           <motion.div
-            className="order-1 space-y-8 sm:space-y-10 lg:order-2 lg:pl-4 xl:pl-8"
+            className="order-1 space-y-6 sm:space-y-7 lg:order-2 lg:pl-3 xl:pl-6"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-40px" }}
             variants={container}
           >
-            <motion.div variants={item} className="space-y-4 sm:space-y-5">
+            <motion.div variants={item} className="space-y-3 sm:space-y-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary sm:px-4 sm:py-2 sm:text-[11px]">
                 <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-85" aria-hidden />
                 Curated for You
