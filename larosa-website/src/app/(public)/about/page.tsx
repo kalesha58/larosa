@@ -72,7 +72,7 @@ export default function AboutPage() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <motion.div style={{ y: heroY }} className="absolute inset-0">
           <Image
-            src="/about-hero.png"
+            src="/Hero4.jpeg"
             alt="Larosa Grand Lobby"
             fill
             className="object-cover saturate-[1.1]"
@@ -114,7 +114,7 @@ export default function AboutPage() {
             >
               <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-border/50">
                 <Image
-                  src="/founder.png"
+                  src="/Brand.jpeg"
                   alt="Élise Fontaine - Founder"
                   fill
                   className="object-cover"

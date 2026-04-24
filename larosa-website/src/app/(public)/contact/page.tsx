@@ -82,10 +82,10 @@ export default function ContactPage() {
       <section className="relative h-[50vh] min-h-[360px] flex items-end justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=1920&q=80"
-            alt="Larosa Hotel Concierge"
+            src="/Hero3.jpeg"
+            alt="Larosa Concierge"
             fill
-            className="object-cover object-top"
+            className="object-cover object-center"
             priority
           />
           <div className="absolute inset-0 bg-background/60 dark:bg-background/70" />
@@ -297,8 +297,8 @@ export default function ContactPage() {
       <section className="bg-card border-t border-border">
         <div className="relative h-64 overflow-hidden">
           <Image
-            src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1920&q=60"
-            alt="Beverly Hills location"
+            src="/hotel-facade.png"
+            alt="Larosa location"
             fill
             className="object-cover opacity-60 dark:opacity-40"
           />
