@@ -78,222 +78,147 @@ export function VillasSection() {
   return (
     <section
       id="villas"
-      className="relative overflow-hidden border-y border-border/60 bg-muted/25 py-12 sm:py-14 md:py-20 lg:py-24"
+      className="relative overflow-hidden py-16 sm:py-24 bg-[hsl(var(--section-alt))]/80"
       aria-labelledby="villas-heading"
     >
-      {/* Ambient layers — distinct from Signature Suites */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_100%_80%_at_100%_0%,hsl(var(--primary)/0.12),transparent_50%)]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_0%_100%,hsl(var(--muted-foreground)/0.08),transparent_45%)]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-[32rem] w-[120%] -translate-x-1/2 bg-gradient-to-t from-background via-transparent to-transparent sm:w-full"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute left-[-20%] top-1/3 -z-10 h-72 w-72 rounded-full bg-primary/[0.05] blur-3xl sm:left-0 md:h-96 md:w-96"
-        aria-hidden
-      />
+      {/* Background patterns */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[10%] left-[5%] w-[35%] h-[35%] bg-primary/4 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[10%] right-[5%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,transparent_0%,hsl(var(--section-alt))_100%)] opacity-60" />
+      </div>
 
-      <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="mb-9 text-center sm:mb-11 lg:mb-12"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={container}
-        >
+      <div className="container relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="max-w-3xl mb-16 sm:mb-20">
           <motion.div
-            variants={item}
-            className="mb-4 flex flex-wrap items-center justify-center gap-3 sm:mb-5"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="space-y-6"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary shadow-sm backdrop-blur-md sm:px-4 sm:py-2 sm:text-[11px]">
-              <Trees className="h-3.5 w-3.5 shrink-0 opacity-85" aria-hidden />
-              Private Estates
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">
+              Private Residences
             </span>
-          </motion.div>
-
-          <motion.h2
-            id="villas-heading"
-            variants={item}
-            className="font-serif text-[2rem] leading-[1.12] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-[3.25rem] xl:text-7xl"
-          >
-            Larosa{" "}
-            <span className="bg-gradient-to-r from-primary via-primary/85 to-primary/60 bg-clip-text text-transparent">
-              Villas
-            </span>
-          </motion.h2>
-
-          <motion.p
-            variants={item}
-            className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg lg:mt-6 lg:max-w-3xl lg:text-xl lg:leading-relaxed"
-          >
-            For those who seek the ultimate in seclusion and personalized
-            luxury, our private villas offer an entirely separate world of
-            tranquil grandeur.
-          </motion.p>
-
-          <motion.div
-            variants={item}
-            className="mt-6 flex justify-center sm:mt-7"
-          >
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className={cn(
-                "h-12 rounded-full border-primary/35 bg-background/80 px-8 font-serif text-[11px] tracking-[0.2em] shadow-md backdrop-blur-sm sm:h-14 sm:px-10 sm:text-xs",
-                "transition-all duration-300 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/15"
-              )}
+            <h2
+              id="villas-heading"
+              className="font-serif text-4xl sm:text-5xl lg:text-6xl leading-[1.1] text-foreground"
             >
-              <Link href="/rooms" className="inline-flex items-center gap-2">
-                Explore all villas
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
+              The Villa <br />
+              <span className="italic text-primary/90">Collection</span>
+            </h2>
+            <p className="text-lg text-muted-foreground font-light leading-relaxed">
+              For those who seek the ultimate in seclusion and personalized luxury, 
+              our private villas offer an entirely separate world of tranquil grandeur.
+            </p>
           </motion.div>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-4 xl:col-span-3"
-          >
-            <div className="rounded-2xl border border-border/45 bg-background/70 p-3 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.22)] backdrop-blur-sm sm:rounded-3xl sm:p-4">
-              <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto no-scrollbar touch-pan-x scroll-smooth px-1 pb-1 lg:mx-0 lg:block lg:space-y-3 lg:overflow-visible lg:px-0">
-                {VILLAS.map((villa, i) => {
-                  const selected = i === activeVillaIdx;
-                  return (
-                    <button
-                      key={villa.name}
-                      type="button"
-                      onClick={() => setActiveVillaIdx(i)}
-                      className={cn(
-                        "min-w-[250px] snap-start rounded-xl border p-4 text-left transition-all duration-300 sm:min-w-[280px] sm:p-5 lg:min-w-0 lg:w-full",
-                        selected
-                          ? "border-primary/40 bg-primary/10 text-foreground shadow-[0_14px_28px_-18px_rgba(0,0,0,0.25)] ring-1 ring-primary/20"
-                          : "border-border/55 bg-background text-foreground hover:border-primary/35 hover:bg-primary/[0.04]"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p
-                            className={cn(
-                              "text-[10px] uppercase tracking-[0.18em] font-medium",
-                              selected
-                                ? "text-primary"
-                                : "text-muted-foreground/80"
-                            )}
-                          >
-                            {String(i + 1).padStart(2, "0")}
-                          </p>
-                          <h3 className="mt-2 font-serif text-lg leading-tight sm:text-xl">
-                            {villa.name}
-                          </h3>
-                          <p
-                            className={cn(
-                              "mt-2 text-xs sm:text-sm",
-                              selected
-                                ? "text-foreground/80"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {villa.size} • {villa.guests}
-                          </p>
-                        </div>
-                        <ArrowRight
-                          className={cn(
-                            "h-4 w-4 shrink-0 transition-transform",
-                            selected
-                              ? "translate-x-0.5 text-primary"
-                              : "text-muted-foreground/80"
-                          )}
-                          aria-hidden
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+          
+          {/* Villa Selector - Modern Minimalist */}
+          <div className="lg:col-span-4 space-y-4">
+            {VILLAS.map((villa, i) => {
+              const selected = i === activeVillaIdx;
+              return (
+                <button
+                  key={villa.name}
+                  onClick={() => setActiveVillaIdx(i)}
+                  className={cn(
+                    "w-full text-left p-6 rounded-[2rem] transition-all duration-500 relative overflow-hidden group",
+                    selected 
+                      ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/20 scale-[1.02]" 
+                      : "bg-card/40 border border-border/50 text-foreground hover:bg-card/80"
+                  )}
+                >
+                  <div className="relative z-10">
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest mb-2 block",
+                      selected ? "text-primary-foreground/70" : "text-primary"
+                    )}>
+                      Villa {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="font-serif text-xl sm:text-2xl leading-tight">
+                      {villa.name}
+                    </h3>
+                  </div>
+                  
+                  {/* Hover/Selection Decor */}
+                  {!selected && (
+                    <div className="absolute top-1/2 right-6 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                      <ArrowRight size={20} className="text-primary/50" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
+          {/* Main Content Area */}
           <motion.article
             key={activeVilla.name}
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-8 xl:col-span-9"
+            className="lg:col-span-8 h-full"
           >
-            <div className="grid grid-cols-1 gap-5 rounded-2xl border border-border/55 bg-card/65 p-4 shadow-[0_20px_50px_-22px_rgba(0,0,0,0.22)] backdrop-blur-md sm:rounded-3xl sm:p-5 lg:grid-cols-12 lg:gap-6 lg:p-6">
-              <div className="lg:col-span-7">
-                <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-[11px]">
-                  Featured villa
-                </span>
-                <h3 className="mt-3 font-serif text-3xl leading-tight text-foreground sm:text-4xl">
-                  {activeVilla.name}
-                </h3>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {activeVilla.desc}
-                </p>
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-0 rounded-[3rem] overflow-hidden bg-card/40 border border-border/50 shadow-2xl h-full backdrop-blur-xl">
+              
+              {/* Image Column */}
+              <div className="lg:col-span-6 relative aspect-[16/10] lg:aspect-auto min-h-[400px]">
+                <Image
+                  src={activeVilla.img}
+                  alt={activeVilla.name}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent lg:bg-gradient-to-r" />
+              </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-border/50 bg-background/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground sm:text-[11px]">
-                    {activeVilla.size}
-                  </span>
-                  <span className="rounded-full border border-border/50 bg-background/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground sm:text-[11px]">
-                    {activeVilla.guests}
-                  </span>
+              {/* Details Column */}
+              <div className="lg:col-span-4 p-8 sm:p-12 flex flex-col justify-center space-y-8">
+                <div className="space-y-4">
+                  <h3 className="font-serif text-3xl sm:text-4xl text-foreground">
+                    {activeVilla.name}
+                  </h3>
+                  <div className="flex gap-4 text-[10px] font-bold uppercase tracking-widest text-primary">
+                    <span>{activeVilla.size}</span>
+                    <span className="w-1 h-1 rounded-full bg-primary/30 mt-1.5" />
+                    <span>{activeVilla.guests}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground font-light leading-relaxed">
+                    {activeVilla.desc}
+                  </p>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {activeVilla.highlights.map((point) => (
-                    <div
-                      key={point}
-                      className="flex items-center gap-2 rounded-xl border border-border/45 bg-background/70 px-3 py-2"
-                    >
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                      <span className="text-sm text-foreground">{point}</span>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-muted-foreground">
+                    Villa Highlights
+                  </p>
+                  <ul className="space-y-3">
+                    {activeVilla.highlights.map((point) => (
+                      <li key={point} className="flex items-center gap-3 text-sm text-foreground font-light">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <Button
                   asChild
-                  size="lg"
-                  className="mt-5 h-12 rounded-full px-8 font-serif text-xs tracking-[0.2em] sm:h-14 sm:text-sm"
+                  className="h-14 rounded-full px-8 font-serif text-xs tracking-[0.2em] w-full sm:w-auto"
                 >
-                  <Link href="/rooms" className="inline-flex items-center gap-2">
-                    Enquire {activeVilla.name}
-                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  <Link href="/rooms">
+                    Discover Villa
                   </Link>
                 </Button>
               </div>
 
-              <div className="lg:col-span-5">
-                <div className="relative h-[260px] overflow-hidden rounded-2xl border border-border/50 sm:h-[320px] lg:h-full lg:min-h-[360px]">
-                  <Image
-                    src={activeVilla.img}
-                    alt={activeVilla.name}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 40vw"
-                    className="object-cover"
-                  />
-                  <div
-                    className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500"
-                    aria-hidden
-                  />
-                </div>
-              </div>
             </div>
           </motion.article>
+
         </div>
       </div>
     </section>

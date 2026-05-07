@@ -23,7 +23,7 @@ const item = {
 
 export function VideoSection() {
   return (
-    <section className="py-16 sm:py-20 md:py-24 lg:py-28 relative overflow-hidden bg-background">
+    <section className="py-14 sm:py-20 relative overflow-hidden bg-background">
       {/* Background gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background" />
       <div className="container mx-auto px-6 max-w-[1400px] relative z-10">
@@ -38,26 +38,24 @@ export function VideoSection() {
             className="order-2 lg:order-1 space-y-8"
           >
             <div>
-              <motion.span variants={item} className="inline-flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 rounded-full text-[10px] font-semibold uppercase tracking-[0.3em] text-primary mb-6">
-                <PlayCircle className="w-3.5 h-3.5" />
+              <motion.span variants={item} className="inline-block px-4 py-1.5 border border-primary/20 bg-primary/5 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-6">
                 A Visual Journey
               </motion.span>
-              <motion.h2 variants={item} className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground leading-[1.1]">
-                Immerse Yourself in <br />
-                <span className="italic text-muted-foreground">Tranquility</span>
+              <motion.h2 variants={item} className="font-serif text-4xl sm:text-5xl lg:text-7xl leading-[1.1] text-foreground mb-8">
+                Immerse in <br />
+                <span className="italic text-primary/90">Tranquility</span>
               </motion.h2>
+              <motion.p variants={item} className="text-lg text-muted-foreground font-light leading-relaxed max-w-xl">
+                Experience the breathtaking architecture and the serene atmosphere of Larosa before you even arrive. 
+                Our sanctuary is designed to harmonize with nature.
+              </motion.p>
             </div>
             
-            <motion.p variants={item} className="text-lg text-muted-foreground leading-relaxed font-light">
-              Experience the breathtaking architecture and the serene atmosphere of Larosa before you even arrive. 
-              Our sanctuary is designed to harmonize with nature, offering an unparalleled escape from the ordinary.
-            </motion.p>
-            
-            <motion.div variants={item} className="pt-4">
-               <div className="flex items-center gap-6">
-                 <div className="w-16 h-px bg-primary/30" />
-                 <span className="text-sm font-serif italic text-muted-foreground">Press play to experience Larosa</span>
+            <motion.div variants={item} className="pt-4 flex items-center gap-4">
+               <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                 <PlayCircle size={20} />
                </div>
+               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Press play to experience</span>
             </motion.div>
           </motion.div>
 

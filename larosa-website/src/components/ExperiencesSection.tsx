@@ -59,129 +59,126 @@ export function ExperiencesSection() {
   return (
     <section
       id="amenities"
-      className="relative overflow-hidden py-12 sm:py-14 md:py-20 lg:py-24"
+      className="relative overflow-hidden py-16 sm:py-24 bg-background"
       aria-labelledby="experiences-heading"
     >
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_85%_55%_at_20%_20%,hsl(var(--primary)/0.1),transparent_50%)]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute bottom-0 right-0 -z-10 h-[28rem] w-[28rem] translate-x-1/4 rounded-full bg-muted/50 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-border to-transparent"
-        aria-hidden
-      />
+      {/* Background patterns */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/3 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="container mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
-          {/* Images */}
-          <motion.div
-            initial={{ opacity: 0, x: -40, scale: 0.95 }}
-            whileInView={{ opacity: 1, x: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-2 lg:order-1"
-          >
-            <div
-              className={cn(
-                "relative aspect-[4/5] w-full overflow-hidden rounded-2xl sm:aspect-[3/4] sm:rounded-3xl",
-                "border border-border/50 shadow-[0_28px_64px_-24px_rgba(0,0,0,0.25)] dark:shadow-[0_28px_64px_-24px_rgba(0,0,0,0.55)]",
-                "ring-1 ring-border/30"
-              )}
+      <div className="container relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20 items-center">
+          
+          {/* Content Column */}
+          <div className="lg:col-span-5 space-y-12 order-2 lg:order-1">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+              className="space-y-6"
             >
-              <Image
-                src="/DinningHall.jpeg"
-                alt="Aureate Dining Experience"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover transition-transform duration-[1.2s] ease-out hover:scale-[1.02]"
-              />
-              <div
-                className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500"
-                aria-hidden
-              />
-            </div>
-            <div className="absolute -bottom-4 -right-2 z-10 w-36 sm:-bottom-6 sm:-right-4 sm:w-44 md:w-48">
-              <div
-                className={cn(
-                  "overflow-hidden rounded-2xl border-4 border-background shadow-xl",
-                  "ring-1 ring-border/40"
-                )}
-              >
-                <Image
-                  src="/Accessories.jpeg"
-                  alt="Spa treatment detail"
-                  width={192}
-                  height={192}
-                  className="aspect-square w-full object-cover"
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Copy + features */}
-          <motion.div
-            className="order-1 space-y-6 sm:space-y-7 lg:order-2 lg:pl-3 xl:pl-6"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40px" }}
-            variants={container}
-          >
-            <motion.div variants={item} className="space-y-3 sm:space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary sm:px-4 sm:py-2 sm:text-[11px]">
-                <Sparkles className="h-3.5 w-3.5 shrink-0 opacity-85" aria-hidden />
-                Curated for You
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">
+                The Larosa Lifestyle
               </span>
               <h2
                 id="experiences-heading"
-                className="font-serif text-[2rem] leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-[3rem] xl:text-6xl"
+                className="font-serif text-4xl sm:text-5xl lg:text-6xl leading-[1.1] text-foreground"
               >
-                Elevated{" "}
-                <span className="bg-gradient-to-r from-primary via-primary/85 to-primary/55 bg-clip-text text-transparent">
-                  Experiences
-                </span>
+                Curated <br />
+                <span className="italic text-primary/90">Moments</span>
               </h2>
+              <p className="text-lg text-muted-foreground font-light leading-relaxed">
+                Beyond luxury accommodation, we offer a collection of experiences 
+                designed to engage the senses and restore the spirit.
+              </p>
             </motion.div>
 
-            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto no-scrollbar touch-pan-x scroll-smooth px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-1 xl:grid-cols-2">
-              {EXPERIENCES.map((exp) => {
+            <motion.div
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              variants={container}
+              className="space-y-8"
+            >
+              {EXPERIENCES.map((exp, i) => {
                 const Icon = exp.icon;
                 return (
-                <motion.div
-                  key={exp.title}
-                  variants={item}
-                  className={cn(
-                    "group min-w-[280px] snap-start rounded-2xl border border-border/45 bg-card/50 p-4 backdrop-blur-[2px] transition-all duration-300 sm:min-w-[320px] md:min-w-0",
-                    "hover:border-primary/30 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5",
-                    "sm:p-5"
-                  )}
-                >
-                  <div className="flex gap-4">
-                    <div
-                      className={cn(
-                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/5",
-                        "transition-colors group-hover:border-primary/50 group-hover:bg-primary/10"
-                      )}
-                    >
-                      <Icon className="h-[18px] w-[18px] text-primary" aria-hidden />
+                  <motion.div
+                    key={exp.title}
+                    variants={item}
+                    className="group flex items-start gap-6"
+                  >
+                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/5 border border-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500">
+                      <Icon size={20} strokeWidth={1.5} />
                     </div>
-                    <div className="min-w-0 space-y-1.5">
-                      <h3 className="font-serif text-base text-foreground sm:text-lg">
+                    <div className="flex-1 space-y-2">
+                      <h3 className="font-serif text-xl text-foreground group-hover:text-primary transition-colors">
                         {exp.title}
                       </h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
+                      <p className="text-sm text-muted-foreground font-light leading-relaxed">
                         {exp.body}
                       </p>
                     </div>
-                  </div>
-                </motion.div>
-              );
+                  </motion.div>
+                );
               })}
+            </motion.div>
+          </div>
+
+          {/* Image Composition Column */}
+          <div className="lg:col-span-7 order-1 lg:order-2">
+            <div className="relative aspect-[4/5] sm:aspect-[16/10] lg:aspect-square">
+              {/* Main Image */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 rounded-[3rem] overflow-hidden border border-border/50 shadow-2xl"
+              >
+                <Image
+                  src="/DinningHall.jpeg"
+                  alt="Aureate Dining"
+                  fill
+                  className="object-cover saturate-[1.1] hover:scale-105 transition-transform duration-[3s]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              </motion.div>
+
+              {/* Overlapping Small Image */}
+              <motion.div
+                initial={{ opacity: 0, y: 50, x: 50 }}
+                whileInView={{ opacity: 1, y: 0, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, delay: 0.4 }}
+                className="absolute -bottom-8 -right-8 w-1/2 aspect-square rounded-[2rem] overflow-hidden border-8 border-background shadow-2xl z-20 hidden sm:block"
+              >
+                <Image
+                  src="/Accessories.jpeg"
+                  alt="Spa Detail"
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
+
+              {/* Floating Badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 100, delay: 0.8 }}
+                className="absolute top-12 -left-8 w-32 h-32 rounded-full bg-primary/95 backdrop-blur-md flex items-center justify-center text-center p-4 shadow-2xl z-30 hidden lg:flex"
+              >
+                <p className="text-primary-foreground text-[10px] font-bold uppercase tracking-widest leading-tight">
+                  Voted #1 <br /> Wellness <br /> Sanctuary
+                </p>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
+
         </div>
       </div>
     </section>

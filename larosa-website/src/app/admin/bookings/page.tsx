@@ -29,14 +29,15 @@ export default function AdminBookings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleCancel = async (id: number) => {
+  const handleCancel = async (id: string) => {
     if (!confirm("Are you certain you want to void this reservation? This action is permanent.")) return;
     try {
       await cancelBooking.mutateAsync({ id });
       toast({ title: "Reservation Voided", description: "The booking has been successfully cancelled." });
       queryClient.invalidateQueries({ queryKey: getGetAllBookingsQueryKey() });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to cancel booking";
+      toast({ variant: "destructive", title: "Error", description: msg });
     }
   };
 
@@ -95,7 +96,7 @@ export default function AdminBookings() {
             ) : bookings?.map((booking: Booking) => (
               <TableRow key={booking.id} className="border-border hover:bg-secondary/10 transition-colors group">
                 <TableCell className="py-6 font-mono text-[10px] text-muted-foreground font-bold pl-8">
-                  #{booking.id.toString().padStart(5, '0')}
+                  #{booking.id.slice(0, 8).toUpperCase()}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -138,7 +139,7 @@ export default function AdminBookings() {
                   <div className="flex items-center gap-2">
                     <CreditCard className="h-3 w-3 text-muted-foreground" />
                     <span className="text-sm font-serif font-bold text-foreground">
-                      ${booking.totalPrice.toLocaleString()}
+                      ₹{booking.totalPrice.toLocaleString()}
                     </span>
                   </div>
                 </TableCell>
@@ -149,7 +150,7 @@ export default function AdminBookings() {
                         variant="ghost" 
                         size="icon" 
                         className="text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-xl h-9 w-9" 
-                        onClick={() => handleCancel(booking.id)} 
+                        onClick={() => handleCancel(booking.id)}
                         title="Cancel Booking"
                       >
                         <XCircle className="h-4 w-4" />

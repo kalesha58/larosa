@@ -16,24 +16,10 @@ export interface Room {
 
 export const INITIAL_ROOMS: Room[] = [
   {
-    id: 1,
-    title: "Regal Suite",
-    type: "Suite",
-    price: 10,
-    images: ["/poolview3.jpeg", "/DinningHall.jpeg"],
-    description:
-      "A timeless masterpiece of comfort and elegance with bespoke furnishings and garden outlooks.",
-    amenities: ["Wifi", "Minibar", "Air Conditioning", "Room Service"],
-    capacity: 2,
-    sizeSqFt: 750,
-    totalRooms: 8,
-    featured: true,
-  },
-  {
     id: 2,
     title: "Presidential Suite",
     type: "Presidential",
-    price: 15,
+    price: 15000,
     images: ["/Hero3.jpeg"],
     description:
       "The pinnacle of Larosa hospitality with panoramic views and a private terrace.",
@@ -47,7 +33,7 @@ export const INITIAL_ROOMS: Room[] = [
     id: 3,
     title: "Deluxe Heritage",
     type: "Deluxe",
-    price: 8,
+    price: 8500,
     images: ["/poolview2.jpeg", "/Bathroom.jpeg"],
     description:
       "Intimate and refined for the modern traveler with Italian marble bathroom.",
@@ -61,7 +47,7 @@ export const INITIAL_ROOMS: Room[] = [
     id: 4,
     title: "Garden Courtyard",
     type: "Standard",
-    price: 5,
+    price: 5000,
     images: ["/poolview3.jpeg"],
     description:
       "Quiet courtyard views and refined simplicity for short urban stays.",
@@ -74,7 +60,7 @@ export const INITIAL_ROOMS: Room[] = [
     id: 5,
     title: "Ocean Penthouse",
     type: "Deluxe",
-    price: 12,
+    price: 12500,
     images: ["/poolview4.jpeg"],
     description:
       "Elevated living with wraparound glass and a deep soaking tub.",

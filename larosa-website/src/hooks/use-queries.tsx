@@ -35,16 +35,27 @@ export interface RoomUpsertInput {
 }
 
 export interface Booking {
-  id: number;
+  id: string;
   roomId: number;
-  room: Room;
+  room: {
+    id: number;
+    title: string;
+    type: string;
+  };
   guestName: string;
   guestEmail: string;
+  guestPhone?: string;
   checkIn: string;
   checkOut: string;
+  nights: number;
   guests: number;
   totalPrice: number;
-  status: "confirmed" | "cancelled";
+  pricePerNight?: number;
+  status: "confirmed" | "cancelled" | "pending";
+  specialRequests?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  createdAt?: string;
 }
 
 export interface AvailabilityRange {
@@ -52,83 +63,9 @@ export interface AvailabilityRange {
   checkOut: string;
 }
 
+// ── Room queries (still static from catalog) ────────────────────────────────
+
 let MOCK_ROOMS: Room[] = cloneInitialRooms();
-
-/** Mock booked ranges per room (inclusive check-in, exclusive check-out for night logic in UI). */
-const MOCK_AVAILABILITY: Record<number, AvailabilityRange[]> = {
-  1: [
-    { checkIn: "2026-06-01", checkOut: "2026-06-05" },
-    { checkIn: "2026-07-10", checkOut: "2026-07-14" },
-  ],
-  2: [{ checkIn: "2026-05-20", checkOut: "2026-05-25" }],
-  3: [],
-  4: [{ checkIn: "2026-04-12", checkOut: "2026-04-18" }],
-  5: [{ checkIn: "2026-08-01", checkOut: "2026-08-10" }],
-};
-
-/** Seeded sample bookings for the admin panel demonstration. */
-let MOCK_BOOKINGS: Booking[] = [
-  {
-    id: 10425,
-    roomId: 1,
-    room: cloneInitialRooms().find(r => r.id === 1)!,
-    guestName: "Alexander Sterling",
-    guestEmail: "alex.sterling@example.com",
-    checkIn: "2026-04-20",
-    checkOut: "2026-04-25",
-    guests: 2,
-    totalPrice: 1250,
-    status: "confirmed"
-  },
-  {
-    id: 10426,
-    roomId: 3,
-    room: cloneInitialRooms().find(r => r.id === 3)!,
-    guestName: "Isabella Vance",
-    guestEmail: "bella.v@example.com",
-    checkIn: "2026-04-22",
-    checkOut: "2026-04-24",
-    guests: 1,
-    totalPrice: 800,
-    status: "confirmed"
-  },
-  {
-    id: 10427,
-    roomId: 2,
-    room: cloneInitialRooms().find(r => r.id === 2)!,
-    guestName: "Julian Cross",
-    guestEmail: "j.cross@tech-inc.org",
-    checkIn: "2026-04-18",
-    checkOut: "2026-04-21",
-    guests: 2,
-    totalPrice: 1800,
-    status: "confirmed"
-  },
-  {
-    id: 10428,
-    roomId: 4,
-    room: cloneInitialRooms().find(r => r.id === 4)!,
-    guestName: "Marcus Thorne",
-    guestEmail: "m.thorne@luxurytravel.com",
-    checkIn: "2026-04-21",
-    checkOut: "2026-04-28",
-    guests: 3,
-    totalPrice: 3500,
-    status: "cancelled"
-  },
-  {
-    id: 10429,
-    roomId: 5,
-    room: cloneInitialRooms().find(r => r.id === 5)!,
-    guestName: "Sophia Loren",
-    guestEmail: "sophia.l@cinema.it",
-    checkIn: "2026-04-19",
-    checkOut: "2026-04-22",
-    guests: 2,
-    totalPrice: 2200,
-    status: "confirmed"
-  }
-];
 
 export interface RoomListFilters {
   type?: string;
@@ -140,21 +77,17 @@ export interface RoomListFilters {
 function filterRooms(filters?: RoomListFilters): Room[] {
   let list = [...MOCK_ROOMS];
   if (!filters) return list;
-
   if (filters.type && filters.type !== "all") {
     list = list.filter((r) => r.type === filters.type);
   }
-  const minPrice = filters.minPrice;
-  const maxPrice = filters.maxPrice;
-  const cap = filters.capacity;
-  if (typeof minPrice === "number") {
-    list = list.filter((r) => r.price >= minPrice);
+  if (typeof filters.minPrice === "number") {
+    list = list.filter((r) => r.price >= filters.minPrice!);
   }
-  if (typeof maxPrice === "number") {
-    list = list.filter((r) => r.price <= maxPrice);
+  if (typeof filters.maxPrice === "number") {
+    list = list.filter((r) => r.price <= filters.maxPrice!);
   }
-  if (typeof cap === "number") {
-    list = list.filter((r) => r.capacity >= cap);
+  if (typeof filters.capacity === "number") {
+    list = list.filter((r) => r.capacity >= filters.capacity!);
   }
   return list;
 }
@@ -198,159 +131,7 @@ export function useGetRoom(id: number, options?: RoomQueryOptions) {
   });
 }
 
-export function useGetBooking(id: number, options?: BookingQueryOptions) {
-  return useQuery({
-    queryKey: ["bookings", id],
-    queryFn: async () => MOCK_BOOKINGS.find((b) => b.id === id),
-    ...options?.query,
-  });
-}
-
-export function useGetUserBookings() {
-  return useQuery({
-    queryKey: ["bookings", "user"],
-    queryFn: async () => MOCK_BOOKINGS,
-  });
-}
-
-export function getGetUserBookingsQueryKey() {
-  return ["bookings", "user"] as const;
-}
-
-export function useGetRoomAvailability(
-  roomId: number,
-  options?: AvailabilityQueryOptions
-) {
-  return useQuery({
-    queryKey: ["rooms", roomId, "availability"],
-    queryFn: async () => MOCK_AVAILABILITY[roomId] ?? [],
-    enabled: Number.isFinite(roomId) && roomId > 0,
-    ...options?.query,
-  });
-}
-
-export function useCreateBooking() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      data,
-    }: {
-      data: {
-        roomId: number;
-        checkIn: string;
-        checkOut: string;
-        guests: number;
-        guestName: string;
-        guestEmail: string;
-        guestPhone?: string;
-        specialRequests?: string;
-      };
-    }) => {
-      const room = MOCK_ROOMS.find((r) => r.id === data.roomId);
-      if (!room) {
-        throw new Error("Room not found");
-      }
-      const checkIn = new Date(data.checkIn);
-      const checkOut = new Date(data.checkOut);
-      const nights = Math.max(
-        1,
-        Math.ceil(
-          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-        )
-      );
-      const subtotal = room.price * nights;
-      const taxes = Math.floor(subtotal * 0.15);
-      const newBooking: Booking = {
-        id: Math.floor(Math.random() * 10000),
-        roomId: data.roomId,
-        room,
-        guestName: data.guestName,
-        guestEmail: data.guestEmail,
-        checkIn: data.checkIn,
-        checkOut: data.checkOut,
-        guests: data.guests,
-        totalPrice: subtotal + taxes,
-        status: "confirmed",
-      };
-      MOCK_BOOKINGS = [newBooking, ...MOCK_BOOKINGS];
-      return newBooking;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
-    },
-  });
-}
-
-export function useCancelBooking() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id }: { id: number }) => {
-      MOCK_BOOKINGS = MOCK_BOOKINGS.map((b) =>
-        b.id === id ? { ...b, status: "cancelled" as const } : b
-      );
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["admin"] });
-    },
-  });
-}
-
-export function useGetAdminStats() {
-  return useQuery({
-    queryKey: ["admin", "stats"],
-    queryFn: async (): Promise<AdminStats> => {
-      const confirmed = MOCK_BOOKINGS.filter((b) => b.status === "confirmed");
-      const cancelled = MOCK_BOOKINGS.filter((b) => b.status === "cancelled");
-      const totalRevenue = confirmed.reduce((sum, b) => sum + b.totalPrice, 0);
-      const occupancyRate = Math.min(
-        96,
-        52 + confirmed.length * 6 + cancelled.length * 2
-      );
-      return {
-        totalRevenue,
-        occupancyRate,
-        confirmedBookings: confirmed.length,
-        cancelledBookings: cancelled.length,
-      };
-    },
-  });
-}
-
-const MOCK_REVENUE: RevenueMonth[] = [
-  { month: "Jan", revenue: 42000 },
-  { month: "Feb", revenue: 38500 },
-  { month: "Mar", revenue: 45200 },
-  { month: "Apr", revenue: 49800 },
-  { month: "May", revenue: 52100 },
-  { month: "Jun", revenue: 61200 },
-  { month: "Jul", revenue: 58900 },
-  { month: "Aug", revenue: 54300 },
-  { month: "Sep", revenue: 47600 },
-  { month: "Oct", revenue: 50100 },
-  { month: "Nov", revenue: 46800 },
-  { month: "Dec", revenue: 55400 },
-];
-
-export function useGetRevenueData() {
-  return useQuery({
-    queryKey: ["admin", "revenue"],
-    queryFn: async () => MOCK_REVENUE,
-  });
-}
-
-export function getGetAllBookingsQueryKey() {
-  return ["bookings", "all"] as const;
-}
-
-export function useGetAllBookings() {
-  return useQuery({
-    queryKey: getGetAllBookingsQueryKey(),
-    queryFn: async () => MOCK_BOOKINGS,
-  });
-}
+// ── Room mutations (still in-memory until rooms are DB-backed) ───────────────
 
 export function useCreateRoom() {
   const queryClient = useQueryClient();
@@ -391,9 +172,7 @@ export function useUpdateRoom() {
       data: RoomUpsertInput;
     }) => {
       const existing = MOCK_ROOMS.find((r) => r.id === id);
-      if (!existing) {
-        throw new Error("Room not found");
-      }
+      if (!existing) throw new Error("Room not found");
       const updated: Room = {
         ...existing,
         title: data.title,
@@ -407,9 +186,6 @@ export function useUpdateRoom() {
         amenities: data.amenities,
       };
       MOCK_ROOMS = MOCK_ROOMS.map((r) => (r.id === id ? updated : r));
-      MOCK_BOOKINGS = MOCK_BOOKINGS.map((b) =>
-        b.roomId === id ? { ...b, room: updated } : b
-      );
       return updated;
     },
     onSuccess: () => {
@@ -424,17 +200,186 @@ export function useDeleteRoom() {
   return useMutation({
     mutationFn: async ({ id }: { id: number }) => {
       const existed = MOCK_ROOMS.some((r) => r.id === id);
-      if (!existed) {
-        throw new Error("Room not found");
-      }
+      if (!existed) throw new Error("Room not found");
       MOCK_ROOMS = MOCK_ROOMS.filter((r) => r.id !== id);
-      MOCK_BOOKINGS = MOCK_BOOKINGS.filter((b) => b.roomId !== id);
       return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+  });
+}
+
+// ── Booking queries — REAL API ───────────────────────────────────────────────
+
+export function getGetAllBookingsQueryKey() {
+  return ["bookings", "all"] as const;
+}
+
+export function useGetAllBookings() {
+  return useQuery({
+    queryKey: getGetAllBookingsQueryKey(),
+    queryFn: async (): Promise<Booking[]> => {
+      const res = await fetch("/api/bookings");
+      if (!res.ok) throw new Error("Failed to fetch bookings");
+      return res.json() as Promise<Booking[]>;
+    },
+  });
+}
+
+export function useGetBooking(id: string, options?: BookingQueryOptions) {
+  return useQuery({
+    queryKey: ["bookings", id],
+    queryFn: async (): Promise<Booking | undefined> => {
+      if (!id) return undefined;
+      const res = await fetch(`/api/bookings/${id}`);
+      if (res.status === 404) return undefined;
+      if (!res.ok) throw new Error("Failed to fetch booking");
+      return res.json() as Promise<Booking>;
+    },
+    enabled: !!id,
+    ...options?.query,
+  });
+}
+
+export function useGetUserBookings() {
+  return useQuery({
+    queryKey: ["bookings", "user"],
+    queryFn: async (): Promise<Booking[]> => {
+      const res = await fetch("/api/bookings");
+      if (!res.ok) throw new Error("Failed to fetch bookings");
+      return res.json() as Promise<Booking[]>;
+    },
+  });
+}
+
+export function getGetUserBookingsQueryKey() {
+  return ["bookings", "user"] as const;
+}
+
+export function useGetRoomAvailability(
+  roomId: number,
+  options?: AvailabilityQueryOptions
+) {
+  return useQuery({
+    queryKey: ["rooms", roomId, "availability"],
+    queryFn: async (): Promise<AvailabilityRange[]> => {
+      const res = await fetch(`/api/bookings/availability?roomId=${roomId}`);
+      if (!res.ok) return [];
+      return res.json() as Promise<AvailabilityRange[]>;
+    },
+    enabled: Number.isFinite(roomId) && roomId > 0,
+    ...options?.query,
+  });
+}
+
+export interface CreateBookingInput {
+  roomId: number;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  specialRequests?: string;
+}
+
+export interface CreateBookingResult {
+  bookingId: string;
+  totalPrice: number;
+  nights: number;
+  subtotal: number;
+  taxes: number;
+}
+
+export function useCreateBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data }: { data: CreateBookingInput }): Promise<CreateBookingResult> => {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const payload: unknown = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Failed to create booking";
+        const code =
+          typeof payload === "object" &&
+          payload !== null &&
+          "code" in payload
+            ? (payload as { code: string }).code
+            : undefined;
+        const err = new Error(msg);
+        if (code) (err as Error & { code: string }).code = code;
+        throw err;
+      }
+      return payload as CreateBookingResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+  });
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      if (!res.ok) {
+        const payload: unknown = await res.json().catch(() => ({}));
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Failed to cancel booking";
+        throw new Error(msg);
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+  });
+}
+
+// ── Admin queries — REAL API ─────────────────────────────────────────────────
+
+export function useGetAdminStats() {
+  return useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: async (): Promise<AdminStats> => {
+      const res = await fetch("/api/admin/stats");
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      return res.json() as Promise<AdminStats>;
+    },
+  });
+}
+
+export function useGetRevenueData() {
+  return useQuery({
+    queryKey: ["admin", "revenue"],
+    queryFn: async (): Promise<RevenueMonth[]> => {
+      const res = await fetch("/api/admin/revenue");
+      if (!res.ok) throw new Error("Failed to fetch revenue");
+      return res.json() as Promise<RevenueMonth[]>;
     },
   });
 }

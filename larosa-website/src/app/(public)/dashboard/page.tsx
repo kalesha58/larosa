@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import Image from "next/image";
 import { LogOut } from "lucide-react";
 
 export default function DashboardPage() {
@@ -39,7 +38,7 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
-  const handleCancelStatus = async (id: number) => {
+  const handleCancelStatus = async (id: string) => {
     try {
       await cancelBooking.mutateAsync({ id });
       toast({
@@ -47,11 +46,12 @@ export default function DashboardPage() {
         description: "Your reservation has been successfully cancelled.",
       });
       queryClient.invalidateQueries({ queryKey: getGetUserBookingsQueryKey() });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unable to cancel booking.";
       toast({
         variant: "destructive",
         title: "Cancellation Failed",
-        description: error.message || "Unable to cancel booking.",
+        description: msg,
       });
     }
   };
@@ -101,15 +101,10 @@ export default function DashboardPage() {
           <div className="space-y-8">
             {bookings.map((booking) => (
               <div key={booking.id} className="bg-card border border-border flex flex-col md:flex-row overflow-hidden shadow-xl hover:border-primary/30 transition-all">
-                <div className="w-full md:w-72 h-48 md:h-auto relative">
-                  <Image 
-                    src={booking.room.images[0] || "/placeholder.jpg"} 
-                    alt={booking.room.title}
-                    fill
-                    className="object-cover"
-                  />
+                <div className="w-full md:w-72 h-48 md:h-auto relative bg-muted flex items-center justify-center">
+                  <span className="text-muted-foreground text-xs uppercase tracking-widest font-bold">{booking.room.type}</span>
                   <div className="absolute top-4 left-4">
-                    <span className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 backdrop-blur-md bg-black/40 text-white`}>
+                    <span className="px-4 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 backdrop-blur-md bg-black/40 text-white">
                       {booking.status}
                     </span>
                   </div>
@@ -119,8 +114,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-2 font-bold">
-                        {booking.room.type} • {booking.status.toUpperCase()} #
-                        {booking.id.toString().padStart(6, "0")}
+                        {booking.room.type} • {booking.status.toUpperCase()} #{booking.id.slice(0, 8).toUpperCase()}
                       </p>
                       <h3 className="font-serif text-3xl text-foreground">{booking.room.title}</h3>
                     </div>

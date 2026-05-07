@@ -332,7 +332,7 @@ export default function AdminRooms() {
                 <TableCell>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1 text-primary">
-                      <span className="text-sm font-bold font-serif">${room.price}</span>
+                      <span className="text-sm font-bold font-serif">₹{room.price}</span>
                     </div>
                     <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">per night</span>
                   </div>
