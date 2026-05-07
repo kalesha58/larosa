@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import Razorpay from "razorpay";
-import { getBookingTotalUsd } from "@/lib/booking-pricing";
+import { getBookingTotal } from "@/lib/booking-pricing";
 import {
   getRazorpayAmountMinorUnits,
   getRazorpayKeyId,
   getRazorpaySecret,
 } from "@/lib/razorpay-config";
 import { PAYMENT_NOT_CONFIGURED_CODE } from "@/lib/payments-env";
+import { connectMongo } from "@/lib/mongodb";
+import { hasOverlap } from "@/models/Booking";
 
 const bodySchema = z.object({
   roomId: z.number().int().positive(),
@@ -37,7 +39,29 @@ export async function POST(request: Request) {
     }
 
     const { roomId, checkIn, checkOut } = parsed.data;
-    const pricing = getBookingTotalUsd(roomId, checkIn, checkOut);
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+      return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
+    }
+
+    // ── OVERLAP CHECK (before hitting Razorpay) ──────────────────────────────
+    await connectMongo();
+    const conflict = await hasOverlap(roomId, checkInDate, checkOutDate);
+    if (conflict) {
+      return NextResponse.json(
+        {
+          error: "These dates are already booked. Please select different dates.",
+          code: "DATES_UNAVAILABLE",
+        },
+        { status: 409 }
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const pricing = getBookingTotal(roomId, checkIn, checkOut);
     if (!pricing) {
       return NextResponse.json(
         { error: "Invalid room or stay dates" },
@@ -59,7 +83,7 @@ export async function POST(request: Request) {
       receipt,
       notes: {
         roomId: String(roomId),
-        totalUsd: String(pricing.total),
+        total: String(pricing.total),
       },
     });
 
@@ -68,7 +92,7 @@ export async function POST(request: Request) {
       amount,
       currency,
       keyId,
-      totalUsd: pricing.total,
+      total: pricing.total,
     });
   } catch (err) {
     console.error(err);

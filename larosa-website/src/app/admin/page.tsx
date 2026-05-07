@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   const statCards = [
     { 
       title: "Total Revenue", 
-      value: `$${stats.totalRevenue.toLocaleString()}`, 
+      value: `₹${stats.totalRevenue.toLocaleString()}`, 
       icon: DollarSign, 
       trend: "+12.5%", 
       description: "from last month",
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
                     fontSize={10}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value/1000}k`}
+                    tickFormatter={(value) => `₹${value/1000}k`}
                     fontWeight="bold"
                   />
                   <Tooltip

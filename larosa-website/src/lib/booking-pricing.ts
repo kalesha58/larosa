@@ -1,6 +1,6 @@
 import { INITIAL_ROOMS, type Room } from "@/lib/room-catalog";
 
-export function getBookingTotalUsd(
+export function getBookingTotal(
   roomId: number,
   checkInIso: string,
   checkOutIso: string

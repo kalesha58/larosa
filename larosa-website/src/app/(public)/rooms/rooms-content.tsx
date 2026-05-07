@@ -61,7 +61,7 @@ function RoomsInner() {
   );
   const [priceRange, setPriceRange] = useState<number[]>(() => [
     Number(searchParams.get("minPrice")) || 0,
-    Number(searchParams.get("maxPrice")) || 3000,
+    Number(searchParams.get("maxPrice")) || 100000,
   ]);
   const [capacity, setCapacity] = useState<string>(
     () => searchParams.get("guests") || "any"
@@ -243,21 +243,21 @@ function RoomsInner() {
                         Price / night
                       </Label>
                       <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 font-serif text-xs tabular-nums text-primary sm:text-sm">
-                        ${priceRange[0]} – ${priceRange[1]}
+                        ₹{priceRange[0]} – ₹{priceRange[1]}
                       </span>
                     </div>
                     <div className="rounded-xl border border-border/40 bg-muted/25 p-4 sm:p-5">
                       <Slider
-                        defaultValue={[0, 3000]}
-                        max={3000}
-                        step={50}
+                        defaultValue={[0, 100000]}
+                        max={100000}
+                        step={500}
                         value={priceRange}
                         onValueChange={setPriceRange}
                         className="py-1"
                       />
                       <div className="mt-3 flex justify-between text-[10px] tabular-nums text-muted-foreground sm:text-xs">
-                        <span>$0</span>
-                        <span>$3,000+</span>
+                        <span>₹0</span>
+                        <span>₹100,000+</span>
                       </div>
                     </div>
                   </div>
@@ -295,7 +295,7 @@ function RoomsInner() {
                     className="h-11 w-full rounded-xl border-border/60 font-serif text-[11px] tracking-[0.18em] transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
                     onClick={() => {
                       setType("all");
-                      setPriceRange([0, 3000]);
+                      setPriceRange([0, 100000]);
                       setCapacity("any");
                     }}
                   >
@@ -387,7 +387,7 @@ function RoomsInner() {
                       className="mt-8 rounded-xl border-primary/35 font-serif text-xs tracking-[0.18em] hover:bg-primary/10"
                       onClick={() => {
                         setType("all");
-                        setPriceRange([0, 3000]);
+                        setPriceRange([0, 100000]);
                         setCapacity("any");
                       }}
                     >

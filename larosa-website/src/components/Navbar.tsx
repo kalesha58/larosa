@@ -67,12 +67,11 @@ export function Navbar() {
           <div className="flex min-w-0 flex-1 items-center gap-6 lg:gap-10">
             <Link
               href="/"
-              className="group relative shrink-0 font-serif text-xl font-semibold tracking-[0.22em] text-foreground sm:text-2xl sm:tracking-[0.24em]"
+              className="group relative shrink-0 font-serif text-xl font-medium tracking-[0.3em] text-foreground sm:text-2xl"
             >
-              <span className="bg-gradient-to-b from-foreground to-foreground/75 bg-clip-text text-transparent transition-opacity group-hover:opacity-90 dark:from-foreground dark:to-foreground/85">
+              <span className="bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent transition-opacity group-hover:opacity-90">
                 LAROSA
               </span>
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-primary/60 transition-all duration-300 group-hover:w-full" aria-hidden />
             </Link>
 
             <nav

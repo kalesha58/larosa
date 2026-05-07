@@ -92,7 +92,7 @@ export function RoomCard({
                 : "border border-primary/20 bg-primary/10 text-primary shadow-sm"
             )}
           >
-            From ${room.price}
+            From ₹{room.price}
           </span>
         </div>
       </div>

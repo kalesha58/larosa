@@ -115,7 +115,7 @@ export default function Home() {
             <p className="mb-3 text-left text-[10px] font-medium uppercase tracking-[0.3em] text-white/80 sm:text-xs">
               Welcome to the extraordinary
             </p>
-            <h1 className="mb-4 max-w-2xl text-left font-serif text-4xl leading-[1.12] text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+            <h1 className="mb-4 max-w-2xl text-left font-serif text-3xl leading-[1.2] text-white sm:text-4xl md:text-5xl lg:text-6xl">
               A Sanctuary of <br />
               <span className="italic text-white/90">Quiet Opulence</span>
             </h1>
@@ -140,7 +140,7 @@ export default function Home() {
         <BookingWidget />
       </div>
 
-      <div className="h-4 md:h-12 bg-background" />
+      <div className="h-8 md:h-16 bg-background" />
 
       <SignatureSuitesSection
         isLoading={isLoading}
@@ -159,7 +159,7 @@ export default function Home() {
 
       <HomeContactSection />
 
-      <section className="py-20 md:py-24 lg:py-28 bg-card border-t border-border text-center px-4 relative overflow-hidden">
+      <section className="py-16 sm:py-20 bg-card border-t border-border text-center px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <p className="text-primary uppercase tracking-[0.3em] text-xs mb-3">

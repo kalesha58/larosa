@@ -1,99 +1,163 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
 import { format } from "date-fns";
-import { CheckCircle } from "lucide-react";
-import { useGetBooking } from "@/hooks/use-queries";
+import { CheckCircle, Calendar, Users, CreditCard, Home, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useGetBooking } from "@/hooks/use-queries";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-export default function BookingConfirmationPage({ params }: { params: Promise<{ bookingId: string }> }) {
+export default function ConfirmationPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = use(params);
+  const { data: booking, isLoading } = useGetBooking(bookingId);
 
-  const { data: booking, isLoading } = useGetBooking(Number(bookingId), {
-    query: { enabled: !!bookingId }
-  });
-
-  if (isLoading || !booking) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pt-32 pb-20 flex items-center justify-center">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <Skeleton className="w-full h-[500px] rounded-none" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-lg w-full mx-auto px-4 space-y-6">
+          <Skeleton className="h-16 w-16 rounded-full mx-auto" />
+          <Skeleton className="h-8 w-64 mx-auto" />
+          <Skeleton className="h-4 w-48 mx-auto" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
+  if (!booking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
+        <p className="text-muted-foreground text-sm uppercase tracking-widest">Booking not found</p>
+        <Link href="/rooms">
+          <Button variant="outline" className="rounded-xl">Browse Rooms</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const checkIn = new Date(booking.checkIn);
+  const checkOut = new Date(booking.checkOut);
+
   return (
-    <div className="min-h-screen bg-background pt-32 pb-20 px-4 md:px-0">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto bg-card border border-border shadow-2xl overflow-hidden">
-          
-          <div className="p-12 text-center border-b border-border bg-background/50">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-              <CheckCircle className="w-8 h-8 text-primary" />
+    <div className="min-h-screen bg-background py-20 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Success Icon */}
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          className="flex justify-center mb-8"
+        >
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <CheckCircle className="h-10 w-10 text-emerald-500" strokeWidth={1.5} />
             </div>
-            <h1 className="font-serif text-4xl text-foreground mb-4">Reservation Confirmed</h1>
-            <p className="text-muted-foreground text-lg italic">
-              Your sanctuary awaits, {booking.guestName.split(' ')[0]}.
-            </p>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-4 font-bold border border-border/50 inline-block px-4 py-1">
-              Confirmation # {booking.id.toString().padStart(6, '0')}
-            </p>
+            <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-10"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-emerald-600 mb-3">Reservation Confirmed</p>
+          <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-3">You&apos;re all set!</h1>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            A confirmation has been sent to <span className="text-foreground font-medium">{booking.guestEmail}</span>. We look forward to welcoming you.
+          </p>
+        </motion.div>
+
+        {/* Booking Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-8"
+        >
+          {/* Card Header */}
+          <div className="bg-primary/5 border-b border-border px-8 py-6 flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-muted-foreground mb-1">Room Reserved</p>
+              <h2 className="font-serif text-2xl text-foreground">{booking.room.title}</h2>
+            </div>
+            <Badge className="text-[9px] uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border-none rounded-lg px-3 py-1">
+              {booking.status}
+            </Badge>
           </div>
 
-          <div className="p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div>
-              <h3 className="font-serif text-xl text-primary mb-6 border-b border-border/30 pb-2">Stay Details</h3>
-              <div className="space-y-6 text-sm tracking-wide">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">Room</p>
-                  <p className="text-foreground text-lg font-serif">{booking.room.title}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">Check-in</p>
-                    <p className="text-foreground font-medium">{format(new Date(booking.checkIn), "MMM d, yyyy")}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase mt-1">After 3:00 PM</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">Check-out</p>
-                    <p className="text-foreground font-medium">{format(new Date(booking.checkOut), "MMM d, yyyy")}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase mt-1">Before 11:00 AM</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1">Guests</p>
-                  <p className="text-foreground">{booking.guests} {booking.guests === 1 ? "Guest" : "Guests"}</p>
-                </div>
+          {/* Details Grid */}
+          <div className="p-8 space-y-0 divide-y divide-border/50">
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Check-in</span>
+              </div>
+              <span className="font-medium text-sm">{format(checkIn, "EEEE, MMMM dd, yyyy")}</span>
+            </div>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Check-out</span>
+              </div>
+              <span className="font-medium text-sm">{format(checkOut, "EEEE, MMMM dd, yyyy")}</span>
+            </div>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Guests</span>
+              </div>
+              <span className="font-medium text-sm">{booking.guests} {booking.guests === 1 ? "Guest" : "Guests"}</span>
+            </div>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Mail className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Contact</span>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-sm">{booking.guestName}</p>
+                <p className="text-xs text-muted-foreground">{booking.guestEmail}</p>
+                {booking.guestPhone && <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end"><Phone className="h-3 w-3" />{booking.guestPhone}</p>}
               </div>
             </div>
-
-            <div>
-              <h3 className="font-serif text-xl text-primary mb-6 border-b border-border/30 pb-2">Payment Summary</h3>
-              <div className="space-y-4 text-sm bg-background/30 p-8 border border-border/30">
-                <div className="flex justify-between pb-4 border-b border-border/50">
-                  <span className="text-muted-foreground uppercase tracking-widest text-xs">Total Charged</span>
-                  <span className="font-serif text-2xl text-foreground font-bold">${booking.totalPrice}</span>
-                </div>
-                <div className="text-xs text-muted-foreground leading-relaxed italic">
-                  <p>A confirmation email has been sent to {booking.guestEmail}. Please present your ID at check-in.</p>
-                </div>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <CreditCard className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Total Paid</span>
               </div>
+              <span className="font-serif text-2xl text-primary">₹{booking.totalPrice.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-widest">Booking ID</span>
+              </div>
+              <span className="font-mono text-xs text-muted-foreground">{booking.id.slice(0, 20)}...</span>
             </div>
           </div>
+        </motion.div>
 
-          <div className="p-8 border-t border-border bg-background/50 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" className="rounded-none font-serif tracking-widest h-12 px-8 border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground" asChild>
-              <Link href="/">RETURN HOME</Link>
+        {/* Actions */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col sm:flex-row gap-4"
+        >
+          <Link href="/" className="flex-1">
+            <Button variant="outline" className="w-full h-12 rounded-xl border-border gap-2">
+              <Home className="h-4 w-4" /> Back to Home
             </Button>
-            <Button className="rounded-none font-serif tracking-widest h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-              <Link href="/dashboard">VIEW MY BOOKINGS</Link>
+          </Link>
+          <Link href="/rooms" className="flex-1">
+            <Button className="w-full h-12 rounded-xl font-serif tracking-widest">
+              Explore More Rooms
             </Button>
-          </div>
-
-        </div>
+          </Link>
+        </motion.div>
       </div>
     </div>
   );
