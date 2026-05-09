@@ -9,12 +9,15 @@ import {
 } from "@/lib/razorpay-config";
 import { PAYMENT_NOT_CONFIGURED_CODE } from "@/lib/payments-env";
 import { connectMongo } from "@/lib/mongodb";
-import { hasOverlap } from "@/models/Booking";
+import { Booking, hasOverlap } from "@/models/Booking";
+import { Room } from "@/models/Room";
+import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 
 const bodySchema = z.object({
-  roomId: z.number().int().positive(),
+  roomId: z.string(),
   checkIn: z.string(),
   checkOut: z.string(),
+  bookingId: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -38,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const { roomId, checkIn, checkOut } = parsed.data;
+    const { roomId, checkIn, checkOut, bookingId } = parsed.data;
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
@@ -53,15 +56,29 @@ export async function POST(request: Request) {
     if (conflict) {
       return NextResponse.json(
         {
-          error: "These dates are already booked. Please select different dates.",
+          error: "These dates were just booked on Larosa. Please select different dates.",
           code: "DATES_UNAVAILABLE",
         },
         { status: 409 }
       );
     }
+
+    const room = await Room.findById(roomId);
+    if (room?.airbnbCalendarUrl) {
+      const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
+      if (hasExternalOverlap(checkInDate, checkOutDate, externalBookings)) {
+        return NextResponse.json(
+          {
+            error: "These dates are reserved on Airbnb. Please select different dates.",
+            code: "DATES_UNAVAILABLE",
+          },
+          { status: 409 }
+        );
+      }
+    }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const pricing = getBookingTotal(roomId, checkIn, checkOut);
+    const pricing = await getBookingTotal(roomId, checkIn, checkOut);
     if (!pricing) {
       return NextResponse.json(
         { error: "Invalid room or stay dates" },
@@ -84,8 +101,16 @@ export async function POST(request: Request) {
       notes: {
         roomId: String(roomId),
         total: String(pricing.total),
+        bookingId: bookingId || "",
       },
     });
+
+    // ── Link orderId to booking in DB ────────────────────────────────────────
+    if (bookingId) {
+      await Booking.findByIdAndUpdate(bookingId, {
+        razorpayOrderId: order.id,
+      });
+    }
 
     return NextResponse.json({
       orderId: order.id,

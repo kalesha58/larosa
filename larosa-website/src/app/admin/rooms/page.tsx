@@ -6,7 +6,6 @@ import {
   useCreateRoom,
   useUpdateRoom,
   useDeleteRoom,
-  getGetRoomsQueryKey,
   type Room,
 } from "@/hooks/use-queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,50 +49,59 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const roomSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
+  category: z.enum(["room", "villa"]),
   description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.string(),
   price: z.coerce.number().min(1, "Price must be at least 1"),
   capacity: z.coerce.number().min(1, "Capacity must be at least 1"),
   totalRooms: z.coerce.number().min(1, "Total inventory must be at least 1"),
   featured: z.boolean(),
+  status: z.enum(["active", "hidden"]),
   images: z.string().min(1, "Images are required"),
   amenities: z.string().min(1, "Amenities are required"),
+  airbnbCalendarUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type RoomFormValues = {
   title: string;
+  category: "room" | "villa";
   description: string;
   type: string;
   price: number;
   capacity: number;
   totalRooms: number;
   featured: boolean;
+  status: "active" | "hidden";
   images: string;
   amenities: string;
+  airbnbCalendarUrl?: string;
 };
 
 export default function AdminRooms() {
-  const { data: rooms, isLoading } = useGetRooms();
+  const { data: rooms, isLoading } = useGetRooms({ admin: true });
   const createRoom = useCreateRoom();
   const updateRoom = useUpdateRoom();
   const deleteRoom = useDeleteRoom();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomSchema) as Resolver<RoomFormValues>,
     defaultValues: {
       title: "",
+      category: "room",
       description: "",
       type: "Standard",
       price: 100,
       capacity: 2,
       totalRooms: 5,
       featured: false,
+      status: "active",
       images: "",
       amenities: "",
+      airbnbCalendarUrl: "",
     }
   });
 
@@ -101,14 +109,17 @@ export default function AdminRooms() {
     setEditingId(room.id);
     form.reset({
       title: room.title,
+      category: room.category ?? "room",
       description: room.description,
       type: room.type,
       price: room.price,
       capacity: room.capacity,
       totalRooms: room.totalRooms,
       featured: room.featured ?? false,
+      status: room.status ?? "active",
       images: room.images.join(", "),
       amenities: room.amenities.join(", "),
+      airbnbCalendarUrl: room.airbnbCalendarUrl || "",
     });
     setOpen(true);
   };
@@ -136,19 +147,17 @@ export default function AdminRooms() {
         await createRoom.mutateAsync({ data });
         toast({ title: "New Asset Registered", description: `${values.title} added to listing.` });
       }
-      queryClient.invalidateQueries({ queryKey: getGetRoomsQueryKey() });
       setOpen(false);
     } catch (error: any) {
       toast({ variant: "destructive", title: "Operation Failed", description: error.message });
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you certain you want to decommission this room? This action cannot be reversed.")) return;
     try {
       await deleteRoom.mutateAsync({ id });
       toast({ title: "Asset Decommissioned", description: "The room listing has been removed from the catalog." });
-      queryClient.invalidateQueries({ queryKey: getGetRoomsQueryKey() });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     }
@@ -179,8 +188,21 @@ export default function AdminRooms() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField control={form.control} name="title" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Room Title</FormLabel>
+                        <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Property Title</FormLabel>
                         <FormControl><Input className="rounded-xl border-border h-11 focus:ring-1 ring-primary" placeholder="e.g. Imperial Suite" {...field} /></FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="category" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Property Category</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger className="rounded-xl border-border h-11"><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
+                          <SelectContent className="rounded-xl border-border">
+                            <SelectItem value="room">Hotel Room</SelectItem>
+                            <SelectItem value="villa">Private Villa</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />
@@ -229,6 +251,20 @@ export default function AdminRooms() {
                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="status" render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between border border-border p-5 bg-secondary/10 rounded-xl">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Visibility Status</FormLabel>
+                          <FormDescription className="text-[9px] uppercase tracking-wider">Hide or Show from public</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch 
+                            checked={field.value === "active"} 
+                            onCheckedChange={(checked) => field.onChange(checked ? "active" : "hidden")} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )} />
                   </div>
 
                   <FormField control={form.control} name="description" render={({ field }) => (
@@ -258,6 +294,51 @@ export default function AdminRooms() {
                     )} />
                   </div>
 
+                  {/* Calendar Sync Section */}
+                  <div className="p-6 border border-primary/20 bg-primary/5 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">Channel Manager (iCal Sync)</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="airbnbCalendarUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Airbnb Import URL</FormLabel>
+                          <FormControl><Input className="rounded-xl border-border h-11 bg-background" placeholder="https://www.airbnb.com/calendar/ical/..." {...field} value={field.value || ""} /></FormControl>
+                          <FormDescription className="text-[9px] uppercase tracking-wider">Paste the Airbnb iCal export link here</FormDescription>
+                          <FormMessage className="text-[10px]" />
+                        </FormItem>
+                      )} />
+
+                      {editingId && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest">Larosa Export URL</label>
+                          <div className="flex gap-2">
+                            <Input 
+                              readOnly 
+                              value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/rooms/${editingId}/calendar/export`} 
+                              className="rounded-xl border-border h-11 bg-background font-mono text-[9px] truncate"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              className="h-11 rounded-xl px-4 text-[10px] font-bold uppercase"
+                              onClick={() => {
+                                const url = `${window.location.origin}/api/rooms/${editingId}/calendar/export`;
+                                navigator.clipboard.writeText(url);
+                                toast({ title: "URL Copied", description: "Paste this into Airbnb's 'Import Calendar' setting." });
+                              }}
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Provide this link to Airbnb to block dates</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="pt-4 flex gap-4">
                     <Button variant="outline" type="button" onClick={() => handleOpenChange(false)} className="flex-1 rounded-xl uppercase tracking-widest text-[10px] h-12 font-bold">Cancel</Button>
                     <Button type="submit" className="flex-[2] rounded-xl bg-primary hover:bg-primary/90 h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg shadow-primary/20">
@@ -276,10 +357,11 @@ export default function AdminRooms() {
         <Table>
           <TableHeader className="bg-secondary/20">
             <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="w-[300px] text-[10px] font-bold uppercase tracking-widest h-14">Room Identity</TableHead>
+              <TableHead className="w-[300px] text-[10px] font-bold uppercase tracking-widest h-14">Property Identity</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Specification</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest text-primary">Financials</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Availability</TableHead>
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest">Status</TableHead>
               <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest pr-8">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -313,7 +395,12 @@ export default function AdminRooms() {
                     </div>
                     <div>
                       <p className="font-serif text-lg leading-tight mb-1">{room.title}</p>
-                      <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{room.type}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{room.type}</p>
+                        <Badge variant="outline" className="text-[8px] uppercase tracking-widest h-4 px-1 bg-primary/5 text-primary/70 border-primary/20">
+                          {room.category ?? "room"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </TableCell>
@@ -340,6 +427,17 @@ export default function AdminRooms() {
                 <TableCell>
                   <Badge variant="outline" className="rounded-lg border-primary/20 bg-primary/5 text-primary text-[9px] uppercase tracking-widest font-bold px-2 py-0.5">
                     {room.totalRooms} Units available
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant={room.status === "active" ? "default" : "secondary"} 
+                    className={cn(
+                      "rounded-lg text-[9px] uppercase tracking-widest font-bold px-2 py-0.5",
+                      room.status === "active" ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-zinc-500/10 text-zinc-500 border-zinc-500/20"
+                    )}
+                  >
+                    {room.status === "active" ? "Public" : "Hidden"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right pr-8">

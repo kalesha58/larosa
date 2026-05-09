@@ -1,8 +1,9 @@
 /** Shared room definitions for client hooks and server-side payment validation. */
 
 export interface Room {
-  id: number;
+  id: string;
   title: string;
+  category: "room" | "villa";
   type: string;
   price: number;
   images: string[];
@@ -12,12 +13,15 @@ export interface Room {
   sizeSqFt: number;
   totalRooms: number;
   featured?: boolean;
+  status?: "active" | "hidden";
+  airbnbCalendarUrl?: string;
 }
 
 export const INITIAL_ROOMS: Room[] = [
   {
-    id: 2,
+    id: "2",
     title: "Presidential Suite",
+    category: "room",
     type: "Presidential",
     price: 15000,
     images: ["/Hero3.jpeg"],
@@ -28,10 +32,12 @@ export const INITIAL_ROOMS: Room[] = [
     sizeSqFt: 1400,
     totalRooms: 3,
     featured: true,
+    status: "active",
   },
   {
-    id: 3,
+    id: "3",
     title: "Deluxe Heritage",
+    category: "room",
     type: "Deluxe",
     price: 8500,
     images: ["/poolview2.jpeg", "/Bathroom.jpeg"],
@@ -42,10 +48,12 @@ export const INITIAL_ROOMS: Room[] = [
     sizeSqFt: 520,
     totalRooms: 14,
     featured: true,
+    status: "active",
   },
   {
-    id: 4,
+    id: "4",
     title: "Garden Courtyard",
+    category: "room",
     type: "Standard",
     price: 5000,
     images: ["/poolview3.jpeg"],
@@ -55,10 +63,12 @@ export const INITIAL_ROOMS: Room[] = [
     capacity: 2,
     sizeSqFt: 380,
     totalRooms: 20,
+    status: "active",
   },
   {
-    id: 5,
+    id: "5",
     title: "Ocean Penthouse",
+    category: "room",
     type: "Deluxe",
     price: 12500,
     images: ["/poolview4.jpeg"],
@@ -68,6 +78,7 @@ export const INITIAL_ROOMS: Room[] = [
     capacity: 3,
     sizeSqFt: 980,
     totalRooms: 4,
+    status: "active",
   },
 ];
 

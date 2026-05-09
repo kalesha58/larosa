@@ -24,21 +24,23 @@ export interface RevenueMonth {
 
 export interface RoomUpsertInput {
   title: string;
+  category: "room" | "villa";
   description: string;
   type: string;
   price: number;
   capacity: number;
   totalRooms: number;
   featured?: boolean;
+  status?: "active" | "hidden";
   images: string[];
   amenities: string[];
 }
 
 export interface Booking {
   id: string;
-  roomId: number;
+  roomId: string;
   room: {
-    id: number;
+    id: string;
     title: string;
     type: string;
   };
@@ -58,15 +60,13 @@ export interface Booking {
   createdAt?: string;
 }
 
+
 export interface AvailabilityRange {
   checkIn: string;
   checkOut: string;
 }
 
-// ── Room queries (still static from catalog) ────────────────────────────────
-
-let MOCK_ROOMS: Room[] = cloneInitialRooms();
-
+// ── Room queries — REAL API ────────────────────────────────────────────────
 export interface RoomListFilters {
   type?: string;
   minPrice?: number;
@@ -74,39 +74,35 @@ export interface RoomListFilters {
   capacity?: number;
 }
 
-function filterRooms(filters?: RoomListFilters): Room[] {
-  let list = [...MOCK_ROOMS];
-  if (!filters) return list;
-  if (filters.type && filters.type !== "all") {
-    list = list.filter((r) => r.type === filters.type);
-  }
-  if (typeof filters.minPrice === "number") {
-    list = list.filter((r) => r.price >= filters.minPrice!);
-  }
-  if (typeof filters.maxPrice === "number") {
-    list = list.filter((r) => r.price <= filters.maxPrice!);
-  }
-  if (typeof filters.capacity === "number") {
-    list = list.filter((r) => r.capacity >= filters.capacity!);
-  }
-  return list;
-}
 
-export function getGetRoomsQueryKey(_filters?: RoomListFilters) {
-  return ["rooms", "list"] as const;
-}
-
-export function useGetRooms(filters?: RoomListFilters) {
+export function useGetRooms(filters?: RoomListFilters & { admin?: boolean }) {
   return useQuery({
     queryKey: ["rooms", "list", filters ?? {}],
-    queryFn: async () => filterRooms(filters),
+    queryFn: async (): Promise<Room[]> => {
+      const params = new URLSearchParams();
+      if (filters?.type && filters.type !== "all") params.append("type", filters.type);
+      if (filters?.admin) params.append("admin", "true");
+      
+      const res = await fetch(`/api/rooms?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch rooms");
+      let list = await res.json() as Room[];
+
+      // Client-side filtering for price and capacity if needed, though better in API
+      if (typeof filters?.minPrice === "number") list = list.filter(r => r.price >= filters.minPrice!);
+      if (typeof filters?.maxPrice === "number") list = list.filter(r => r.price <= filters.maxPrice!);
+      if (typeof filters?.capacity === "number") list = list.filter(r => r.capacity >= filters.capacity!);
+      
+      return list;
+    },
   });
 }
 
 export function useGetFeaturedRooms() {
+  const { data: rooms } = useGetRooms();
   return useQuery({
     queryKey: ["rooms", "featured"],
-    queryFn: async () => MOCK_ROOMS.filter((r) => r.featured),
+    queryFn: async () => rooms?.filter((r) => r.featured) || [],
+    enabled: !!rooms,
   });
 }
 
@@ -122,11 +118,16 @@ type AvailabilityQueryOptions = {
   query?: Partial<UseQueryOptions<AvailabilityRange[]>>;
 };
 
-export function useGetRoom(id: number, options?: RoomQueryOptions) {
+export function useGetRoom(id: string, options?: RoomQueryOptions) {
   return useQuery({
     queryKey: ["rooms", id],
-    queryFn: async () => MOCK_ROOMS.find((r) => r.id === id),
-    enabled: Number.isFinite(id) && id > 0,
+    queryFn: async (): Promise<Room | undefined> => {
+      const res = await fetch(`/api/rooms/${id}`);
+      if (res.status === 404) return undefined;
+      if (!res.ok) throw new Error("Failed to fetch room");
+      return res.json();
+    },
+    enabled: !!id,
     ...options?.query,
   });
 }
@@ -137,22 +138,13 @@ export function useCreateRoom() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ data }: { data: RoomUpsertInput }) => {
-      const nextId = Math.max(0, ...MOCK_ROOMS.map((r) => r.id)) + 1;
-      const room: Room = {
-        id: nextId,
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        price: data.price,
-        images: data.images.length > 0 ? data.images : ["/room-deluxe.png"],
-        amenities: data.amenities,
-        capacity: data.capacity,
-        sizeSqFt: 600,
-        totalRooms: data.totalRooms,
-        featured: data.featured ?? false,
-      };
-      MOCK_ROOMS = [...MOCK_ROOMS, room];
-      return room;
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create room");
+      return res.json() as Promise<Room>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
@@ -168,25 +160,16 @@ export function useUpdateRoom() {
       id,
       data,
     }: {
-      id: number;
-      data: RoomUpsertInput;
+      id: string;
+      data: Partial<RoomUpsertInput>;
     }) => {
-      const existing = MOCK_ROOMS.find((r) => r.id === id);
-      if (!existing) throw new Error("Room not found");
-      const updated: Room = {
-        ...existing,
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        price: data.price,
-        capacity: data.capacity,
-        totalRooms: data.totalRooms,
-        featured: data.featured ?? false,
-        images: data.images.length > 0 ? data.images : existing.images,
-        amenities: data.amenities,
-      };
-      MOCK_ROOMS = MOCK_ROOMS.map((r) => (r.id === id ? updated : r));
-      return updated;
+      const res = await fetch(`/api/rooms/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update room");
+      return res.json() as Promise<Room>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
@@ -198,10 +181,11 @@ export function useUpdateRoom() {
 export function useDeleteRoom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: number }) => {
-      const existed = MOCK_ROOMS.some((r) => r.id === id);
-      if (!existed) throw new Error("Room not found");
-      MOCK_ROOMS = MOCK_ROOMS.filter((r) => r.id !== id);
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await fetch(`/api/rooms/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete room");
       return id;
     },
     onSuccess: () => {
@@ -260,7 +244,7 @@ export function getGetUserBookingsQueryKey() {
 }
 
 export function useGetRoomAvailability(
-  roomId: number,
+  roomId: string, // Changed to string
   options?: AvailabilityQueryOptions
 ) {
   return useQuery({
@@ -270,13 +254,13 @@ export function useGetRoomAvailability(
       if (!res.ok) return [];
       return res.json() as Promise<AvailabilityRange[]>;
     },
-    enabled: Number.isFinite(roomId) && roomId > 0,
+    enabled: !!roomId,
     ...options?.query,
   });
 }
 
 export interface CreateBookingInput {
-  roomId: number;
+  roomId: string; // Changed to string
   checkIn: string;
   checkOut: string;
   guests: number;

@@ -1,18 +1,21 @@
-import { INITIAL_ROOMS, type Room } from "@/lib/room-catalog";
+import { Room } from "@/models/Room";
+import { connectMongo } from "./mongodb";
 
-export function getBookingTotal(
-  roomId: number,
+export async function getBookingTotal(
+  roomId: string,
   checkInIso: string,
   checkOutIso: string
-): {
-  room: Room;
+): Promise<{
+  room: any;
   subtotal: number;
   taxes: number;
   total: number;
   nights: number;
-} | null {
-  const room = INITIAL_ROOMS.find((r) => r.id === roomId);
+} | null> {
+  await connectMongo();
+  const room = await Room.findById(roomId).lean();
   if (!room) return null;
+  
   const checkIn = new Date(checkInIso);
   const checkOut = new Date(checkOutIso);
   const nights = Math.max(
@@ -22,6 +25,6 @@ export function getBookingTotal(
     )
   );
   const subtotal = room.price * nights;
-  const taxes = Math.floor(subtotal * 0.15);
+  const taxes = Math.floor(subtotal * 0.12); // Using 12% GST consistently
   return { room, subtotal, taxes, total: subtotal + taxes, nights };
 }

@@ -4,7 +4,7 @@ export type BookingStatus = "pending" | "confirmed" | "cancelled";
 
 export interface IBooking {
   _id: mongoose.Types.ObjectId;
-  roomId: number;
+  roomId: string;
   roomTitle: string;
   roomType: string;
   pricePerNight: number;
@@ -27,7 +27,7 @@ export interface IBooking {
 
 const BookingSchema = new Schema<IBooking>(
   {
-    roomId: { type: Number, required: true },
+    roomId: { type: String, required: true },
     roomTitle: { type: String, required: true },
     roomType: { type: String, required: true },
     pricePerNight: { type: Number, required: true },
@@ -66,12 +66,11 @@ BookingSchema.index({ razorpayOrderId: 1 });
 /** Checks if a date range overlaps with any confirmed booking for a given room.
  *  Returns true if there IS a conflict (i.e., dates are NOT available). */
 export async function hasOverlap(
-  roomId: number,
+  roomId: string,
   checkIn: Date,
   checkOut: Date,
   excludeBookingId?: string
 ): Promise<boolean> {
-  const Booking = models.Booking ?? model<IBooking>("Booking", BookingSchema);
   const query: any = {
     roomId,
     status: "confirmed",
@@ -83,6 +82,12 @@ export async function hasOverlap(
   }
   const conflict = await Booking.findOne(query).lean();
   return conflict !== null;
+}
+
+// In development, Next.js HMR can leave stale models in the cache.
+// If we changed roomId from Number to String, we must clear it.
+if (process.env.NODE_ENV === "development") {
+  delete models.Booking;
 }
 
 export const Booking =

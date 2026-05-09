@@ -23,9 +23,8 @@ const AMENITY_ICONS: Record<string, React.ElementType> = {
 
 export default function RoomDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const roomId = parseInt(id, 10);
   const router = useRouter();
-  const { data: room, isLoading } = useGetRoom(roomId);
+  const { data: room, isLoading } = useGetRoom(id);
 
   if (isLoading) {
     return (

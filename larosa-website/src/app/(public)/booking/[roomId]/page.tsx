@@ -48,8 +48,7 @@ function buildDisabledDates(ranges: { checkIn: string; checkOut: string }[]): Da
 }
 
 export default function BookingPage({ params }: { params: Promise<{ roomId: string }> }) {
-  const { roomId: roomIdStr } = use(params);
-  const roomId = parseInt(roomIdStr, 10);
+  const { roomId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
   const razorpayLoaded = useRazorpayScript();
@@ -132,6 +131,7 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
           roomId: room.id,
           checkIn: dateRange?.from?.toISOString(),
           checkOut: dateRange?.to?.toISOString(),
+          bookingId,
         }),
       });
       const orderData = await orderRes.json() as {

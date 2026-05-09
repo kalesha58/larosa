@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
-import { INITIAL_ROOMS } from "@/lib/room-catalog";
+import { Room } from "@/models/Room";
+import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 
 const createSchema = z.object({
-  roomId: z.number().int().positive(),
+  roomId: z.string(),
   checkIn: z.string(),
   checkOut: z.string(),
   guests: z.number().int().positive(),
@@ -61,9 +62,12 @@ export async function POST(request: NextRequest) {
   try {
     await connectMongo();
 
-    const json: unknown = await request.json();
+    const json: any = await request.json();
+    console.log("[POST /api/bookings] Request body:", json);
     const parsed = createSchema.safeParse(json);
     if (!parsed.success) {
+      console.error("[POST /api/bookings] Validation failed:", parsed.error.format());
+      console.error("[POST /api/bookings] Raw body received:", json);
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
         { status: 400 }
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
-    const room = INITIAL_ROOMS.find((r) => r.id === data.roomId);
+    const room = await Room.findById(data.roomId);
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
@@ -92,7 +96,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (checkIn < new Date()) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (checkIn < today) {
       return NextResponse.json(
         { error: "Check-in date cannot be in the past" },
         { status: 400 }
@@ -104,11 +110,25 @@ export async function POST(request: NextRequest) {
     if (conflict) {
       return NextResponse.json(
         {
-          error: "These dates are already booked",
+          error: "These dates are already booked on Larosa",
           code: "DATES_UNAVAILABLE",
         },
         { status: 409 }
       );
+    }
+
+    // NEW: Airbnb Overlap Check
+    if (room.airbnbCalendarUrl) {
+      const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
+      if (hasExternalOverlap(checkIn, checkOut, externalBookings)) {
+        return NextResponse.json(
+          {
+            error: "These dates are reserved on Airbnb",
+            code: "DATES_UNAVAILABLE",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const nights = Math.max(
@@ -146,10 +166,10 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (err) {
-    console.error("[POST /api/bookings]", err);
+  } catch (err: any) {
+    console.error("[POST /api/bookings] CRITICAL ERROR:", err);
     return NextResponse.json(
-      { error: "Failed to create booking" },
+      { error: "Failed to create booking", details: err?.message },
       { status: 500 }
     );
   }

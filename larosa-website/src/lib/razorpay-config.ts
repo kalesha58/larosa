@@ -22,3 +22,8 @@ export function getRazorpaySecret(): string | null {
   const s = process.env.RAZORPAY_KEY_SECRET?.trim();
   return s && s.length > 0 ? s : null;
 }
+
+export function getRazorpayWebhookSecret(): string | null {
+  const s = process.env.RAZORPAY_WEBHOOK_SECRET?.trim();
+  return s && s.length > 0 ? s : null;
+}
