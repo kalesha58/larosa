@@ -509,7 +509,7 @@ export default function AdminRooms() {
                               Enable automatic import
                             </FormLabel>
                             <FormDescription className="text-[9px]">
-                              Cron job pulls this feed periodically when enabled.
+                              Vercel runs a daily import when enabled (use Sync for immediate updates).
                             </FormDescription>
                           </div>
                           <FormControl>

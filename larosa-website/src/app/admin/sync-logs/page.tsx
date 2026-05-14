@@ -23,7 +23,7 @@ export default function AdminSyncLogsPage() {
         </p>
         <h1 className="font-serif text-4xl text-foreground">Airbnb sync logs</h1>
         <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-          Recent imports from Airbnb iCal feeds (cron every 15 minutes plus manual sync from Rooms).
+          Recent imports from Airbnb iCal feeds (Vercel cron runs once daily; use Sync on Rooms for immediate import).
         </p>
       </div>
 
