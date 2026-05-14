@@ -41,26 +41,26 @@ export default function AdminSyncLogsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
+              <TableRow key="loading">
                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground text-xs">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : isError ? (
-              <TableRow>
+              <TableRow key="error">
                 <TableCell colSpan={6} className="h-32 text-center text-destructive text-xs">
                   Failed to load logs (admin session required).
                 </TableCell>
               </TableRow>
             ) : !logs?.length ? (
-              <TableRow>
+              <TableRow key="empty">
                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground text-xs">
                   No sync runs recorded yet.
                 </TableCell>
               </TableRow>
             ) : (
-              logs.map((log) => (
-                <TableRow key={log.id}>
+              logs.map((log, index) => (
+                <TableRow key={log.id || index}>
                   <TableCell className="font-mono text-[11px] whitespace-nowrap">
                     {format(new Date(log.createdAt), "MMM d, yyyy HH:mm")}
                   </TableCell>

@@ -570,7 +570,7 @@ export default function AdminRooms() {
           <FormHeaderRow />
           <TableBody>
             {isLoading ? (
-              <TableRow>
+              <TableRow key="loading">
                 <TableCell colSpan={6} className="h-48 text-center text-muted-foreground animate-pulse">
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
@@ -581,14 +581,14 @@ export default function AdminRooms() {
                 </TableCell>
               </TableRow>
             ) : rooms?.length === 0 ? (
-              <TableRow>
+              <TableRow key="empty">
                 <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
                   <p className="text-[10px] uppercase font-bold tracking-[0.2em]">No Room Data Detected</p>
                 </TableCell>
               </TableRow>
             ) : (
-              rooms?.map((room: Room) => (
-                <TableRow key={room.id} className="border-border hover:bg-secondary/10 transition-colors group">
+              rooms?.map((room: Room, index: number) => (
+                <TableRow key={room.id || index} className="border-border hover:bg-secondary/10 transition-colors group">
                   <TableCell className="py-6">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 bg-secondary/30 border border-border flex items-center justify-center text-primary relative rounded-xl">

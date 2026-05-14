@@ -80,7 +80,7 @@ export default function AdminBookings() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
+              <TableRow key="loading">
                 <TableCell colSpan={8} className="h-48 text-center text-muted-foreground animate-pulse">
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
@@ -89,13 +89,13 @@ export default function AdminBookings() {
                 </TableCell>
               </TableRow>
             ) : bookings?.length === 0 ? (
-              <TableRow>
+              <TableRow key="empty">
                 <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
                   <p className="text-[10px] uppercase font-bold tracking-[0.2em]">No Reservation Records Detected</p>
                 </TableCell>
               </TableRow>
-            ) : bookings?.map((booking: Booking) => (
-              <TableRow key={booking.id} className="border-border hover:bg-secondary/10 transition-colors group">
+            ) : bookings?.map((booking: Booking, index: number) => (
+              <TableRow key={booking.id || index} className="border-border hover:bg-secondary/10 transition-colors group">
                 <TableCell className="py-6 font-mono text-[10px] text-muted-foreground font-bold pl-8">
                   #{booking.id.slice(0, 8).toUpperCase()}
                 </TableCell>
