@@ -6,7 +6,7 @@ import {
   useQueryClient,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import { cloneInitialRooms, type Room } from "@/lib/room-catalog";
+import type { Room } from "@/lib/room-catalog";
 
 export type { Room } from "@/lib/room-catalog";
 
@@ -32,6 +32,10 @@ export interface RoomUpsertInput {
   featured?: boolean;
   images: string[];
   amenities: string[];
+  sizeSqFt?: number;
+  airbnbIcalUrl?: string;
+  syncEnabled?: boolean;
+  regenerateExportToken?: boolean;
 }
 
 export interface Booking {
@@ -52,6 +56,7 @@ export interface Booking {
   totalPrice: number;
   pricePerNight?: number;
   status: "confirmed" | "cancelled" | "pending";
+  source?: "website" | "airbnb";
   specialRequests?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -61,11 +66,41 @@ export interface Booking {
 export interface AvailabilityRange {
   checkIn: string;
   checkOut: string;
+  source?: "website" | "airbnb";
 }
 
-// ── Room queries (still static from catalog) ────────────────────────────────
+export interface SyncLogEntry {
+  id: string;
+  roomId: number;
+  source: string;
+  success: boolean;
+  startedAt: string;
+  finishedAt: string;
+  eventsImported: number;
+  eventsRemoved: number;
+  errorMessage: string;
+  createdAt: string;
+}
 
-let MOCK_ROOMS: Room[] = cloneInitialRooms();
+async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...init?.headers },
+    ...init,
+  });
+  const data: unknown = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg =
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
+      typeof (data as { error: unknown }).error === "string"
+        ? (data as { error: string }).error
+        : "Request failed";
+    throw new Error(msg);
+  }
+  return data as T;
+}
 
 export interface RoomListFilters {
   type?: string;
@@ -74,22 +109,17 @@ export interface RoomListFilters {
   capacity?: number;
 }
 
-function filterRooms(filters?: RoomListFilters): Room[] {
-  let list = [...MOCK_ROOMS];
-  if (!filters) return list;
-  if (filters.type && filters.type !== "all") {
-    list = list.filter((r) => r.type === filters.type);
-  }
-  if (typeof filters.minPrice === "number") {
-    list = list.filter((r) => r.price >= filters.minPrice!);
-  }
-  if (typeof filters.maxPrice === "number") {
-    list = list.filter((r) => r.price <= filters.maxPrice!);
-  }
-  if (typeof filters.capacity === "number") {
-    list = list.filter((r) => r.capacity >= filters.capacity!);
-  }
-  return list;
+function roomsQueryString(filters?: RoomListFilters): string {
+  const sp = new URLSearchParams();
+  if (!filters) return sp.toString();
+  if (filters.type && filters.type !== "all") sp.set("type", filters.type);
+  if (typeof filters.minPrice === "number")
+    sp.set("minPrice", String(filters.minPrice));
+  if (typeof filters.maxPrice === "number")
+    sp.set("maxPrice", String(filters.maxPrice));
+  if (typeof filters.capacity === "number")
+    sp.set("capacity", String(filters.capacity));
+  return sp.toString();
 }
 
 export function getGetRoomsQueryKey(_filters?: RoomListFilters) {
@@ -97,16 +127,27 @@ export function getGetRoomsQueryKey(_filters?: RoomListFilters) {
 }
 
 export function useGetRooms(filters?: RoomListFilters) {
+  const qs = roomsQueryString(filters);
+  const url = qs ? `/api/rooms?${qs}` : "/api/rooms";
   return useQuery({
     queryKey: ["rooms", "list", filters ?? {}],
-    queryFn: async () => filterRooms(filters),
+    queryFn: async (): Promise<Room[]> => {
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load rooms");
+      return res.json() as Promise<Room[]>;
+    },
   });
 }
 
 export function useGetFeaturedRooms() {
   return useQuery({
     queryKey: ["rooms", "featured"],
-    queryFn: async () => MOCK_ROOMS.filter((r) => r.featured),
+    queryFn: async (): Promise<Room[]> => {
+      const res = await fetch("/api/rooms", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load rooms");
+      const rooms = (await res.json()) as Room[];
+      return rooms.filter((r) => r.featured);
+    },
   });
 }
 
@@ -125,34 +166,38 @@ type AvailabilityQueryOptions = {
 export function useGetRoom(id: number, options?: RoomQueryOptions) {
   return useQuery({
     queryKey: ["rooms", id],
-    queryFn: async () => MOCK_ROOMS.find((r) => r.id === id),
+    queryFn: async (): Promise<Room | undefined> => {
+      const res = await fetch(`/api/rooms/${id}`, { credentials: "include" });
+      if (res.status === 404) return undefined;
+      if (!res.ok) throw new Error("Failed to load room");
+      return res.json() as Promise<Room>;
+    },
     enabled: Number.isFinite(id) && id > 0,
     ...options?.query,
   });
 }
 
-// ── Room mutations (still in-memory until rooms are DB-backed) ───────────────
-
 export function useCreateRoom() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ data }: { data: RoomUpsertInput }) => {
-      const nextId = Math.max(0, ...MOCK_ROOMS.map((r) => r.id)) + 1;
-      const room: Room = {
-        id: nextId,
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        price: data.price,
-        images: data.images.length > 0 ? data.images : ["/room-deluxe.png"],
-        amenities: data.amenities,
-        capacity: data.capacity,
-        sizeSqFt: 600,
-        totalRooms: data.totalRooms,
-        featured: data.featured ?? false,
-      };
-      MOCK_ROOMS = [...MOCK_ROOMS, room];
-      return room;
+    mutationFn: async ({ data }: { data: RoomUpsertInput }): Promise<Room> => {
+      return jsonFetch<Room>("/api/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          price: data.price,
+          capacity: data.capacity,
+          totalRooms: data.totalRooms,
+          featured: data.featured ?? false,
+          images: data.images,
+          amenities: data.amenities,
+          sizeSqFt: data.sizeSqFt,
+          airbnbIcalUrl: data.airbnbIcalUrl,
+          syncEnabled: data.syncEnabled,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
@@ -170,23 +215,25 @@ export function useUpdateRoom() {
     }: {
       id: number;
       data: RoomUpsertInput;
-    }) => {
-      const existing = MOCK_ROOMS.find((r) => r.id === id);
-      if (!existing) throw new Error("Room not found");
-      const updated: Room = {
-        ...existing,
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        price: data.price,
-        capacity: data.capacity,
-        totalRooms: data.totalRooms,
-        featured: data.featured ?? false,
-        images: data.images.length > 0 ? data.images : existing.images,
-        amenities: data.amenities,
-      };
-      MOCK_ROOMS = MOCK_ROOMS.map((r) => (r.id === id ? updated : r));
-      return updated;
+    }): Promise<Room> => {
+      return jsonFetch<Room>(`/api/rooms/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          price: data.price,
+          capacity: data.capacity,
+          totalRooms: data.totalRooms,
+          featured: data.featured ?? false,
+          images: data.images,
+          amenities: data.amenities,
+          sizeSqFt: data.sizeSqFt,
+          airbnbIcalUrl: data.airbnbIcalUrl ?? null,
+          syncEnabled: data.syncEnabled,
+          regenerateExportToken: data.regenerateExportToken ?? false,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
@@ -199,15 +246,50 @@ export function useDeleteRoom() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id }: { id: number }) => {
-      const existed = MOCK_ROOMS.some((r) => r.id === id);
-      if (!existed) throw new Error("Room not found");
-      MOCK_ROOMS = MOCK_ROOMS.filter((r) => r.id !== id);
+      await jsonFetch<{ ok: boolean }>(`/api/rooms/${id}`, {
+        method: "DELETE",
+      });
       return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+  });
+}
+
+export function useSyncRoom(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      return jsonFetch<{
+        roomId: number;
+        success: boolean;
+        imported: number;
+        removed: number;
+        error?: string;
+      }>(`/api/rooms/${roomId}/sync`, { method: "POST" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "sync-logs"] });
+    },
+  });
+}
+
+export function useGetSyncLogs(roomId?: number) {
+  return useQuery({
+    queryKey: ["admin", "sync-logs", roomId ?? "all"],
+    queryFn: async (): Promise<SyncLogEntry[]> => {
+      const u =
+        roomId != null
+          ? `/api/admin/sync-logs?roomId=${roomId}`
+          : "/api/admin/sync-logs";
+      const res = await fetch(u, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load sync logs");
+      return res.json() as Promise<SyncLogEntry[]>;
     },
   });
 }
@@ -222,7 +304,7 @@ export function useGetAllBookings() {
   return useQuery({
     queryKey: getGetAllBookingsQueryKey(),
     queryFn: async (): Promise<Booking[]> => {
-      const res = await fetch("/api/bookings");
+      const res = await fetch("/api/bookings", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json() as Promise<Booking[]>;
     },
@@ -234,7 +316,7 @@ export function useGetBooking(id: string, options?: BookingQueryOptions) {
     queryKey: ["bookings", id],
     queryFn: async (): Promise<Booking | undefined> => {
       if (!id) return undefined;
-      const res = await fetch(`/api/bookings/${id}`);
+      const res = await fetch(`/api/bookings/${id}`, { credentials: "include" });
       if (res.status === 404) return undefined;
       if (!res.ok) throw new Error("Failed to fetch booking");
       return res.json() as Promise<Booking>;
@@ -248,7 +330,7 @@ export function useGetUserBookings() {
   return useQuery({
     queryKey: ["bookings", "user"],
     queryFn: async (): Promise<Booking[]> => {
-      const res = await fetch("/api/bookings");
+      const res = await fetch("/api/bookings", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json() as Promise<Booking[]>;
     },
@@ -266,7 +348,9 @@ export function useGetRoomAvailability(
   return useQuery({
     queryKey: ["rooms", roomId, "availability"],
     queryFn: async (): Promise<AvailabilityRange[]> => {
-      const res = await fetch(`/api/bookings/availability?roomId=${roomId}`);
+      const res = await fetch(`/api/bookings/availability?roomId=${roomId}`, {
+        credentials: "include",
+      });
       if (!res.ok) return [];
       return res.json() as Promise<AvailabilityRange[]>;
     },
@@ -300,6 +384,7 @@ export function useCreateBooking() {
     mutationFn: async ({ data }: { data: CreateBookingInput }): Promise<CreateBookingResult> => {
       const res = await fetch("/api/bookings", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -327,6 +412,7 @@ export function useCreateBooking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
     },
   });
 }
@@ -337,6 +423,7 @@ export function useCancelBooking() {
     mutationFn: async ({ id }: { id: string }) => {
       const res = await fetch(`/api/bookings/${id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "cancelled" }),
       });
@@ -356,6 +443,7 @@ export function useCancelBooking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
     },
   });
 }
@@ -366,7 +454,7 @@ export function useGetAdminStats() {
   return useQuery({
     queryKey: ["admin", "stats"],
     queryFn: async (): Promise<AdminStats> => {
-      const res = await fetch("/api/admin/stats");
+      const res = await fetch("/api/admin/stats", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json() as Promise<AdminStats>;
     },
@@ -377,7 +465,7 @@ export function useGetRevenueData() {
   return useQuery({
     queryKey: ["admin", "revenue"],
     queryFn: async (): Promise<RevenueMonth[]> => {
-      const res = await fetch("/api/admin/revenue");
+      const res = await fetch("/api/admin/revenue", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch revenue");
       return res.json() as Promise<RevenueMonth[]>;
     },

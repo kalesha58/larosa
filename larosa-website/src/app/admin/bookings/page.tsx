@@ -72,6 +72,7 @@ export default function AdminBookings() {
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Guest Details</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Property Units</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Schedule</TableHead>
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest">Source</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Status</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Financials</TableHead>
               <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest pr-8">Actions</TableHead>
@@ -80,7 +81,7 @@ export default function AdminBookings() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground animate-pulse">
+                <TableCell colSpan={8} className="h-48 text-center text-muted-foreground animate-pulse">
                   <div className="flex flex-col items-center gap-3">
                     <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
                     <span className="text-[10px] uppercase font-bold tracking-[0.3em]">Querying Central Logs</span>
@@ -89,7 +90,7 @@ export default function AdminBookings() {
               </TableRow>
             ) : bookings?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
                   <p className="text-[10px] uppercase font-bold tracking-[0.2em]">No Reservation Records Detected</p>
                 </TableCell>
               </TableRow>
@@ -127,6 +128,11 @@ export default function AdminBookings() {
                   </div>
                 </TableCell>
                 <TableCell>
+                  <Badge variant="outline" className="text-[8px] uppercase tracking-widest font-bold">
+                    {booking.source === "airbnb" ? "Airbnb" : "Website"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
                   <Badge 
                     variant={booking.status === 'confirmed' ? 'default' : 'secondary'} 
                     className={`rounded-lg text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 border-none ${
@@ -145,7 +151,7 @@ export default function AdminBookings() {
                 </TableCell>
                 <TableCell className="text-right pr-8">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    {booking.status === 'confirmed' && (
+                    {booking.status === "confirmed" && (
                       <Button 
                         variant="ghost" 
                         size="icon" 

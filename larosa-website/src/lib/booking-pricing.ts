@@ -1,17 +1,39 @@
-import { INITIAL_ROOMS, type Room } from "@/lib/room-catalog";
+import { connectMongo } from "@/lib/mongodb";
+import { Room } from "@/models/Room";
 
-export function getBookingTotal(
+export interface RoomPricingShape {
+  id: number;
+  title: string;
+  type: string;
+  price: number;
+}
+
+export async function getRoomForPricing(
+  roomId: number
+): Promise<RoomPricingShape | null> {
+  await connectMongo();
+  const room = await Room.findOne({ roomId }).lean();
+  if (!room) return null;
+  return {
+    id: room.roomId,
+    title: room.title,
+    type: room.type,
+    price: room.price,
+  };
+}
+
+export async function getBookingTotal(
   roomId: number,
   checkInIso: string,
   checkOutIso: string
-): {
-  room: Room;
+): Promise<{
+  room: RoomPricingShape;
   subtotal: number;
   taxes: number;
   total: number;
   nights: number;
-} | null {
-  const room = INITIAL_ROOMS.find((r) => r.id === roomId);
+} | null> {
+  const room = await getRoomForPricing(roomId);
   if (!room) return null;
   const checkIn = new Date(checkInIso);
   const checkOut = new Date(checkOutIso);
@@ -22,6 +44,6 @@ export function getBookingTotal(
     )
   );
   const subtotal = room.price * nights;
-  const taxes = Math.floor(subtotal * 0.15);
+  const taxes = Math.round(subtotal * 0.12);
   return { room, subtotal, taxes, total: subtotal + taxes, nights };
 }

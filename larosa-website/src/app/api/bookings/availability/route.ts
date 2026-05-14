@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
-import { Booking } from "@/models/Booking";
+import { Booking, PENDING_BOOKING_HOLD_MS } from "@/models/Booking";
+import { ensureCatalogRoomsSeeded } from "@/lib/room-seed";
 
 // GET /api/bookings/availability?roomId=2
 export async function GET(request: NextRequest) {
@@ -16,26 +17,34 @@ export async function GET(request: NextRequest) {
 
     const roomId = parseInt(roomIdStr, 10);
     if (isNaN(roomId)) {
-      return NextResponse.json(
-        { error: "Invalid roomId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid roomId" }, { status: 400 });
     }
 
     await connectMongo();
+    await ensureCatalogRoomsSeeded();
 
-    // Only return confirmed bookings (cancelled ones free up the dates)
+    const holdSince = new Date(Date.now() - PENDING_BOOKING_HOLD_MS);
+
     const bookings = await Booking.find({
       roomId,
-      status: "confirmed",
-      checkOut: { $gte: new Date() }, // only future/current bookings
+      status: { $ne: "cancelled" },
+      checkOut: { $gte: new Date() },
+      $or: [
+        { status: "confirmed" },
+        {
+          status: "pending",
+          createdAt: { $gte: holdSince },
+          $or: [{ source: "website" }, { source: { $exists: false } }],
+        },
+      ],
     })
-      .select("checkIn checkOut")
+      .select("checkIn checkOut source")
       .lean();
 
     const ranges = bookings.map((b) => ({
       checkIn: b.checkIn.toISOString().split("T")[0],
       checkOut: b.checkOut.toISOString().split("T")[0],
+      source: (b.source ?? "website") as "website" | "airbnb",
     }));
 
     return NextResponse.json(ranges);

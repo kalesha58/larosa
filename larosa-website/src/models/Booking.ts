@@ -1,6 +1,10 @@
 import mongoose, { Schema, models, model } from "mongoose";
 
 export type BookingStatus = "pending" | "confirmed" | "cancelled";
+export type BookingSource = "website" | "airbnb";
+
+/** Pending website bookings block availability for this long (payment window). */
+export const PENDING_BOOKING_HOLD_MS = 30 * 60 * 1000;
 
 export interface IBooking {
   _id: mongoose.Types.ObjectId;
@@ -18,6 +22,9 @@ export interface IBooking {
   guests: number;
   totalPrice: number;
   status: BookingStatus;
+  source: BookingSource;
+  /** iCal UID for imported Airbnb blocks (dedupe / removal). */
+  externalUid?: string;
   specialRequests?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -50,6 +57,12 @@ const BookingSchema = new Schema<IBooking>(
       enum: ["pending", "confirmed", "cancelled"],
       default: "pending",
     },
+    source: {
+      type: String,
+      enum: ["website", "airbnb"],
+      default: "website",
+    },
+    externalUid: { type: String, trim: true, sparse: true },
     specialRequests: { type: String },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
@@ -57,31 +70,41 @@ const BookingSchema = new Schema<IBooking>(
   { timestamps: true }
 );
 
-// Index for fast overlap queries
 BookingSchema.index({ roomId: 1, checkIn: 1, checkOut: 1, status: 1 });
-// Index for user booking lookups
+BookingSchema.index({ roomId: 1, source: 1, externalUid: 1 });
 BookingSchema.index({ guestEmail: 1 });
 BookingSchema.index({ razorpayOrderId: 1 });
 
-/** Checks if a date range overlaps with any confirmed booking for a given room.
- *  Returns true if there IS a conflict (i.e., dates are NOT available). */
+/** Overlap with confirmed stays (website or Airbnb) or recent pending website holds. */
 export async function hasOverlap(
   roomId: number,
   checkIn: Date,
   checkOut: Date,
   excludeBookingId?: string
 ): Promise<boolean> {
-  const Booking = models.Booking ?? model<IBooking>("Booking", BookingSchema);
-  const query: any = {
+  const BookingModel = models.Booking ?? model<IBooking>("Booking", BookingSchema);
+  const holdSince = new Date(Date.now() - PENDING_BOOKING_HOLD_MS);
+
+  const base: Record<string, unknown> = {
     roomId,
-    status: "confirmed",
     checkIn: { $lt: checkOut },
     checkOut: { $gt: checkIn },
+    status: { $ne: "cancelled" },
+    $or: [
+      { status: "confirmed" },
+      {
+        status: "pending",
+        createdAt: { $gte: holdSince },
+        $or: [{ source: "website" }, { source: { $exists: false } }],
+      },
+    ],
   };
+
   if (excludeBookingId) {
-    query._id = { $ne: new mongoose.Types.ObjectId(excludeBookingId) };
+    base._id = { $ne: new mongoose.Types.ObjectId(excludeBookingId) };
   }
-  const conflict = await Booking.findOne(query).lean();
+
+  const conflict = await BookingModel.findOne(base).lean();
   return conflict !== null;
 }
 

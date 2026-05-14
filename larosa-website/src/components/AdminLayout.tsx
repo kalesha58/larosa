@@ -3,16 +3,17 @@
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  BedDouble, 
-  CalendarDays, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  BedDouble,
+  CalendarDays,
+  LogOut,
   ChevronRight,
   ExternalLink,
   User,
   Settings,
-  Bell
+  Bell,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,6 +71,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Rooms", href: "/admin/rooms", icon: BedDouble },
     { name: "Bookings", href: "/admin/bookings", icon: CalendarDays },
+    { name: "Sync logs", href: "/admin/sync-logs", icon: RefreshCw },
   ];
 
   const systemNav = [

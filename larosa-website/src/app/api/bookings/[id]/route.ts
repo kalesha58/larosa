@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import mongoose from "mongoose";
+import { getAuthPayload } from "@/lib/auth-guard";
 
 // GET /api/bookings/[id]
 export async function GET(
@@ -39,6 +40,7 @@ export async function GET(
       totalPrice: booking.totalPrice,
       pricePerNight: booking.pricePerNight,
       status: booking.status,
+      source: booking.source ?? "website",
       specialRequests: booking.specialRequests ?? "",
       razorpayOrderId: booking.razorpayOrderId ?? "",
       razorpayPaymentId: booking.razorpayPaymentId ?? "",
@@ -53,12 +55,17 @@ export async function GET(
   }
 }
 
-// PATCH /api/bookings/[id] — update status (admin cancel, etc.)
+// PATCH /api/bookings/[id] — admin: confirm/cancel; guest: cancel own website booking only
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAuthPayload();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectMongo();
     const { id } = await params;
 
@@ -74,6 +81,34 @@ export async function PATCH(
         { error: "Invalid status. Must be 'confirmed' or 'cancelled'" },
         { status: 400 }
       );
+    }
+
+    const existing = await Booking.findById(id).lean();
+    if (!existing) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    const isAdmin = session.role === "admin";
+    const isOwner =
+      existing.guestEmail.toLowerCase() === session.email.toLowerCase();
+
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!isAdmin) {
+      if (status !== "cancelled") {
+        return NextResponse.json(
+          { error: "Guests may only cancel a booking" },
+          { status: 403 }
+        );
+      }
+      if ((existing.source ?? "website") === "airbnb") {
+        return NextResponse.json(
+          { error: "This reservation cannot be cancelled here" },
+          { status: 403 }
+        );
+      }
     }
 
     const booking = await Booking.findByIdAndUpdate(

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
+import { requireAdminResponse, isUnauthorized } from "@/lib/auth-guard";
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -9,6 +10,9 @@ const MONTH_NAMES = [
 
 // GET /api/admin/revenue — monthly revenue for the current year
 export async function GET() {
+  const auth = await requireAdminResponse();
+  if (isUnauthorized(auth)) return auth;
+
   try {
     await connectMongo();
 
@@ -18,6 +22,7 @@ export async function GET() {
       {
         $match: {
           status: "confirmed",
+          source: "website",
           checkIn: {
             $gte: new Date(`${currentYear}-01-01`),
             $lte: new Date(`${currentYear}-12-31`),

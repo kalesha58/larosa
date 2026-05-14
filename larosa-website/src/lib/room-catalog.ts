@@ -12,6 +12,13 @@ export interface Room {
   sizeSqFt: number;
   totalRooms: number;
   featured?: boolean;
+  /** One Airbnb listing calendar ↔ this `id` (see server sync). */
+  airbnbIcalUrl?: string;
+  syncEnabled?: boolean;
+  syncStatus?: string;
+  lastSyncedAt?: string | null;
+  /** Relative path; prepend site origin for Airbnb import. */
+  calendarExportUrl?: string;
 }
 
 export const INITIAL_ROOMS: Room[] = [

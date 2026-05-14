@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
-import { INITIAL_ROOMS } from "@/lib/room-catalog";
+import { Room } from "@/models/Room";
+import { getAuthPayload } from "@/lib/auth-guard";
+import { ensureCatalogRoomsSeeded } from "@/lib/room-seed";
 
 const createSchema = z.object({
   roomId: z.number().int().positive(),
@@ -15,38 +17,70 @@ const createSchema = z.object({
   specialRequests: z.string().optional(),
 });
 
-// GET /api/bookings — list all bookings (admin use)
+function serializeBooking(b: {
+  _id: { toString: () => string };
+  roomId: number;
+  roomTitle: string;
+  roomType: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  checkIn: Date;
+  checkOut: Date;
+  nights: number;
+  guests: number;
+  totalPrice: number;
+  status: string;
+  source?: string;
+  specialRequests?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  createdAt: Date;
+}) {
+  return {
+    id: b._id.toString(),
+    roomId: b.roomId,
+    room: {
+      id: b.roomId,
+      title: b.roomTitle,
+      type: b.roomType,
+    },
+    guestName: b.guestName,
+    guestEmail: b.guestEmail,
+    guestPhone: b.guestPhone ?? "",
+    checkIn: b.checkIn.toISOString(),
+    checkOut: b.checkOut.toISOString(),
+    nights: b.nights,
+    guests: b.guests,
+    totalPrice: b.totalPrice,
+    status: b.status,
+    source: b.source ?? "website",
+    specialRequests: b.specialRequests ?? "",
+    razorpayOrderId: b.razorpayOrderId ?? "",
+    razorpayPaymentId: b.razorpayPaymentId ?? "",
+    createdAt: b.createdAt.toISOString(),
+  };
+}
+
+// GET /api/bookings — admin: all; user: own bookings only
 export async function GET() {
   try {
+    const session = await getAuthPayload();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectMongo();
-    const bookings = await Booking.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    await ensureCatalogRoomsSeeded();
 
-    const serialized = bookings.map((b) => ({
-      id: b._id.toString(),
-      roomId: b.roomId,
-      room: {
-        id: b.roomId,
-        title: b.roomTitle,
-        type: b.roomType,
-      },
-      guestName: b.guestName,
-      guestEmail: b.guestEmail,
-      guestPhone: b.guestPhone ?? "",
-      checkIn: b.checkIn.toISOString(),
-      checkOut: b.checkOut.toISOString(),
-      nights: b.nights,
-      guests: b.guests,
-      totalPrice: b.totalPrice,
-      status: b.status,
-      specialRequests: b.specialRequests ?? "",
-      razorpayOrderId: b.razorpayOrderId ?? "",
-      razorpayPaymentId: b.razorpayPaymentId ?? "",
-      createdAt: b.createdAt.toISOString(),
-    }));
+    const filter =
+      session.role === "admin"
+        ? {}
+        : { guestEmail: session.email.toLowerCase() };
 
-    return NextResponse.json(serialized);
+    const bookings = await Booking.find(filter).sort({ createdAt: -1 }).lean();
+
+    return NextResponse.json(bookings.map(serializeBooking));
   } catch (err) {
     console.error("[GET /api/bookings]", err);
     return NextResponse.json(
@@ -60,6 +94,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await connectMongo();
+    await ensureCatalogRoomsSeeded();
 
     const json: unknown = await request.json();
     const parsed = createSchema.safeParse(json);
@@ -71,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
-    const room = INITIAL_ROOMS.find((r) => r.id === data.roomId);
+    const room = await Room.findOne({ roomId: data.roomId }).lean();
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
@@ -79,12 +114,8 @@ export async function POST(request: NextRequest) {
     const checkIn = new Date(data.checkIn);
     const checkOut = new Date(data.checkOut);
 
-    // Validate dates
     if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
-      return NextResponse.json(
-        { error: "Invalid dates" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
     }
     if (checkIn >= checkOut) {
       return NextResponse.json(
@@ -99,7 +130,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // OVERLAP CHECK — core business rule
     const conflict = await hasOverlap(data.roomId, checkIn, checkOut);
     if (conflict) {
       return NextResponse.json(
@@ -113,14 +143,16 @@ export async function POST(request: NextRequest) {
 
     const nights = Math.max(
       1,
-      Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
+      Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+      )
     );
     const subtotal = room.price * nights;
-    const taxes = Math.round(subtotal * 0.12); // 12% GST
+    const taxes = Math.round(subtotal * 0.12);
     const totalPrice = subtotal + taxes;
 
     const booking = await Booking.create({
-      roomId: room.id,
+      roomId: room.roomId,
       roomTitle: room.title,
       roomType: room.type,
       pricePerNight: room.price,
@@ -134,6 +166,7 @@ export async function POST(request: NextRequest) {
       totalPrice,
       specialRequests: data.specialRequests,
       status: "pending",
+      source: "website",
     });
 
     return NextResponse.json(

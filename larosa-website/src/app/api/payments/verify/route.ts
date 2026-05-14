@@ -160,8 +160,7 @@ export async function POST(request: Request) {
       if (booking) {
         confirmedBookingId = booking._id.toString();
 
-        // ── Send confirmation email ─────────────────────────────────────────
-        if (isMailConfigured()) {
+        if ((booking.source ?? "website") !== "airbnb" && isMailConfigured()) {
           try {
             await sendContactMail({
               to: booking.guestEmail,

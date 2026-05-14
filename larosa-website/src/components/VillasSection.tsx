@@ -171,6 +171,7 @@ export function VillasSection() {
                   src={activeVilla.img}
                   alt={activeVilla.name}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 60vw"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent lg:bg-gradient-to-r" />

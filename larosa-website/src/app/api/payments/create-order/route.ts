@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const pricing = getBookingTotal(roomId, checkIn, checkOut);
+    const pricing = await getBookingTotal(roomId, checkIn, checkOut);
     if (!pricing) {
       return NextResponse.json(
         { error: "Invalid room or stay dates" },

@@ -37,7 +37,7 @@ const HERO_SLIDES = [
     label: "Premium Comfort",
   },
   {
-    src: "/WhatsApp Image 2026-04-24 at 12.18.54 PM.jpeg",
+    src: "/WhatsApp Image 2026-04-24 at 12.19.08 PM.jpeg",
     label: "Larosa Sanctuary",
   },
 ];
