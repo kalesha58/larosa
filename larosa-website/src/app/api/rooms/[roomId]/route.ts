@@ -72,11 +72,11 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
     }
 
     const data = parsed.data;
-    const update: Record<string, unknown> = { ...data };
-    delete update.regenerateExportToken;
+    const { airbnbIcalUrl, regenerateExportToken, ...rest } = data;
+    const update: Record<string, unknown> = { ...rest };
 
-    if (data.airbnbIcalUrl !== undefined) {
-      const trimmed = (data.airbnbIcalUrl ?? "").trim();
+    if (airbnbIcalUrl !== undefined) {
+      const trimmed = (airbnbIcalUrl ?? "").trim();
       if (trimmed) {
         try {
           assertAllowedAirbnbIcalUrl(trimmed);
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
       update.airbnbIcalUrl = trimmed;
     }
 
-    if (data.regenerateExportToken) {
+    if (regenerateExportToken) {
       update.calendarExportToken = randomBytes(24).toString("hex");
     }
 

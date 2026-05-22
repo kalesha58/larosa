@@ -38,29 +38,79 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import type { AdminStats, RevenueMonth } from "@/hooks/use-queries";
+
+const EMPTY_STATS: AdminStats = {
+  totalRevenue: 0,
+  occupancyRate: 0,
+  confirmedBookings: 0,
+  cancelledBookings: 0,
+};
+
+const EMPTY_REVENUE: RevenueMonth[] = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+].map((month) => ({ month, revenue: 0 }));
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-10">
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-10 w-64" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Skeleton className="h-[400px] lg:col-span-2 rounded-2xl" />
+        <Skeleton className="h-[400px] rounded-2xl" />
+      </div>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading: statsLoading } = useGetAdminStats();
-  const { data: revenueData, isLoading: revLoading } = useGetRevenueData();
-  const { data: bookings, isLoading: bookingsLoading } = useGetAllBookings();
+  const statsQuery = useGetAdminStats();
+  const revenueQuery = useGetRevenueData();
+  const bookingsQuery = useGetAllBookings();
 
-  if (statsLoading || revLoading || bookingsLoading || !stats || !revenueData || !bookings) {
+  const isPending =
+    statsQuery.isPending || revenueQuery.isPending || bookingsQuery.isPending;
+
+  const hasError =
+    statsQuery.isError || revenueQuery.isError || bookingsQuery.isError;
+
+  const refetchAll = () => {
+    void statsQuery.refetch();
+    void revenueQuery.refetch();
+    void bookingsQuery.refetch();
+  };
+
+  if (isPending) {
+    return <DashboardSkeleton />;
+  }
+
+  if (hasError) {
     return (
-      <div className="space-y-10">
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-10 w-64" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-[400px] lg:col-span-2 rounded-2xl" />
-          <Skeleton className="h-[400px] rounded-2xl" />
-        </div>
-      </div>
+      <AdminEmptyState
+        icon={TrendingUp}
+        title="Dashboard unavailable"
+        description="Could not load admin metrics. Check that you are logged in as admin and MONGODB_URI is set in .env.local, then restart the dev server."
+        actionLabel="Open Rooms"
+        actionHref="/admin/rooms"
+        onRetry={refetchAll}
+      />
     );
   }
+
+  const stats = statsQuery.data ?? EMPTY_STATS;
+  const revenueData = revenueQuery.data ?? EMPTY_REVENUE;
+  const bookings = bookingsQuery.data ?? [];
+  const hasRevenue = revenueData.some((m) => m.revenue > 0);
 
   const statCards = [
     { 
@@ -194,7 +244,14 @@ export default function AdminDashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px] w-full mt-4">
+            <div className="h-[400px] w-full mt-4 relative">
+              {!hasRevenue ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/80">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground text-center px-6">
+                    No website revenue yet — confirmed bookings will appear here
+                  </p>
+                </div>
+              ) : null}
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
@@ -357,9 +414,14 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-muted-foreground">
-                <p className="text-xs uppercase tracking-[0.2em]">No recent activity found</p>
-              </div>
+              <AdminEmptyState
+                icon={Calendar}
+                title="No reservations yet"
+                description="Sync Airbnb on Rooms or wait for website bookings. Imported blocks and stays will show here."
+                actionLabel="View calendar"
+                actionHref="/admin/calendar"
+                className="py-8"
+              />
             )}
           </CardContent>
         </Card>

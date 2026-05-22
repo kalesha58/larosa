@@ -4,7 +4,7 @@ export type RoomSyncStatus = "idle" | "syncing" | "ok" | "error";
 
 export interface IRoom {
   _id: mongoose.Types.ObjectId;
-  /** Public room id used by bookings and URLs (stable). Map one Airbnb listing to one `roomId` for accurate sync. */
+  /** Stable bookable villa id (one whole villa per `roomId`; map one Airbnb listing + .ics URL). */
   roomId: number;
   title: string;
   description: string;

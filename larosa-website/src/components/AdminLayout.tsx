@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   BedDouble,
   CalendarDays,
+  CalendarRange,
   LogOut,
   ChevronRight,
   ExternalLink,
@@ -69,7 +70,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const nav = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Rooms", href: "/admin/rooms", icon: BedDouble },
+    { name: "Villas", href: "/admin/rooms", icon: BedDouble },
+    { name: "Calendar", href: "/admin/calendar", icon: CalendarRange },
     { name: "Bookings", href: "/admin/bookings", icon: CalendarDays },
     { name: "Sync logs", href: "/admin/sync-logs", icon: RefreshCw },
   ];

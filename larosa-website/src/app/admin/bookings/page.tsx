@@ -18,13 +18,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { XCircle, Calendar, User, Mail, CreditCard, Search, Filter, Download } from "lucide-react";
+import { XCircle, Calendar, Mail, CreditCard, Search, Filter, Download, ClipboardList } from "lucide-react";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminTableSkeleton } from "@/components/admin/AdminTableSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 
 export default function AdminBookings() {
-  const { data: bookings, isLoading } = useGetAllBookings();
+  const { data: bookings, isLoading, isError, isSuccess, refetch } = useGetAllBookings();
   const cancelBooking = useCancelBooking();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,7 +72,7 @@ export default function AdminBookings() {
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="w-[120px] text-[10px] font-bold uppercase tracking-widest h-14">ID</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Guest Details</TableHead>
-              <TableHead className="text-[10px] font-bold uppercase tracking-widest">Property Units</TableHead>
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest">Villa</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Schedule</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Source</TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest">Status</TableHead>
@@ -80,18 +82,28 @@ export default function AdminBookings() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow key="loading">
-                <TableCell colSpan={8} className="h-48 text-center text-muted-foreground animate-pulse">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
-                    <span className="text-[10px] uppercase font-bold tracking-[0.3em]">Querying Central Logs</span>
-                  </div>
+              <AdminTableSkeleton rows={4} cols={8} />
+            ) : isError ? (
+              <TableRow key="error">
+                <TableCell colSpan={8} className="p-0">
+                  <AdminEmptyState
+                    icon={ClipboardList}
+                    title="Could not load bookings"
+                    description="Ensure you are logged in as admin and MongoDB is connected."
+                    onRetry={() => void refetch()}
+                  />
                 </TableCell>
               </TableRow>
-            ) : bookings?.length === 0 ? (
+            ) : isSuccess && (!bookings || bookings.length === 0) ? (
               <TableRow key="empty">
-                <TableCell colSpan={8} className="h-48 text-center text-muted-foreground">
-                  <p className="text-[10px] uppercase font-bold tracking-[0.2em]">No Reservation Records Detected</p>
+                <TableCell colSpan={8} className="p-0">
+                  <AdminEmptyState
+                    icon={ClipboardList}
+                    title="No reservations yet"
+                    description="After you paste Airbnb iCal URLs on Villas and Sync Airbnb, imported blocks appear here. Website bookings will also show up."
+                    actionLabel="Open calendar"
+                    actionHref="/admin/calendar"
+                  />
                 </TableCell>
               </TableRow>
             ) : bookings?.map((booking: Booking, index: number) => (

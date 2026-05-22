@@ -61,11 +61,10 @@ export function SignatureSuitesSection({
         </div>
 
         <div className={gridClass}>
-          {isLoading ? (
-            <>
-              {[0, 1].map((i) => (
+          {isLoading
+            ? [0, 1].map((i) => (
                 <div
-                  key={i}
+                  key={`signature-skel-${i}`}
                   className="flex aspect-[4/5] flex-col overflow-hidden rounded-[2rem] border border-border/50 bg-muted/30 shadow-inner"
                 >
                   <div className="min-h-0 flex-1 animate-pulse bg-muted/50" />
@@ -73,13 +72,14 @@ export function SignatureSuitesSection({
                     <div className="h-12 animate-pulse rounded-full bg-muted/60" />
                   </div>
                 </div>
+              ))
+            : (rooms ?? []).map((room, idx) => (
+                <SuiteShowcaseCard
+                  key={room.id ?? `suite-${idx}`}
+                  room={room}
+                  index={idx}
+                />
               ))}
-            </>
-          ) : (
-            rooms?.map((room, idx) => (
-              <SuiteShowcaseCard key={room.id} room={room} index={idx} />
-            ))
-          )}
         </div>
 
         <motion.div

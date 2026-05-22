@@ -6,10 +6,13 @@ import {
   useCreateRoom,
   useUpdateRoom,
   useDeleteRoom,
-  useSyncRoom,
   getGetRoomsQueryKey,
   type Room,
 } from "@/hooks/use-queries";
+import { RoomSyncButton } from "@/components/admin/RoomSyncButton";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminTableSkeleton } from "@/components/admin/AdminTableSkeleton";
+import { BedDouble } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,8 +62,8 @@ import {
   Users,
   Layers,
   Star,
-  RefreshCw,
   Copy,
+  RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -95,37 +98,6 @@ type RoomFormValues = {
   regenerateExportToken: boolean;
 };
 
-function RoomSyncButton({ roomId }: { roomId: number }) {
-  const sync = useSyncRoom(roomId);
-  const { toast } = useToast();
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="h-8 rounded-lg text-[9px] uppercase tracking-widest font-bold gap-1"
-      disabled={sync.isPending}
-      onClick={async () => {
-        try {
-          const r = await sync.mutateAsync();
-          toast({
-            title: r.success ? "Airbnb sync complete" : "Sync finished",
-            description: r.error
-              ? r.error
-              : `Imported ${r.imported}, removed ${r.removed}`,
-          });
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : "Sync failed";
-          toast({ variant: "destructive", title: "Sync failed", description: msg });
-        }
-      }}
-    >
-      <RefreshCw className={`h-3 w-3 ${sync.isPending ? "animate-spin" : ""}`} />
-      Sync
-    </Button>
-  );
-}
-
 function CopyExportUrlButton({ room }: { room: Room }) {
   const { toast } = useToast();
   if (!room.calendarExportUrl) return null;
@@ -155,7 +127,7 @@ function CopyExportUrlButton({ room }: { room: Room }) {
 }
 
 export default function AdminRooms() {
-  const { data: rooms, isLoading } = useGetRooms();
+  const { data: rooms, isLoading, isError, isSuccess, refetch } = useGetRooms();
   const createRoom = useCreateRoom();
   const updateRoom = useUpdateRoom();
   const deleteRoom = useDeleteRoom();
@@ -163,16 +135,17 @@ export default function AdminRooms() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomSchema) as Resolver<RoomFormValues>,
     defaultValues: {
       title: "",
       description: "",
-      type: "Standard",
+      type: "Villa",
       price: 100,
       capacity: 2,
-      totalRooms: 5,
+      totalRooms: 1,
       featured: false,
       images: "",
       amenities: "",
@@ -216,7 +189,7 @@ export default function AdminRooms() {
       type: values.type,
       price: values.price,
       capacity: values.capacity,
-      totalRooms: values.totalRooms,
+      totalRooms: 1,
       featured: values.featured,
       images: values.images.split(",").map((s) => s.trim()).filter(Boolean),
       amenities: values.amenities.split(",").map((s) => s.trim()).filter(Boolean),
@@ -247,10 +220,42 @@ export default function AdminRooms() {
     }
   };
 
+  const handleSeedCatalog = async () => {
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/admin/seed-villas", {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        upserted?: number[];
+        updated?: number[];
+        pruned?: number[];
+        skippedWithBookings?: number[];
+      };
+      if (!res.ok) {
+        throw new Error(body.error ?? "Seed failed");
+      }
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      toast({
+        title: "Villa catalog synced",
+        description: `Updated: ${body.updated?.length ?? 0}, new: ${body.upserted?.length ?? 0}, pruned: ${body.pruned?.length ?? 0}.`,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast({ variant: "destructive", title: "Seed failed", description: message });
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (
       !confirm(
-        "Are you certain you want to decommission this room? This action cannot be reversed."
+        "Are you certain you want to decommission this villa? This action cannot be reversed."
       )
     )
       return;
@@ -258,7 +263,7 @@ export default function AdminRooms() {
       await deleteRoom.mutateAsync({ id });
       toast({
         title: "Asset Decommissioned",
-        description: "The room listing has been removed from the catalog.",
+        description: "The villa has been removed from the catalog.",
       });
       queryClient.invalidateQueries({ queryKey: getGetRoomsQueryKey() });
     } catch (error: unknown) {
@@ -272,24 +277,35 @@ export default function AdminRooms() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border/50">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60 mb-2">
-            Inventory Management
+            Villa management
           </p>
-          <h1 className="font-serif text-4xl text-foreground">Room Catalog</h1>
+          <h1 className="font-serif text-4xl text-foreground">Villa catalog</h1>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={seeding}
+            onClick={() => void handleSeedCatalog()}
+            className="rounded-xl h-12 px-6 uppercase tracking-widest text-xs font-bold border-border"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${seeding ? "animate-spin" : ""}`} />
+            Sync catalog from seed
+          </Button>
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-8 uppercase tracking-widest text-xs font-bold shadow-lg shadow-primary/20">
-              <Plus className="mr-2 h-4 w-4" /> Register New Room
+              <Plus className="mr-2 h-4 w-4" /> Add villa
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border rounded-2xl shadow-2xl p-0">
             <DialogHeader className="p-8 pb-4 border-b border-border/50">
               <DialogTitle className="font-serif text-3xl">
-                {editingId ? "Modify Asset" : "New Inventory Item"}
+                {editingId ? "Edit villa" : "New villa"}
               </DialogTitle>
               <DialogDescription className="text-xs uppercase tracking-widest mt-1">
-                Fill in the details for the luxury room listing
+                One villa = one whole property bookable at a time (one Airbnb listing).
               </DialogDescription>
             </DialogHeader>
             <div className="p-8">
@@ -302,12 +318,12 @@ export default function AdminRooms() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-[10px] font-bold uppercase tracking-widest">
-                            Room Title
+                            Villa name
                           </FormLabel>
                           <FormControl>
                             <Input
                               className="rounded-xl border-border h-11 focus:ring-1 ring-primary"
-                              placeholder="e.g. Imperial Suite"
+                              placeholder="e.g. Garden Retreat Villa"
                               {...field}
                             />
                           </FormControl>
@@ -330,10 +346,8 @@ export default function AdminRooms() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="rounded-xl border-border">
-                              <SelectItem value="Standard">Standard</SelectItem>
-                              <SelectItem value="Deluxe">Deluxe</SelectItem>
+                              <SelectItem value="Villa">Villa</SelectItem>
                               <SelectItem value="Suite">Suite</SelectItem>
-                              <SelectItem value="Presidential">Presidential</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage className="text-[10px]" />
@@ -362,21 +376,6 @@ export default function AdminRooms() {
                         <FormItem>
                           <FormLabel className="text-[10px] font-bold uppercase tracking-widest">
                             Max Guests
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="number" className="rounded-xl border-border h-11" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-[10px]" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="totalRooms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[10px] font-bold uppercase tracking-widest">
-                            Physical Inventory
                           </FormLabel>
                           <FormControl>
                             <Input type="number" className="rounded-xl border-border h-11" {...field} />
@@ -554,7 +553,7 @@ export default function AdminRooms() {
                       type="submit"
                       className="flex-[2] rounded-xl bg-primary hover:bg-primary/90 h-12 uppercase tracking-widest text-[10px] font-bold shadow-lg shadow-primary/20"
                     >
-                      {editingId ? "Complete Update" : "Register Room"}
+                      {editingId ? "Save villa" : "Add villa"}
                     </Button>
                   </div>
                 </form>
@@ -562,6 +561,7 @@ export default function AdminRooms() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="bg-card border border-border shadow-2xl relative overflow-hidden rounded-2xl">
@@ -570,20 +570,29 @@ export default function AdminRooms() {
           <FormHeaderRow />
           <TableBody>
             {isLoading ? (
-              <TableRow key="loading">
-                <TableCell colSpan={6} className="h-48 text-center text-muted-foreground animate-pulse">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-4 w-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
-                    <span className="text-[10px] uppercase font-bold tracking-[0.3em]">
-                      Syncing Repository
-                    </span>
-                  </div>
+              <AdminTableSkeleton rows={3} cols={6} />
+            ) : isError ? (
+              <TableRow key="error">
+                <TableCell colSpan={6} className="p-0">
+                  <AdminEmptyState
+                    icon={BedDouble}
+                    title="Could not load villas"
+                    description="Check MONGODB_URI in .env or .env.local and restart the dev server. Use Sync catalog from seed or npm run db:seed."
+                    actionLabel="Retry"
+                    onRetry={() => void refetch()}
+                    retryLabel="Retry"
+                  />
                 </TableCell>
               </TableRow>
-            ) : rooms?.length === 0 ? (
+            ) : isSuccess && (!rooms || rooms.length === 0) ? (
               <TableRow key="empty">
-                <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
-                  <p className="text-[10px] uppercase font-bold tracking-[0.2em]">No Room Data Detected</p>
+                <TableCell colSpan={6} className="p-0">
+                  <AdminEmptyState
+                    icon={BedDouble}
+                    title="No villas in MongoDB"
+                    description="Set MONGODB_URI, then click Sync catalog from seed or run npm run db:seed. Garden Retreat and Ocean View are created automatically."
+                    onRetry={() => void refetch()}
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -602,7 +611,7 @@ export default function AdminRooms() {
                       <div>
                         <p className="font-serif text-lg leading-tight mb-1">{room.title}</p>
                         <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
-                          {room.type}
+                          Villa ID {room.id} · {room.type}
                         </p>
                       </div>
                     </div>
@@ -612,7 +621,7 @@ export default function AdminRooms() {
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Users size={12} />
                         <span className="text-[10px] font-semibold tracking-wider font-mono">
-                          CAPACITY: {room.capacity}
+                          MAX GUESTS: {room.capacity}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -638,7 +647,7 @@ export default function AdminRooms() {
                       variant="outline"
                       className="rounded-lg border-primary/20 bg-primary/5 text-primary text-[9px] uppercase tracking-widest font-bold px-2 py-0.5"
                     >
-                      {room.totalRooms} Units
+                      Whole villa
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -692,11 +701,11 @@ function FormHeaderRow() {
     <TableHeader className="bg-secondary/20">
       <TableRow className="border-border hover:bg-transparent">
         <TableHead className="w-[240px] text-[10px] font-bold uppercase tracking-widest h-14">
-          Room Identity
+          Villa
         </TableHead>
         <TableHead className="text-[10px] font-bold uppercase tracking-widest">Specification</TableHead>
         <TableHead className="text-[10px] font-bold uppercase tracking-widest text-primary">Financials</TableHead>
-        <TableHead className="text-[10px] font-bold uppercase tracking-widest">Inventory</TableHead>
+        <TableHead className="text-[10px] font-bold uppercase tracking-widest">Booking unit</TableHead>
         <TableHead className="text-[10px] font-bold uppercase tracking-widest min-w-[140px]">
           Calendar sync
         </TableHead>

@@ -69,6 +69,21 @@ export interface AvailabilityRange {
   source?: "website" | "airbnb";
 }
 
+export interface AdminCalendarBooking {
+  id: string;
+  checkIn: string;
+  checkOut: string;
+  source: "website" | "airbnb";
+  guestName: string;
+  status: string;
+  displayTitle?: string;
+  airbnbKind?: "booking" | "blocked" | "other";
+}
+
+export function getAdminRoomCalendarQueryKey(roomId: number) {
+  return ["admin", "calendar", roomId] as const;
+}
+
 export interface SyncLogEntry {
   id: string;
   roomId: number;
@@ -136,6 +151,7 @@ export function useGetRooms(filters?: RoomListFilters) {
       if (!res.ok) throw new Error("Failed to load rooms");
       return res.json() as Promise<Room[]>;
     },
+    retry: 1,
   });
 }
 
@@ -229,7 +245,7 @@ export function useUpdateRoom() {
           images: data.images,
           amenities: data.amenities,
           sizeSqFt: data.sizeSqFt,
-          airbnbIcalUrl: data.airbnbIcalUrl ?? null,
+          airbnbIcalUrl: data.airbnbIcalUrl ?? "",
           syncEnabled: data.syncEnabled,
           regenerateExportToken: data.regenerateExportToken ?? false,
         }),
@@ -275,7 +291,28 @@ export function useSyncRoom(roomId: number) {
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "sync-logs"] });
+      queryClient.invalidateQueries({
+        queryKey: getAdminRoomCalendarQueryKey(roomId),
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "calendar"] });
     },
+  });
+}
+
+export function useGetAdminRoomCalendar(
+  roomId: number,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: getAdminRoomCalendarQueryKey(roomId),
+    queryFn: async (): Promise<AdminCalendarBooking[]> => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/calendar`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to load calendar");
+      return res.json() as Promise<AdminCalendarBooking[]>;
+    },
+    enabled: (options?.enabled ?? true) && Number.isFinite(roomId) && roomId > 0,
   });
 }
 
@@ -308,6 +345,7 @@ export function useGetAllBookings() {
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json() as Promise<Booking[]>;
     },
+    retry: 1,
   });
 }
 
@@ -458,6 +496,7 @@ export function useGetAdminStats() {
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json() as Promise<AdminStats>;
     },
+    retry: 1,
   });
 }
 
@@ -469,5 +508,6 @@ export function useGetRevenueData() {
       if (!res.ok) throw new Error("Failed to fetch revenue");
       return res.json() as Promise<RevenueMonth[]>;
     },
+    retry: 1,
   });
 }

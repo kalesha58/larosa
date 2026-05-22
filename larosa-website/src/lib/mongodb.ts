@@ -20,7 +20,7 @@ global.mongooseCache = cache;
 export async function connectMongo(): Promise<typeof mongoose> {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error("Please define MONGODB_URI in .env.local");
+    throw new Error("Please define MONGODB_URI in .env or .env.local");
   }
 
   if (cache.conn) {
