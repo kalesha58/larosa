@@ -5,7 +5,7 @@ import { ensureCatalogRoomsSeeded } from "@/lib/room-seed";
 import {
   activeBookingMongoFilter,
   adminCalendarDateWindow,
-  toUtcDateString,
+  formatPropertyDate,
 } from "@/lib/active-booking-filter";
 import { calendarDisplayTitle } from "@/lib/airbnb-event-label";
 import { Booking } from "@/models/Booking";
@@ -44,8 +44,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
         });
         return {
           id: b._id.toString(),
-          checkIn: toUtcDateString(b.checkIn),
-          checkOut: toUtcDateString(b.checkOut),
+          checkIn: formatPropertyDate(b.checkIn),
+          checkOut: formatPropertyDate(b.checkOut),
           source,
           guestName: b.guestName,
           status: b.status,

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
+import { getBookingTotal } from "@/lib/booking-pricing";
+import { normalizeStayFromInstant } from "@/lib/property-dates";
+import { stayOverlapsManualBlock } from "@/lib/room-availability-ranges";
 import { Booking, hasOverlap } from "@/models/Booking";
 import { Room } from "@/models/Room";
 import { getAuthPayload } from "@/lib/auth-guard";
@@ -111,12 +114,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    const checkIn = new Date(data.checkIn);
-    const checkOut = new Date(data.checkOut);
+    const rawCheckIn = new Date(data.checkIn);
+    const rawCheckOut = new Date(data.checkOut);
 
-    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+    if (isNaN(rawCheckIn.getTime()) || isNaN(rawCheckOut.getTime())) {
       return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
     }
+    const { checkIn, checkOut } = normalizeStayFromInstant(
+      rawCheckIn,
+      rawCheckOut
+    );
+
     if (checkIn >= checkOut) {
       return NextResponse.json(
         { error: "Check-in must be before check-out" },
@@ -141,21 +149,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const nights = Math.max(
-      1,
-      Math.ceil(
-        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-      )
+    const manualBlock = await stayOverlapsManualBlock(
+      data.roomId,
+      checkIn,
+      checkOut
     );
-    const subtotal = room.price * nights;
-    const taxes = Math.round(subtotal * 0.12);
-    const totalPrice = subtotal + taxes;
+    if (manualBlock) {
+      return NextResponse.json(
+        {
+          error: "These dates are not available",
+          code: "DATES_UNAVAILABLE",
+        },
+        { status: 409 }
+      );
+    }
+
+    const pricing = await getBookingTotal(
+      data.roomId,
+      checkIn.toISOString(),
+      checkOut.toISOString()
+    );
+    if (!pricing) {
+      return NextResponse.json({ error: "Invalid stay dates" }, { status: 400 });
+    }
+
+    const { nights, subtotal, taxes, total: totalPrice, pricePerNight } =
+      pricing;
 
     const booking = await Booking.create({
       roomId: room.roomId,
       roomTitle: room.title,
       roomType: room.type,
-      pricePerNight: room.price,
+      pricePerNight,
       guestName: data.guestName,
       guestEmail: data.guestEmail,
       guestPhone: data.guestPhone,

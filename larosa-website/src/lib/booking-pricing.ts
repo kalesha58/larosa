@@ -1,4 +1,10 @@
 import { connectMongo } from "@/lib/mongodb";
+import {
+  getNightlyRates,
+  sumNightlyRates,
+  type NightlyRate,
+} from "@/lib/room-day-pricing";
+import { formatPropertyDate, normalizeStayFromInstant } from "@/lib/property-dates";
 import { Room } from "@/models/Room";
 
 export interface RoomPricingShape {
@@ -32,18 +38,42 @@ export async function getBookingTotal(
   taxes: number;
   total: number;
   nights: number;
+  nightlyRates: NightlyRate[];
+  pricePerNight: number;
 } | null> {
   const room = await getRoomForPricing(roomId);
   if (!room) return null;
-  const checkIn = new Date(checkInIso);
-  const checkOut = new Date(checkOutIso);
-  const nights = Math.max(
-    1,
-    Math.ceil(
-      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-    )
+
+  const rawCheckIn = new Date(checkInIso);
+  const rawCheckOut = new Date(checkOutIso);
+  if (isNaN(rawCheckIn.getTime()) || isNaN(rawCheckOut.getTime())) {
+    return null;
+  }
+
+  const { checkIn, checkOut } = normalizeStayFromInstant(
+    rawCheckIn,
+    rawCheckOut
   );
-  const subtotal = room.price * nights;
+  if (checkIn >= checkOut) return null;
+
+  const checkInYmd = formatPropertyDate(checkIn);
+  const checkOutYmd = formatPropertyDate(checkOut);
+  const nightlyRates = await getNightlyRates(roomId, checkInYmd, checkOutYmd);
+  const nights = nightlyRates.length;
+  if (nights < 1) return null;
+
+  const subtotal = sumNightlyRates(nightlyRates);
   const taxes = Math.round(subtotal * 0.12);
-  return { room, subtotal, taxes, total: subtotal + taxes, nights };
+  const total = subtotal + taxes;
+  const pricePerNight = Math.round(subtotal / nights);
+
+  return {
+    room,
+    subtotal,
+    taxes,
+    total,
+    nights,
+    nightlyRates,
+    pricePerNight,
+  };
 }

@@ -36,7 +36,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, CalendarRange } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { formatPropertyDateLabel } from "@/lib/property-dates";
 import type { Room } from "@/hooks/use-queries";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
@@ -392,8 +393,8 @@ export default function AdminCalendarPage() {
                 </p>
               ) : null}
               <p className="text-muted-foreground">
-                {format(parseISO(selectedEvent.checkIn), "MMM d, yyyy")} →{" "}
-                {format(parseISO(selectedEvent.checkOut), "MMM d, yyyy")}
+                {formatPropertyDateLabel(selectedEvent.checkIn)} →{" "}
+                {formatPropertyDateLabel(selectedEvent.checkOut)}
                 <span className="block text-[10px] uppercase tracking-widest mt-1">
                   (checkout day available)
                 </span>

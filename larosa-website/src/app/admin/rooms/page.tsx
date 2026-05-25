@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 import {
   Edit,
   Plus,
@@ -64,6 +65,7 @@ import {
   Star,
   Copy,
   RefreshCw,
+  CalendarDays,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -668,6 +670,17 @@ export default function AdminRooms() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10 rounded-xl"
+                        title="Manage pricing"
+                      >
+                        <Link href={`/admin/rooms/${room.id}/pricing`}>
+                          <CalendarDays className="h-4 w-4" />
+                        </Link>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

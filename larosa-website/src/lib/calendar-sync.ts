@@ -5,6 +5,11 @@ import { assertAllowedAirbnbIcalUrl } from "@/lib/ical-url";
 import { Booking } from "@/models/Booking";
 import { Room } from "@/models/Room";
 import { SyncLog } from "@/models/SyncLog";
+import {
+  icalDateToPropertyYmd,
+  propertyStayFromYmd,
+  PROPERTY_TIMEZONE,
+} from "@/lib/property-dates";
 
 const FETCH_TIMEOUT_MS = 25_000;
 
@@ -14,10 +19,17 @@ function toDate(d: unknown): Date {
   return new Date(NaN);
 }
 
-function startOfUtcDay(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-  );
+/** iCal DATE (floating) or DATE-TIME → IST calendar check-in / exclusive check-out. */
+function stayRangeFromIcalInstants(start: Date, end: Date): {
+  checkIn: Date;
+  checkOut: Date;
+} {
+  const endResolved = isNaN(end.getTime())
+    ? new Date(start.getTime() + 86400000)
+    : end;
+  const checkInYmd = icalDateToPropertyYmd(start);
+  const checkOutYmd = icalDateToPropertyYmd(endResolved);
+  return propertyStayFromYmd(checkInYmd, checkOutYmd);
 }
 
 function summaryText(s: unknown): string {
@@ -60,10 +72,7 @@ function extractStayRangesFromCalendar(parsed: ReturnType<typeof ical.parseICS>)
           const start = toDate(inst.start);
           const end = toDate(inst.end);
           if (isNaN(start.getTime())) continue;
-          const checkIn = startOfUtcDay(start);
-          const checkOut = isNaN(end.getTime())
-            ? new Date(checkIn.getTime() + 86400000)
-            : startOfUtcDay(end);
+          const { checkIn, checkOut } = stayRangeFromIcalInstants(start, end);
           ranges.push({
             uid: `${ev.uid}#${checkIn.getTime()}`,
             checkIn,
@@ -85,8 +94,7 @@ function extractStayRangesFromCalendar(parsed: ReturnType<typeof ical.parseICS>)
       end = new Date(start.getTime() + 86400000);
     }
 
-    const checkIn = startOfUtcDay(start);
-    const checkOut = startOfUtcDay(end);
+    const { checkIn, checkOut } = stayRangeFromIcalInstants(start, end);
 
     ranges.push({
       uid: ev.uid,
@@ -310,16 +318,19 @@ export async function buildWebsiteExportIcs(params: {
 
   const cal = icalGen({
     name: `La Rosa — ${params.roomTitle}`,
-    timezone: "UTC",
+    timezone: PROPERTY_TIMEZONE,
     ttl: 900,
     prodId: { company: "La Rosa", product: "Website", language: "EN" },
   });
 
   for (const b of bookings) {
+    const checkInYmd = icalDateToPropertyYmd(new Date(b.checkIn));
+    const checkOutYmd = icalDateToPropertyYmd(new Date(b.checkOut));
+    const range = propertyStayFromYmd(checkInYmd, checkOutYmd);
     cal.createEvent({
       id: `larosa-booking-${b._id.toString()}@larosa`,
-      start: startOfUtcDay(new Date(b.checkIn)),
-      end: startOfUtcDay(new Date(b.checkOut)),
+      start: range.checkIn,
+      end: range.checkOut,
       allDay: true,
       summary: `${params.roomTitle} — Booking ${b._id.toString()}`,
       description: `Booking ID: ${b._id.toString()}\nRoom: ${params.roomTitle}`,

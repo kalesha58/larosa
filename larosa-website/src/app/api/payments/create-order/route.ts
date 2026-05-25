@@ -10,6 +10,7 @@ import {
 import { PAYMENT_NOT_CONFIGURED_CODE } from "@/lib/payments-env";
 import { connectMongo } from "@/lib/mongodb";
 import { hasOverlap } from "@/models/Booking";
+import { stayOverlapsManualBlock } from "@/lib/room-availability-ranges";
 
 const bodySchema = z.object({
   roomId: z.number().int().positive(),
@@ -54,6 +55,21 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "These dates are already booked. Please select different dates.",
+          code: "DATES_UNAVAILABLE",
+        },
+        { status: 409 }
+      );
+    }
+
+    const manualBlock = await stayOverlapsManualBlock(
+      roomId,
+      checkInDate,
+      checkOutDate
+    );
+    if (manualBlock) {
+      return NextResponse.json(
+        {
+          error: "These dates are not available. Please select different dates.",
           code: "DATES_UNAVAILABLE",
         },
         { status: 409 }

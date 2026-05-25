@@ -55,6 +55,7 @@ export function bookingsToFullCalendarEvents(
       airbnbKind: b.source === "airbnb" ? airbnbKind : undefined,
     });
 
+    // Plain YYYY-MM-DD all-day events (no calendar timeZone) — matches Airbnb DATE rows.
     return {
       id: `${b.id}-${b.checkIn}-${index}`,
       title: displayTitle,

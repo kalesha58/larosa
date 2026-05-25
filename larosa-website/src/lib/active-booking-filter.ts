@@ -1,4 +1,7 @@
 import { PENDING_BOOKING_HOLD_MS } from "@/models/Booking";
+import { formatPropertyDate } from "@/lib/property-dates";
+
+export { formatPropertyDate };
 
 /** Shared filter for non-cancelled bookings that block availability. */
 export function activeBookingMongoFilter(roomId: number) {
@@ -26,6 +29,5 @@ export function adminCalendarDateWindow() {
   };
 }
 
-export function toUtcDateString(d: Date): string {
-  return d.toISOString().split("T")[0]!;
-}
+/** @deprecated Use formatPropertyDate — kept for import compatibility. */
+export const toUtcDateString = formatPropertyDate;

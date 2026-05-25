@@ -66,7 +66,34 @@ export interface Booking {
 export interface AvailabilityRange {
   checkIn: string;
   checkOut: string;
-  source?: "website" | "airbnb";
+  source?: "website" | "airbnb" | "manual";
+}
+
+export interface AdminPricingDay {
+  date: string;
+  effectivePrice: number;
+  basePrice: number;
+  hasCustomPrice: boolean;
+  blocked: boolean;
+  reserved: boolean;
+}
+
+export interface AdminRoomPricingResponse {
+  roomId: number;
+  roomTitle: string;
+  basePrice: number;
+  days: AdminPricingDay[];
+  overrides: { date: string; price?: number; blocked: boolean }[];
+  bookings: AdminCalendarBooking[];
+}
+
+export interface BookingQuote {
+  subtotal: number;
+  taxes: number;
+  total: number;
+  nights: number;
+  pricePerNight: number;
+  nightlyBreakdown: { date: string; price: number }[];
 }
 
 export interface AdminCalendarBooking {
@@ -296,6 +323,107 @@ export function useSyncRoom(roomId: number) {
       });
       queryClient.invalidateQueries({ queryKey: ["admin", "calendar"] });
     },
+  });
+}
+
+export function getAdminRoomPricingQueryKey(
+  roomId: number,
+  from: string,
+  to: string
+) {
+  return ["admin", "pricing", roomId, from, to] as const;
+}
+
+export function useGetAdminRoomPricing(
+  roomId: number,
+  range: { from: string; to: string } | null,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: getAdminRoomPricingQueryKey(
+      roomId,
+      range?.from ?? "",
+      range?.to ?? ""
+    ),
+    queryFn: async (): Promise<AdminRoomPricingResponse> => {
+      const params = new URLSearchParams({
+        from: range!.from,
+        to: range!.to,
+      });
+      const res = await fetch(
+        `/api/admin/rooms/${roomId}/pricing?${params}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to load pricing calendar");
+      return res.json() as Promise<AdminRoomPricingResponse>;
+    },
+    enabled:
+      (options?.enabled ?? true) &&
+      Number.isFinite(roomId) &&
+      roomId > 0 &&
+      !!range?.from &&
+      !!range?.to,
+  });
+}
+
+export function useUpdateAdminRoomDay(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      date: string;
+      price?: number | null;
+      blocked?: boolean;
+    }) => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/pricing/day`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload: unknown = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Failed to update day";
+        throw new Error(msg);
+      }
+      return payload as AdminPricingDay;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "pricing", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["rooms", roomId, "availability"] });
+    },
+  });
+}
+
+export function useGetBookingQuote(
+  roomId: number,
+  checkIn: string | null,
+  checkOut: string | null,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ["bookings", "quote", roomId, checkIn, checkOut],
+    queryFn: async (): Promise<BookingQuote> => {
+      const params = new URLSearchParams({
+        roomId: String(roomId),
+        checkIn: checkIn!,
+        checkOut: checkOut!,
+      });
+      const res = await fetch(`/api/bookings/quote?${params}`);
+      if (!res.ok) throw new Error("Failed to load quote");
+      return res.json() as Promise<BookingQuote>;
+    },
+    enabled:
+      (options?.enabled ?? true) &&
+      Number.isFinite(roomId) &&
+      roomId > 0 &&
+      !!checkIn &&
+      !!checkOut,
   });
 }
 
