@@ -15,6 +15,7 @@ export interface Room {
   featured?: boolean;
   status?: "active" | "hidden";
   airbnbCalendarUrl?: string;
+  calendarExportUrl?: string;
 }
 
 export const INITIAL_ROOMS: Room[] = [
