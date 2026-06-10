@@ -1,30 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useGetRooms } from "@/hooks/use-queries";
 import { RoomCard } from "@/components/RoomCard";
-import { GuestCountStepper } from "@/components/GuestCountStepper";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { clampGuestCount, MAX_ONLINE_GUESTS } from "@/lib/guest-limits";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import {
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  RotateCcw,
-} from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HERO_SLIDES = [
@@ -56,23 +37,6 @@ const HERO_SLIDES = [
 ];
 
 function RoomsInner() {
-  const searchParams = useSearchParams();
-  const [type, setType] = useState<string>(
-    () => searchParams.get("type") || "all"
-  );
-  const [priceRange, setPriceRange] = useState<number[]>(() => [
-    Number(searchParams.get("minPrice")) || 0,
-    Number(searchParams.get("maxPrice")) || 100000,
-  ]);
-  const [guestCount, setGuestCount] = useState(() => {
-    const fromUrl = searchParams.get("guests");
-    if (fromUrl) {
-      const n = Number.parseInt(fromUrl, 10);
-      if (!Number.isNaN(n)) return clampGuestCount(n);
-    }
-    return 1;
-  });
-
   const [heroIndex, setHeroIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -94,12 +58,7 @@ function RoomsInner() {
     );
   }
 
-  const { data: rooms, isLoading } = useGetRooms({
-    type: type !== "all" ? type : undefined,
-    minPrice: priceRange[0],
-    maxPrice: priceRange[1],
-    capacity: guestCount,
-  });
+  const { data: rooms, isLoading } = useGetRooms();
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,198 +148,84 @@ function RoomsInner() {
       <div className="relative border-t border-border/50 bg-gradient-to-b from-muted/20 via-background to-background">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" aria-hidden />
         <div className="container mx-auto max-w-[1400px] px-4 pb-20 pt-10 sm:px-6 sm:pt-12 lg:px-8 lg:pt-16">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-12">
-            {/* Filters — rich sticky panel */}
-            <aside className="lg:col-span-4 xl:col-span-3">
-              <div
-                className={cn(
-                  "lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1 xl:top-28",
-                  "rounded-2xl border border-border/50 bg-card/60 p-6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.12)] backdrop-blur-md sm:p-8",
-                  "dark:border-border/40 dark:bg-card/40 dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.45)]"
-                )}
-              >
-                <div className="space-y-6 sm:space-y-7">
-                  <div className="space-y-3">
-                    <Label
-                      htmlFor="rooms-filter-type"
-                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs"
-                    >
-                      Room type
-                    </Label>
-                    <Select value={type} onValueChange={setType}>
-                      <SelectTrigger
-                        id="rooms-filter-type"
-                        className="h-12 rounded-xl border-border/60 bg-background/60 text-left text-sm shadow-sm transition-colors hover:border-primary/35 focus:ring-primary/20"
-                      >
-                        <SelectValue placeholder="All types" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="all">All types</SelectItem>
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="Deluxe">Deluxe</SelectItem>
-                        <SelectItem value="Suite">Suite</SelectItem>
-                        <SelectItem value="Presidential">Presidential</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <Separator className="bg-border/60" />
-
-                  <div className="space-y-4">
-                    <div className="flex items-end justify-between gap-2">
-                      <Label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
-                        Price / night
-                      </Label>
-                      <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 font-serif text-xs tabular-nums text-primary sm:text-sm">
-                        ₹{priceRange[0]} – ₹{priceRange[1]}
-                      </span>
-                    </div>
-                    <div className="rounded-xl border border-border/40 bg-muted/25 p-4 sm:p-5">
-                      <Slider
-                        defaultValue={[0, 100000]}
-                        max={100000}
-                        step={500}
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        className="py-1"
-                      />
-                      <div className="mt-3 flex justify-between text-[10px] tabular-nums text-muted-foreground sm:text-xs">
-                        <span>₹0</span>
-                        <span>₹100,000+</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-border/60" />
-
-                  <div className="space-y-3">
-                    <Label
-                      htmlFor="rooms-filter-guests"
-                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:text-xs"
-                    >
-                      Guests
-                    </Label>
-                    <GuestCountStepper
-                      id="rooms-filter-guests"
-                      value={guestCount}
-                      onChange={setGuestCount}
-                      max={MAX_ONLINE_GUESTS}
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 w-full rounded-xl border-border/60 font-serif text-[11px] tracking-[0.18em] transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
-                    onClick={() => {
-                      setType("all");
-                      setPriceRange([0, 100000]);
-                      setGuestCount(1);
-                    }}
-                  >
-                    <RotateCcw className="mr-2 h-3.5 w-3.5" aria-hidden />
-                    Reset filters
-                  </Button>
-                </div>
+          {/* Results bar */}
+          <div
+            className={cn(
+              "mb-6 flex flex-col gap-4 rounded-2xl border border-border/45 bg-card/40 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-5",
+              "dark:bg-card/25"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
+                <LayoutGrid className="h-5 w-5 text-primary" aria-hidden />
               </div>
-            </aside>
-
-            {/* Results */}
-            <div className="min-w-0 space-y-6 lg:col-span-8 xl:col-span-9">
-              <div
-                className={cn(
-                  "flex flex-col gap-4 rounded-2xl border border-border/45 bg-card/40 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-5",
-                  "dark:bg-card/25"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
-                    <LayoutGrid className="h-5 w-5 text-primary" aria-hidden />
-                  </div>
-                  <div>
-                    <p className="font-serif text-base text-foreground sm:text-lg">
-                      {isLoading
-                        ? "Searching…"
-                        : rooms && rooms.length > 0
-                          ? `${rooms.length} ${rooms.length === 1 ? "suite" : "suites"} available`
-                          : "No matches"}
-                    </p>
-                    <p className="text-xs text-muted-foreground sm:text-sm">
-                      Curated spaces matching your preferences
-                    </p>
-                  </div>
-                </div>
-                {!isLoading && rooms && rooms.length > 0 && (
-                  <span className="inline-flex w-fit items-center rounded-full border border-border/50 bg-background/80 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                    Live results
-                  </span>
-                )}
-              </div>
-
-              <div
-                className={cn(
-                  "rounded-2xl border border-border/40 bg-muted/10 p-4 sm:p-6 lg:rounded-3xl lg:p-8 xl:p-10",
-                  "dark:bg-muted/5"
-                )}
-              >
-                {isLoading ? (
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={`rooms-result-skeleton-${i}`}
-                        className="overflow-hidden rounded-2xl border border-border/40 bg-card/40"
-                      >
-                        <div className="aspect-[4/3] animate-pulse bg-muted/60" />
-                        <div className="space-y-3 p-6">
-                          <div className="h-6 w-2/3 animate-pulse rounded-md bg-muted/70" />
-                          <div className="h-4 w-full animate-pulse rounded-md bg-muted/50" />
-                          <div className="h-4 w-4/5 animate-pulse rounded-md bg-muted/50" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : rooms && rooms.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 xl:gap-10">
-                    {rooms.map((room, idx) => (
-                      <RoomCard
-                        key={`room-${room.id}-${idx}`}
-                        room={room}
-                        index={idx}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/30 px-6 py-16 text-center sm:py-24">
-                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 bg-muted/40">
-                      <LayoutGrid
-                        className="h-7 w-7 text-muted-foreground"
-                        aria-hidden
-                      />
-                    </div>
-                    <h3 className="font-serif text-xl text-foreground sm:text-2xl">
-                      No rooms match these filters
-                    </h3>
-                    <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
-                      Try widening your price range or clearing filters to see
-                      more of Larosa.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mt-8 rounded-xl border-primary/35 font-serif text-xs tracking-[0.18em] hover:bg-primary/10"
-                      onClick={() => {
-                        setType("all");
-                        setPriceRange([0, 100000]);
-                        setGuestCount(1);
-                      }}
-                    >
-                      <RotateCcw className="mr-2 h-3.5 w-3.5" aria-hidden />
-                      Reset filters
-                    </Button>
-                  </div>
-                )}
+              <div>
+                <p className="font-serif text-base text-foreground sm:text-lg">
+                  {isLoading
+                    ? "Searching…"
+                    : rooms && rooms.length > 0
+                      ? `${rooms.length} ${rooms.length === 1 ? "suite" : "suites"} available`
+                      : "No suites found"}
+                </p>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Curated spaces matching your preferences
+                </p>
               </div>
             </div>
+            {!isLoading && rooms && rooms.length > 0 && (
+              <span className="inline-flex w-fit items-center rounded-full border border-border/50 bg-background/80 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Live results
+              </span>
+            )}
+          </div>
+
+          {/* Room grid — full width */}
+          <div
+            className={cn(
+              "rounded-2xl border border-border/40 bg-muted/10 p-4 sm:p-6 lg:rounded-3xl lg:p-8 xl:p-10",
+              "dark:bg-muted/5"
+            )}
+          >
+            {isLoading ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 md:gap-8">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={`rooms-result-skeleton-${i}`}
+                    className="overflow-hidden rounded-2xl border border-border/40 bg-card/40"
+                  >
+                    <div className="aspect-[4/3] animate-pulse bg-muted/60" />
+                    <div className="space-y-3 p-6">
+                      <div className="h-6 w-2/3 animate-pulse rounded-md bg-muted/70" />
+                      <div className="h-4 w-full animate-pulse rounded-md bg-muted/50" />
+                      <div className="h-4 w-4/5 animate-pulse rounded-md bg-muted/50" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : rooms && rooms.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 md:gap-8 xl:gap-10">
+                {rooms.map((room, idx) => (
+                  <RoomCard
+                    key={`room-${room.id}-${idx}`}
+                    room={room}
+                    index={idx}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/30 px-6 py-16 text-center sm:py-24">
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 bg-muted/40">
+                  <LayoutGrid className="h-7 w-7 text-muted-foreground" aria-hidden />
+                </div>
+                <h3 className="font-serif text-xl text-foreground sm:text-2xl">
+                  No suites available
+                </h3>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
+                  Please check back soon — new accommodations are being added.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

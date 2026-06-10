@@ -13,7 +13,17 @@ export async function getBookingTotal(
   nights: number;
 } | null> {
   await connectMongo();
-  const room = await Room.findById(roomId).lean();
+  let room = null;
+  const num = Number(roomId);
+  if (!isNaN(num) && String(num) === roomId) {
+    room = await Room.findOne({ roomId: num }).lean();
+  } else {
+    try {
+      room = await Room.findById(roomId).lean();
+    } catch (e) {
+      room = null;
+    }
+  }
   if (!room) return null;
   
   const checkIn = new Date(checkInIso);

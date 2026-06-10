@@ -7,6 +7,9 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { cloneInitialRooms, type Room } from "@/lib/room-catalog";
+import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
+
+export type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 
 export type { Room } from "@/lib/room-catalog";
 
@@ -344,6 +347,87 @@ export function useCancelBooking() {
   });
 }
 
+// ── Admin pricing calendar ───────────────────────────────────────────────────
+
+export interface AdminPricingDay {
+  date: string;
+  effectivePrice: number;
+  hasCustomPrice: boolean;
+  blocked: boolean;
+  reserved: boolean;
+}
+
+export interface AdminRoomPricingData {
+  roomId: number;
+  roomTitle: string;
+  basePrice: number;
+  days: AdminPricingDay[];
+  overrides: { date: string; price?: number; blocked: boolean }[];
+  bookings: {
+    id: string;
+    checkIn: string;
+    checkOut: string;
+    source: "website" | "airbnb";
+    guestName: string;
+    status: string;
+    displayTitle: string;
+    airbnbKind?: string;
+  }[];
+}
+
+export function useGetAdminRoomPricing(
+  roomId: number,
+  range: { from: string; to: string } | null
+) {
+  return useQuery({
+    queryKey: ["admin", "pricing", roomId, range?.from, range?.to],
+    queryFn: async (): Promise<AdminRoomPricingData> => {
+      const params = new URLSearchParams({
+        from: range!.from,
+        to: range!.to,
+      });
+      const res = await fetch(
+        `/api/admin/rooms/${roomId}/pricing?${params.toString()}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch pricing calendar");
+      return res.json() as Promise<AdminRoomPricingData>;
+    },
+    enabled: !!range && !isNaN(roomId) && roomId > 0,
+  });
+}
+
+export function useUpdateAdminRoomDay(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      date: string;
+      price?: number | null;
+      blocked?: boolean;
+    }) => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/pricing/day`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Failed to update day";
+        throw new Error(msg);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "pricing", roomId] });
+    },
+  });
+}
+
 // ── Admin queries — REAL API ─────────────────────────────────────────────────
 
 export function useGetAdminStats() {
@@ -364,6 +448,85 @@ export function useGetRevenueData() {
       const res = await fetch("/api/admin/revenue");
       if (!res.ok) throw new Error("Failed to fetch revenue");
       return res.json() as Promise<RevenueMonth[]>;
+    },
+  });
+}
+
+// ── Admin calendar events ────────────────────────────────────────────────────
+
+export function useGetAdminRoomCalendar(
+  roomId: number,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ["admin", "calendar", roomId],
+    queryFn: async (): Promise<AdminCalendarBooking[]> => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/calendar`);
+      if (!res.ok) throw new Error("Failed to fetch calendar");
+      return res.json() as Promise<AdminCalendarBooking[]>;
+    },
+    enabled: options?.enabled !== false && !isNaN(roomId) && roomId > 0,
+  });
+}
+
+// ── Sync logs ────────────────────────────────────────────────────────────────
+
+export interface SyncLog {
+  id: string;
+  roomId: number;
+  source: string;
+  success: boolean;
+  startedAt: string;
+  finishedAt: string;
+  eventsImported: number;
+  eventsRemoved: number;
+  errorMessage: string;
+  createdAt: string;
+}
+
+export function useGetSyncLogs(roomId?: number) {
+  return useQuery({
+    queryKey: ["admin", "sync-logs", roomId ?? null],
+    queryFn: async (): Promise<SyncLog[]> => {
+      const params = roomId != null ? `?roomId=${roomId}` : "";
+      const res = await fetch(`/api/admin/sync-logs${params}`);
+      if (!res.ok) throw new Error("Failed to load sync logs");
+      return res.json() as Promise<SyncLog[]>;
+    },
+  });
+}
+
+// ── Room sync (manual Airbnb iCal import) ───────────────────────────────────
+
+export function useSyncRoom(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{
+      success: boolean;
+      imported: number;
+      removed: number;
+      error?: string;
+    }> => {
+      const res = await fetch(`/api/rooms/${roomId}/sync`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Sync failed";
+        throw new Error(msg);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "calendar", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
     },
   });
 }

@@ -22,7 +22,7 @@ export async function fetchExternalBookings(url: string): Promise<ExternalBookin
 
     Object.values(webEvents).forEach((event) => {
       if (event && event.type === "VEVENT") {
-        const ev = event as ical.VEvent;
+        const ev = event as any;
         if (ev.start && ev.end) {
           const start = new Date(ev.start as any);
           const end = new Date(ev.end as any);

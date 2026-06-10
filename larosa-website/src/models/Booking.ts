@@ -2,6 +2,10 @@ import mongoose, { Schema, models, model } from "mongoose";
 
 export type BookingStatus = "pending" | "confirmed" | "cancelled";
 
+/** How long a pending booking holds its dates before expiring (30 minutes). */
+export const PENDING_BOOKING_HOLD_MS = 30 * 60 * 1000;
+
+
 export interface IBooking {
   _id: mongoose.Types.ObjectId;
   roomId: string;
