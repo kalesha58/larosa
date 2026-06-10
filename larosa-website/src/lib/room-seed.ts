@@ -4,7 +4,7 @@ import { assertAllowedAirbnbIcalUrl } from "@/lib/ical-url";
 import { Booking } from "@/models/Booking";
 import { Room } from "@/models/Room";
 
-const CATALOG_ROOM_IDS = new Set(INITIAL_ROOMS.map((r) => r.id));
+const CATALOG_ROOM_IDS = new Set(INITIAL_ROOMS.map((r) => parseInt(r.id, 10)));
 
 const SEED_ICAL_BY_ROOM: Record<number, string> = {
   1: "SEED_AIRBNB_ICAL_URL",
@@ -87,11 +87,12 @@ export async function ensureCatalogRoomsSeeded(): Promise<CatalogSeedResult> {
   const updated: number[] = [];
 
   for (const r of INITIAL_ROOMS) {
-    const seedIcal = seedIcalForRoom(r.id);
-    const existing = await Room.findOne({ roomId: r.id }).lean();
+    const numericId = parseInt(r.id, 10);
+    const seedIcal = seedIcalForRoom(numericId);
+    const existing = await Room.findOne({ roomId: numericId }).lean();
 
     const setOnInsert: Record<string, unknown> = {
-      roomId: r.id,
+      roomId: numericId,
       syncEnabled: true,
       syncStatus: "idle",
       calendarExportToken: randomBytes(24).toString("hex"),
@@ -105,15 +106,15 @@ export async function ensureCatalogRoomsSeeded(): Promise<CatalogSeedResult> {
 
     const hadExisting = !!existing;
     await Room.findOneAndUpdate(
-      { roomId: r.id },
+      { roomId: numericId },
       { $setOnInsert: setOnInsert, $set },
       { upsert: true }
     );
 
     if (hadExisting) {
-      updated.push(r.id);
+      updated.push(numericId);
     } else {
-      upserted.push(r.id);
+      upserted.push(numericId);
     }
   }
 

@@ -7,6 +7,9 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { cloneInitialRooms, type Room } from "@/lib/room-catalog";
+import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
+
+export type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 
 export type { Room } from "@/lib/room-catalog";
 
@@ -450,17 +453,6 @@ export function useGetRevenueData() {
 }
 
 // ── Admin calendar events ────────────────────────────────────────────────────
-
-export interface AdminCalendarBooking {
-  id: string;
-  checkIn: string;
-  checkOut: string;
-  source: "website" | "airbnb";
-  guestName: string;
-  status: string;
-  displayTitle: string;
-  airbnbKind?: string;
-}
 
 export function useGetAdminRoomCalendar(
   roomId: number,

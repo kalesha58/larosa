@@ -1,44 +1,58 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
+import { requireAdminResponse, isUnauthorized } from "@/lib/auth-guard";
+import { ensureCatalogRoomsSeeded } from "@/lib/room-seed";
+import { serializeRoom } from "@/lib/room-api";
 import { Room } from "@/models/Room";
+import { randomBytes } from "crypto";
 
-export async function GET(request: Request) {
+// GET /api/rooms — list all rooms (public: active only; admin: all)
+export async function GET(request: NextRequest) {
   try {
     await connectMongo();
+    await ensureCatalogRoomsSeeded();
+
     const { searchParams } = new URL(request.url);
     const isAdmin = searchParams.get("admin") === "true";
-    
-    // If not admin, only show active rooms
-    const query = isAdmin ? {} : { status: "active" };
-    
-    const rooms = await Room.find(query).sort({ createdAt: -1 });
-    
-    // Map _id to id for frontend compatibility
-    const formattedRooms = rooms.map(room => ({
-      ...room.toObject(),
-      id: room._id.toString(),
-    }));
+    const typeFilter = searchParams.get("type");
 
-    return NextResponse.json(formattedRooms);
+    const query: Record<string, unknown> = isAdmin ? {} : { status: "active" };
+    if (typeFilter && typeFilter !== "all") {
+      query.type = typeFilter;
+    }
+
+    const rooms = await Room.find(query).sort({ roomId: 1 }).lean();
+    return NextResponse.json(rooms.map(serializeRoom));
   } catch (err) {
-    console.error("[api/rooms] GET error:", err);
+    console.error("[GET /api/rooms]", err);
     return NextResponse.json({ error: "Failed to fetch rooms" }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+// POST /api/rooms — create a new room (admin only)
+export async function POST(request: NextRequest) {
+  const auth = await requireAdminResponse();
+  if (isUnauthorized(auth)) return auth;
+
   try {
     await connectMongo();
     const body = await request.json();
-    
-    const room = await Room.create(body);
-    
-    return NextResponse.json({
-      ...room.toObject(),
-      id: room._id.toString(),
+
+    // Auto-assign the next roomId
+    const last = await Room.findOne().sort({ roomId: -1 }).lean();
+    const nextId = (last?.roomId ?? 0) + 1;
+
+    const room = await Room.create({
+      ...body,
+      roomId: nextId,
+      calendarExportToken: randomBytes(24).toString("hex"),
+      syncEnabled: true,
+      syncStatus: "idle",
     });
+
+    return NextResponse.json(serializeRoom(room.toObject()));
   } catch (err) {
-    console.error("[api/rooms] POST error:", err);
+    console.error("[POST /api/rooms]", err);
     return NextResponse.json({ error: "Failed to create room" }, { status: 500 });
   }
 }

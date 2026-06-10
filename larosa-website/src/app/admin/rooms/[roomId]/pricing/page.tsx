@@ -15,6 +15,7 @@ import {
   type AdminPricingDay,
 } from "@/hooks/use-queries";
 import { bookingsToFullCalendarEvents } from "@/lib/booking-calendar-events";
+import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 import { formatCompactInr, formatInr } from "@/lib/format-price";
 import { formatPropertyDate, formatPropertyDateLabel } from "@/lib/property-dates";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,7 @@ export default function AdminRoomPricingPage({
   }, []);
 
   const events = useMemo(
-    () => bookingsToFullCalendarEvents(data?.bookings ?? []),
+    () => bookingsToFullCalendarEvents((data?.bookings ?? []) as AdminCalendarBooking[]),
     [data?.bookings]
   );
 
