@@ -17,16 +17,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const roomId = parseInt(roomIdStr, 10);
-    if (isNaN(roomId)) {
-      return NextResponse.json({ error: "Invalid roomId" }, { status: 400 });
-    }
-
     await connectMongo();
     await ensureCatalogRoomsSeeded();
 
-    const pricing = await getBookingTotal(roomId, checkIn, checkOut);
+    const pricing = await getBookingTotal(roomIdStr, checkIn, checkOut);
     if (!pricing) {
       return NextResponse.json(
         { error: "Invalid room or stay dates" },
@@ -39,8 +33,15 @@ export async function GET(request: NextRequest) {
       taxes: pricing.taxes,
       total: pricing.total,
       nights: pricing.nights,
-      pricePerNight: pricing.pricePerNight,
-      nightlyBreakdown: pricing.nightlyRates,
+      pricePerNight: pricing.room.price,
+      nightlyBreakdown: Array.from({ length: pricing.nights }).map((_, idx) => {
+        const d = new Date(checkIn);
+        d.setDate(d.getDate() + idx);
+        return {
+          date: d.toISOString().split("T")[0],
+          price: pricing.room.price,
+        };
+      }),
     });
   } catch (err) {
     console.error("[GET /api/bookings/quote]", err);
