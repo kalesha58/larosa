@@ -10,29 +10,14 @@ import { cn } from "@/lib/utils";
 
 const HERO_SLIDES = [
   {
-    src: "/room2.jpeg",
-    label: "Presidential Suite",
-    caption: "Unparalleled luxury for the most discerning guest",
+    src: "/poolview1.jpeg",
+    label: "Aqua Retreat",
+    caption: "Set across nearly 2 acres of serene landscape with private pool and lake views",
   },
   {
-    src: "/room4.jpeg",
-    label: "Grand Suite",
-    caption: "Sweeping views and timeless elegance",
-  },
-  {
-    src: "/room3.jpeg",
-    label: "Deluxe Room",
-    caption: "Refined comfort, thoughtfully designed",
-  },
-  {
-    src: "/villa-hero-2.png",
-    label: "Garden Suite",
-    caption: "A private retreat amid lush greenery",
-  },
-  {
-    src: "/villa-hero-1.png",
-    label: "Pool Villa",
-    caption: "Your own corner of paradise",
+    src: "/poolview2.jpeg",
+    label: "Villanova",
+    caption: "A stunning Mediterranean style retreat with private pool and lush greenery",
   },
 ];
 
