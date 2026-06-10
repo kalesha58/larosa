@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/AdminLayout";
+import { AdminThemeProvider } from "@/hooks/use-admin-theme";
 
 export default function AdminPageLayout({
   children,
@@ -6,8 +7,8 @@ export default function AdminPageLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AdminLayout>
-      {children}
-    </AdminLayout>
+    <AdminThemeProvider>
+      <AdminLayout>{children}</AdminLayout>
+    </AdminThemeProvider>
   );
 }

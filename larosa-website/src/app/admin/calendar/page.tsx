@@ -40,6 +40,8 @@ import { format } from "date-fns";
 import { formatPropertyDateLabel } from "@/lib/property-dates";
 import type { Room } from "@/hooks/use-queries";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { cn } from "@/lib/utils";
+import { statusStyles } from "@/lib/admin-status-styles";
 
 function normalizeRoomId(room: Room): number | null {
   const n = Number(room.id);
@@ -291,7 +293,7 @@ export default function AdminCalendarPage() {
             </span>
           ) : null}
           {selectedRoom && !hasIcalUrl ? (
-            <span className="text-amber-700/90 ml-auto max-w-md text-right">
+            <span className={cn(statusStyles.warning.text, "ml-auto max-w-md text-right opacity-90")}>
               Paste the Airbnb .ics URL on this villa in Admin → Villas, then Sync Airbnb.
             </span>
           ) : selectedRoom?.lastSyncedAt ? (
@@ -374,8 +376,8 @@ export default function AdminCalendarPage() {
                   variant="outline"
                   className={
                     selectedEvent.source === "airbnb"
-                      ? "border-rose-500/50 text-rose-600"
-                      : "border-sky-500/50 text-sky-700"
+                      ? cn(statusStyles.error.border, statusStyles.error.text)
+                      : cn(statusStyles.info.border, statusStyles.info.text)
                   }
                 >
                   {selectedEvent.source === "airbnb" && selectedEvent.airbnbKind

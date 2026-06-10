@@ -15,6 +15,21 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { statusStyles } from "@/lib/admin-status-styles";
+
+const notificationTypeStyles = {
+  booking: cn(statusStyles.info.bg, statusStyles.info.text),
+  maintenance: cn(statusStyles.warning.bg, statusStyles.warning.text),
+  payment: cn(statusStyles.success.bg, statusStyles.success.text),
+  system: cn(statusStyles.neutral.bg, statusStyles.neutral.text),
+} as const;
+
+const priorityDotStyles = {
+  high: statusStyles.error.dot,
+  medium: statusStyles.warning.dot,
+  low: "bg-slate-400 dark:bg-slate-500",
+} as const;
 
 const mockNotifications = [
   {
@@ -105,12 +120,10 @@ export default function AdminNotifications() {
               key={notif.id} 
               className={`p-6 border border-border flex gap-6 relative group transition-all duration-300 hover:shadow-lg rounded-2xl ${notif.read ? 'bg-card/40 opacity-80' : 'bg-card shadow-md border-l-4 border-l-primary'}`}
             >
-              <div className={`h-12 w-12 flex items-center justify-center shrink-0 rounded-xl ${
-                notif.type === 'booking' ? 'bg-blue-500/10 text-blue-500' :
-                notif.type === 'maintenance' ? 'bg-amber-500/10 text-amber-500' :
-                notif.type === 'payment' ? 'bg-emerald-500/10 text-emerald-500' :
-                'bg-slate-500/10 text-slate-500'
-              }`}>
+              <div className={cn(
+                "h-12 w-12 flex items-center justify-center shrink-0 rounded-xl",
+                notificationTypeStyles[notif.type as keyof typeof notificationTypeStyles] ?? notificationTypeStyles.system
+              )}>
                 {notif.type === 'booking' && <Calendar size={20} />}
                 {notif.type === 'maintenance' && <AlertTriangle size={20} />}
                 {notif.type === 'payment' && <CheckCircle2 size={20} />}
@@ -125,11 +138,10 @@ export default function AdminNotifications() {
                 <p className="text-sm text-muted-foreground max-w-2xl">{notif.description}</p>
                 <div className="flex items-center gap-4 pt-2">
                    <div className="flex items-center gap-1.5 pt-1">
-                      <div className={`h-1.5 w-1.5 rounded-full ${
-                        notif.priority === 'high' ? 'bg-rose-500' :
-                        notif.priority === 'medium' ? 'bg-amber-500' :
-                        'bg-slate-400'
-                      }`} />
+                      <div className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        priorityDotStyles[notif.priority as keyof typeof priorityDotStyles] ?? priorityDotStyles.low
+                      )} />
                       <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{notif.priority} Priority</span>
                    </div>
                 </div>

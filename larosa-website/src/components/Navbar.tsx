@@ -55,7 +55,7 @@ export function Navbar() {
     <>
       <header
         className={cn(
-          "fixed top-0 z-50 w-full transition-[background,box-shadow,border-color] duration-500 ease-out",
+          "fixed top-[var(--campaign-strip-height,0px)] z-50 w-full transition-[background,box-shadow,border-color,top] duration-500 ease-out",
           scrolled
             ? "border-b border-border/60 bg-background/85 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-xl dark:bg-background/80 dark:shadow-[0_12px_40px_-16px_rgba(0,0,0,0.45)] dark:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]"
             : "border-b border-transparent bg-gradient-to-b from-background/70 via-background/35 to-transparent backdrop-blur-md dark:from-background/50 dark:via-background/20"
