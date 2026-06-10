@@ -6,7 +6,7 @@ import {
   useQueryClient,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import { cloneInitialRooms, type Room } from "@/lib/room-catalog";
+import type { Room } from "@/lib/room-catalog";
 import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 
 export type { AdminCalendarBooking } from "@/lib/booking-calendar-events";

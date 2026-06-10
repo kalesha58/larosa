@@ -53,7 +53,7 @@ export function VillaDetailContent({ villa, className }: VillaDetailContentProps
           asChild
           className="h-14 w-full rounded-full px-8 font-serif text-xs tracking-[0.2em] sm:w-auto"
         >
-          <Link href="/rooms">Discover Villa</Link>
+          <Link href={`/rooms/${villa.roomId}`}>Discover Villa</Link>
         </Button>
       </div>
     </div>

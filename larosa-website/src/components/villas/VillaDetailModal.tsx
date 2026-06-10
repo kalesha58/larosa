@@ -16,20 +16,22 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { VillaDetailContent } from "@/components/villas/VillaDetailContent";
-import { HOME_VILLAS } from "@/lib/villas-home";
+import type { HomeVilla } from "@/lib/villas-home";
 
 type VillaDetailModalProps = {
+  villas: HomeVilla[];
   openIndex: number | null;
   onOpenChange: (open: boolean) => void;
 };
 
 export function VillaDetailModal({
+  villas,
   openIndex,
   onOpenChange,
 }: VillaDetailModalProps) {
   const [isMobile, setIsMobile] = useState(false);
   const open = openIndex !== null;
-  const villa = openIndex !== null ? HOME_VILLAS[openIndex] : null;
+  const villa = openIndex !== null ? villas[openIndex] : null;
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");

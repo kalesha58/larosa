@@ -1,133 +1,145 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useGetRooms } from "@/hooks/use-queries";
+import { buildHeroSlides } from "@/lib/villa-display";
 import { RoomCard } from "@/components/RoomCard";
 import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const HERO_SLIDES = [
-  {
-    src: "/poolview1.jpeg",
-    label: "Aqua Retreat",
-    caption: "Set across nearly 2 acres of serene landscape with private pool and lake views",
-  },
-  {
-    src: "/poolview2.jpeg",
-    label: "Villanova",
-    caption: "A stunning Mediterranean style retreat with private pool and lush greenery",
-  },
-];
-
 function RoomsInner() {
+  const { data: rooms, isLoading } = useGetRooms();
+  const heroSlides = useMemo(
+    () => (rooms ? buildHeroSlides(rooms) : []),
+    [rooms]
+  );
+
   const [heroIndex, setHeroIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    setHeroIndex(0);
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
     timerRef.current = setInterval(() => {
-      setHeroIndex((i) => (i + 1) % HERO_SLIDES.length);
+      setHeroIndex((i) => (i + 1) % heroSlides.length);
     }, 4500);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [heroSlides.length]);
 
   function goTo(i: number) {
-    setHeroIndex((i + HERO_SLIDES.length) % HERO_SLIDES.length);
+    if (heroSlides.length === 0) return;
+    setHeroIndex((i + heroSlides.length) % heroSlides.length);
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(
-      () => setHeroIndex((idx) => (idx + 1) % HERO_SLIDES.length),
-      4500
-    );
+    if (heroSlides.length > 1) {
+      timerRef.current = setInterval(
+        () => setHeroIndex((idx) => (idx + 1) % heroSlides.length),
+        4500
+      );
+    }
   }
 
-  const { data: rooms, isLoading } = useGetRooms();
+  const currentSlide = heroSlides[heroIndex];
 
   return (
     <div className="min-h-screen bg-background">
       <section className="relative h-[75vh] min-h-[480px] overflow-hidden">
-        <AnimatePresence mode="sync">
-          <motion.div
-            key={heroIndex}
-            className="absolute inset-0"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.3, ease: "easeInOut" }}
-          >
-            <Image
-              src={HERO_SLIDES[heroIndex].src}
-              alt={HERO_SLIDES[heroIndex].label}
-              fill
-              priority={heroIndex === 0}
-              sizes="100vw"
-              className="object-cover saturate-[1.1]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/50" />
-          </motion.div>
-        </AnimatePresence>
+        {currentSlide ? (
+          <>
+            <AnimatePresence mode="sync">
+              <motion.div
+                key={heroIndex}
+                className="absolute inset-0"
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.3, ease: "easeInOut" }}
+              >
+                <Image
+                  src={currentSlide.src}
+                  alt={currentSlide.label}
+                  fill
+                  priority={heroIndex === 0}
+                  sizes="100vw"
+                  className="object-cover saturate-[1.1]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/50" />
+              </motion.div>
+            </AnimatePresence>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-4 pt-20">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={heroIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.7 }}
-            >
-              <p className="text-white/90 uppercase tracking-[0.3em] text-xs mb-4 font-medium">
-                {HERO_SLIDES[heroIndex].label}
-              </p>
-              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-white mb-4 leading-tight drop-shadow-md">
-                Our Accommodations
-              </h1>
-              <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-light drop-shadow-sm">
-                {HERO_SLIDES[heroIndex].caption}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-4 pt-20">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={heroIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.7 }}
+                >
+                  <p className="text-white/90 uppercase tracking-[0.3em] text-xs mb-4 font-medium">
+                    {currentSlide.label}
+                  </p>
+                  <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-white mb-4 leading-tight drop-shadow-md">
+                    Our Villas
+                  </h1>
+                  <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-light drop-shadow-sm">
+                    {currentSlide.caption}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-        <button
-          type="button"
-          onClick={() => goTo(heroIndex - 1)}
-          className="absolute left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <button
-          type="button"
-          onClick={() => goTo(heroIndex + 1)}
-          className="absolute right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
-          aria-label="Next slide"
-        >
-          <ChevronRight size={20} />
-        </button>
+            {heroSlides.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => goTo(heroIndex - 1)}
+                  className="absolute left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goTo(heroIndex + 1)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white hover:border-white hover:bg-white/10 transition-all backdrop-blur-md"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight size={20} />
+                </button>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {HERO_SLIDES.map((slide, i) => (
-            <button
-              key={slide.src}
-              type="button"
-              onClick={() => goTo(i)}
-              className={`transition-all duration-500 rounded-full ${
-                i === heroIndex
-                  ? "w-8 h-1 bg-white"
-                  : "w-2 h-1 bg-white/40"
-              }`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
-        </div>
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {heroSlides.map((slide, i) => (
+                    <button
+                      key={`${slide.src}-${i}`}
+                      type="button"
+                      onClick={() => goTo(i)}
+                      className={`transition-all duration-500 rounded-full ${
+                        i === heroIndex
+                          ? "w-8 h-1 bg-white"
+                          : "w-2 h-1 bg-white/40"
+                      }`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
 
-        <div className="absolute bottom-8 right-8 z-20 text-xs text-white/70 font-serif tracking-widest drop-shadow-sm">
-          {String(heroIndex + 1).padStart(2, "0")} /{" "}
-          {String(HERO_SLIDES.length).padStart(2, "0")}
-        </div>
+                <div className="absolute bottom-8 right-8 z-20 text-xs text-white/70 font-serif tracking-widest drop-shadow-sm">
+                  {String(heroIndex + 1).padStart(2, "0")} /{" "}
+                  {String(heroSlides.length).padStart(2, "0")}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-muted animate-pulse" />
+        )}
       </section>
 
       <div className="relative border-t border-border/50 bg-gradient-to-b from-muted/20 via-background to-background">
@@ -150,8 +162,8 @@ function RoomsInner() {
                   {isLoading
                     ? "Searching…"
                     : rooms && rooms.length > 0
-                      ? `${rooms.length} ${rooms.length === 1 ? "suite" : "suites"} available`
-                      : "No suites found"}
+                      ? `${rooms.length} ${rooms.length === 1 ? "villa" : "villas"} available`
+                      : "No villas found"}
                 </p>
                 <p className="text-xs text-muted-foreground sm:text-sm">
                   Curated spaces matching your preferences
@@ -165,7 +177,7 @@ function RoomsInner() {
             )}
           </div>
 
-          {/* Room grid — full width */}
+          {/* Villa grid */}
           <div
             className={cn(
               "rounded-2xl border border-border/40 bg-muted/10 p-4 sm:p-6 lg:rounded-3xl lg:p-8 xl:p-10",
@@ -204,10 +216,10 @@ function RoomsInner() {
                   <LayoutGrid className="h-7 w-7 text-muted-foreground" aria-hidden />
                 </div>
                 <h3 className="font-serif text-xl text-foreground sm:text-2xl">
-                  No suites available
+                  No villas available
                 </h3>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
-                  Please check back soon — new accommodations are being added.
+                  Please check back soon — new villas are being added.
                 </p>
               </div>
             )}

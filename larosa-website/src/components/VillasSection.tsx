@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { useGetRooms } from "@/hooks/use-queries";
+import { roomsToDisplayVillas } from "@/lib/villa-display";
 import { VillaDetailModal } from "@/components/villas/VillaDetailModal";
 import { VillaHubDiagram } from "@/components/villas/VillaHubDiagram";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -33,6 +36,8 @@ const item = {
 export function VillasSection() {
   const [openVillaIndex, setOpenVillaIndex] = useState<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
+  const { data: rooms, isLoading } = useGetRooms();
+  const villas = rooms ? roomsToDisplayVillas(rooms) : [];
 
   const instant = { duration: 0 };
 
@@ -109,14 +114,30 @@ export function VillasSection() {
           </div>
         </motion.div>
 
-        <VillaHubDiagram
-          activeIndex={openVillaIndex}
-          onSelectVilla={setOpenVillaIndex}
-          animate={!shouldReduceMotion}
-        />
+        {isLoading ? (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-[420px] rounded-3xl" />
+            <Skeleton className="hidden h-[420px] rounded-3xl lg:block" />
+          </div>
+        ) : villas.length >= 2 ? (
+          <VillaHubDiagram
+            villas={villas}
+            activeIndex={openVillaIndex}
+            onSelectVilla={setOpenVillaIndex}
+            animate={!shouldReduceMotion}
+          />
+        ) : villas.length === 1 ? (
+          <VillaHubDiagram
+            villas={villas}
+            activeIndex={openVillaIndex}
+            onSelectVilla={setOpenVillaIndex}
+            animate={!shouldReduceMotion}
+          />
+        ) : null}
       </div>
 
       <VillaDetailModal
+        villas={villas}
         openIndex={openVillaIndex}
         onOpenChange={(open) => {
           if (!open) setOpenVillaIndex(null);
