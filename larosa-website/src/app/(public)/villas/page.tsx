@@ -17,39 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const VILLAS = [
-  {
-    name: "Garden Retreat Villa",
-    tagline: "A Sanctuary of Verdant Peace",
-    desc: "Secluded one-bedroom villa with private plunge pool surrounded by lush tropical gardens. Perfect for couples seeking intimate tranquility away from the world.",
-    size: "120 m²",
-    guests: "2 Guests",
-    img: "/poolview1.jpeg",
-    secondaryImg: "/room2.jpeg",
-    highlights: [
-      "Private heated plunge pool",
-      "Garden-facing master suite",
-      "Dedicated villa host",
-      "Sunset dining deck",
-    ],
-  },
-  {
-    name: "Ocean View Villa",
-    tagline: "Horizon-Bound Elegance",
-    desc: "Elevated two-bedroom villa with breathtaking panoramic ocean views and a private terrace. Designed for those who live for the sea and infinite horizons.",
-    size: "200 m²",
-    guests: "4 Guests",
-    img: "/poolview2.jpeg",
-    secondaryImg: "/room3.jpeg",
-    highlights: [
-      "Panoramic ocean terrace",
-      "Indoor-outdoor lounge",
-      "Curated in-villa minibar",
-      "Priority concierge service",
-    ],
-  },
-];
+import { HOME_VILLAS } from "@/lib/villas-home";
 
 const LIFESTYLE_FEATURES = [
   {
@@ -193,7 +161,7 @@ export default function VillasPage() {
       {/* The Villas - Asymmetrical Layout */}
       <section className="pb-32 px-4 md:px-8 overflow-hidden bg-background">
         <div className="container mx-auto max-w-[1400px] space-y-40">
-          {VILLAS.map((villa, index) => {
+          {HOME_VILLAS.map((villa, index) => {
             const isEven = index % 2 === 0;
             return (
               <motion.div
@@ -260,18 +228,7 @@ export default function VillasPage() {
                       </h3>
                     </div>
 
-                    <div className="flex gap-4 border-b border-border/50 pb-8">
-                      <div className="flex items-center gap-2">
-                         <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                         <span className="text-xs uppercase tracking-widest font-medium text-muted-foreground">{villa.size}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                         <span className="text-xs uppercase tracking-widest font-medium text-muted-foreground">{villa.guests}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light">
+                    <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light border-b border-border/50 pb-8">
                       {villa.desc}
                     </p>
 

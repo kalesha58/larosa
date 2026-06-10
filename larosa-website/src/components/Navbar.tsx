@@ -21,12 +21,12 @@ import {
 } from "@/components/ui/sheet";
 import { Moon, Sun, Menu, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/lib/brand";
 
 const NAV_LINKS = [
   { href: "/rooms", label: "Rooms & Suites" },
   { href: "/villas", label: "Villas" },
   { href: "/about", label: "About" },
-  { href: "/#amenities", label: "Experiences" },
   { href: "/contact", label: "Contact" },
 ] as const;
 
@@ -67,10 +67,10 @@ export function Navbar() {
           <div className="flex min-w-0 flex-1 items-center gap-6 lg:gap-10">
             <Link
               href="/"
-              className="group relative shrink-0 font-serif text-xl font-medium tracking-[0.3em] text-foreground sm:text-2xl"
+              className="group relative shrink-0 font-serif text-lg font-medium tracking-[0.14em] text-foreground sm:text-xl"
             >
               <span className="bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent transition-opacity group-hover:opacity-90">
-                LAROSA
+                {BRAND_NAME}
               </span>
             </Link>
 
@@ -220,8 +220,8 @@ export function Navbar() {
           </SheetDescription>
 
           <div className="flex items-center justify-between border-b border-border/50 bg-card/30 px-4 py-3.5 backdrop-blur-sm sm:px-5">
-            <span className="font-serif text-lg font-semibold tracking-[0.2em] text-foreground">
-              LAROSA
+            <span className="font-serif text-base font-semibold tracking-[0.12em] text-foreground">
+              {BRAND_NAME}
             </span>
             <Button
               type="button"

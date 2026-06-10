@@ -1,0 +1,88 @@
+"use client";
+
+import { useRef } from "react";
+import { motion } from "framer-motion";
+import { BookingWidget } from "@/components/BookingWidget";
+import { useCursorParallax } from "@/hooks/useCursorParallax";
+import { useScrollSequence } from "@/hooks/useScrollSequence";
+
+export function CinematicHero() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contentOverlayRef = useRef<HTMLDivElement>(null);
+
+  const { getOffset } = useCursorParallax();
+  const { isReady, isFullyLoaded, loadProgress } = useScrollSequence({
+    sectionRef,
+    canvasRef,
+    contentOverlayRef,
+    getParallaxOffset: getOffset,
+  });
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative h-[200vh] w-full"
+      aria-label="Cinematic hero"
+    >
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 h-full w-full"
+          aria-hidden
+        />
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
+
+        {!isReady && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black">
+            <div className="mb-4 h-px w-32 overflow-hidden bg-white/20">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${loadProgress}%` }}
+              />
+            </div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-white/60">
+              Preparing experience
+              {!isFullyLoaded && loadProgress < 100 ? ` · ${loadProgress}%` : ""}
+            </p>
+          </div>
+        )}
+
+        <div
+          ref={contentOverlayRef}
+          className="relative z-10 flex h-full flex-col items-center justify-center px-4 sm:px-6 lg:px-10"
+        >
+          <div className="w-full max-w-[1320px]">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 1, delay: 0.2 }}
+            >
+              <p className="mb-3 text-left text-[10px] font-medium uppercase tracking-[0.3em] text-white/80 sm:text-xs">
+                Welcome to the extraordinary
+              </p>
+              <h1 className="mb-4 max-w-2xl text-left font-serif text-3xl leading-[1.2] text-white sm:text-4xl md:text-5xl lg:text-6xl">
+                A Sanctuary of <br />
+                <span className="italic text-white/90">Quiet Opulence</span>
+              </h1>
+              <p className="mb-8 max-w-xl text-left text-sm font-light leading-relaxed text-white/70 sm:text-base md:text-lg">
+                Experience an unhurried, elevated stay where every detail is
+                meticulously crafted for your absolute comfort.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="hidden w-full md:-mb-24 md:block"
+            >
+              <BookingWidget className="mx-0 max-w-3xl" />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

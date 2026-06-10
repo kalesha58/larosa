@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { GuestCountStepper } from "@/components/GuestCountStepper";
+import {
+  MAX_ONLINE_GUESTS,
+  validateGuestsForRoom,
+  clampGuestCount,
+} from "@/lib/guest-limits";
 import { Badge } from "@/components/ui/badge";
 import { useGetRoom, useGetRoomAvailability, useCreateBooking } from "@/hooks/use-queries";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,7 +34,11 @@ import { cn } from "@/lib/utils";
 const guestSchema = z.object({
   guestName: z.string().min(2, "Full name is required"),
   guestEmail: z.string().email("Valid email is required"),
-  guestPhone: z.string().optional(),
+  guestPhone: z
+    .string()
+    .trim()
+    .min(10, "Phone number is required")
+    .max(20, "Enter a valid phone number"),
   specialRequests: z.string().optional(),
 });
 type GuestForm = z.infer<typeof guestSchema>;
@@ -59,7 +68,7 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [guests, setGuests] = useState("2");
+  const [guests, setGuests] = useState(2);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [paying, setPaying] = useState(false);
@@ -74,17 +83,32 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
     },
   });
 
+  const guestMax = room
+    ? Math.min(MAX_ONLINE_GUESTS, room.capacity)
+    : MAX_ONLINE_GUESTS;
+
+  useEffect(() => {
+    if (!room) return;
+    const max = Math.min(MAX_ONLINE_GUESTS, room.capacity);
+    setGuests((g) => clampGuestCount(g, 1, max));
+  }, [room]);
+
   const disabledDates = buildDisabledDates(bookedRanges);
   const nights = dateRange?.from && dateRange?.to
     ? Math.max(1, differenceInCalendarDays(dateRange.to, dateRange.from))
     : 0;
   const subtotal = room ? room.price * nights : 0;
-  const taxes = Math.round(subtotal * 0.12);
-  const total = subtotal + taxes;
+  const total = subtotal;
 
   const handleDateContinue = () => {
     if (!dateRange?.from || !dateRange?.to) {
       toast.error("Please select check-in and check-out dates");
+      return;
+    }
+    if (!room) return;
+    const check = validateGuestsForRoom(guests, room.capacity);
+    if (!check.ok) {
+      toast.error(check.error);
       return;
     }
     setStep(2);
@@ -98,7 +122,7 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
           roomId: room.id,
           checkIn: dateRange.from.toISOString(),
           checkOut: dateRange.to.toISOString(),
-          guests: parseInt(guests, 10),
+          guests,
           guestName: data.guestName,
           guestEmail: data.guestEmail,
           guestPhone: data.guestPhone,
@@ -113,6 +137,9 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
       const code = (err as Error & { code?: string }).code;
       if (code === "DATES_UNAVAILABLE") {
         toast.error("These dates are already booked. Please select different dates.");
+        setStep(1);
+      } else if (code === "GUESTS_OVER_LIMIT") {
+        toast.error(msg);
         setStep(1);
       } else {
         toast.error(msg);
@@ -269,19 +296,22 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
                         className="border border-border rounded-xl p-4 bg-background/50"
                       />
                     </div>
-                    <div className="mb-8">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Number of Guests</label>
-                      <Select value={guests} onValueChange={setGuests}>
-                        <SelectTrigger className="h-11 rounded-xl border-border w-48" id="booking-guests">
-                          <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: room.capacity }, (_, i) => i + 1).map((n) => (
-                            <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? "Guest" : "Guests"}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="mb-8 max-w-xs">
+                      <label
+                        htmlFor="booking-guests"
+                        className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block"
+                      >
+                        Number of Guests
+                      </label>
+                      <GuestCountStepper
+                        id="booking-guests"
+                        value={guests}
+                        onChange={setGuests}
+                        max={guestMax}
+                      />
+                      <p className="mt-2 text-[10px] text-muted-foreground">
+                        Online booking up to {guestMax} guest{guestMax === 1 ? "" : "s"} for this room.
+                      </p>
                     </div>
                     <Button id="booking-continue-dates" onClick={handleDateContinue} disabled={!dateRange?.from || !dateRange?.to} className="w-full h-12 rounded-xl font-serif tracking-widest text-sm">
                       Continue <ArrowRight className="ml-2 h-4 w-4" />
@@ -325,11 +355,11 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
                         </div>
                         <FormField control={form.control} name="guestPhone" render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Phone Number</FormLabel>
+                            <FormLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Phone Number *</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input id="booking-phone" type="tel" className="h-11 rounded-xl border-border pl-10" autoComplete="tel" {...field} />
+                                <Input id="booking-phone" type="tel" required className="h-11 rounded-xl border-border pl-10" autoComplete="tel" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />
@@ -422,12 +452,11 @@ export default function BookingPage({ params }: { params: Promise<{ roomId: stri
                     <span className="font-medium text-xs">{nights}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Subtotal</span>
-                    <span className="text-xs">₹{subtotal.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">GST (12%)</span>
-                    <span className="text-xs">₹{taxes.toLocaleString("en-IN")}</span>
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                      <Users className="h-3 w-3" />
+                      Guests
+                    </span>
+                    <span className="font-medium text-xs">{guests}</span>
                   </div>
                   <div className="flex justify-between items-center pt-3">
                     <span className="text-[10px] font-bold uppercase tracking-widest">Total</span>

@@ -6,8 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useGetRooms } from "@/hooks/use-queries";
 import { RoomCard } from "@/components/RoomCard";
+import { GuestCountStepper } from "@/components/GuestCountStepper";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { clampGuestCount, MAX_ONLINE_GUESTS } from "@/lib/guest-limits";
 import {
   Select,
   SelectContent,
@@ -21,7 +23,6 @@ import {
   ChevronRight,
   LayoutGrid,
   RotateCcw,
-  SlidersHorizontal,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -63,9 +64,14 @@ function RoomsInner() {
     Number(searchParams.get("minPrice")) || 0,
     Number(searchParams.get("maxPrice")) || 100000,
   ]);
-  const [capacity, setCapacity] = useState<string>(
-    () => searchParams.get("guests") || "any"
-  );
+  const [guestCount, setGuestCount] = useState(() => {
+    const fromUrl = searchParams.get("guests");
+    if (fromUrl) {
+      const n = Number.parseInt(fromUrl, 10);
+      if (!Number.isNaN(n)) return clampGuestCount(n);
+    }
+    return 1;
+  });
 
   const [heroIndex, setHeroIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -92,7 +98,7 @@ function RoomsInner() {
     type: type !== "all" ? type : undefined,
     minPrice: priceRange[0],
     maxPrice: priceRange[1],
-    capacity: capacity !== "any" ? Number(capacity) : undefined,
+    capacity: guestCount,
   });
 
   return (
@@ -193,23 +199,6 @@ function RoomsInner() {
                   "dark:border-border/40 dark:bg-card/40 dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.45)]"
                 )}
               >
-                <div className="mb-6 flex items-start gap-3 sm:mb-8">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/5">
-                    <SlidersHorizontal
-                      className="h-5 w-5 text-primary"
-                      aria-hidden
-                    />
-                  </div>
-                  <div>
-                    <h2 className="font-serif text-lg leading-tight text-foreground sm:text-xl">
-                      Refine your stay
-                    </h2>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                      Tailor results by category, budget, and party size.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="space-y-6 sm:space-y-7">
                   <div className="space-y-3">
                     <Label
@@ -271,22 +260,12 @@ function RoomsInner() {
                     >
                       Guests
                     </Label>
-                    <Select value={capacity} onValueChange={setCapacity}>
-                      <SelectTrigger
-                        id="rooms-filter-guests"
-                        className="h-12 rounded-xl border-border/60 bg-background/60 text-left text-sm shadow-sm transition-colors hover:border-primary/35 focus:ring-primary/20"
-                      >
-                        <SelectValue placeholder="Any capacity" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="any">Any capacity</SelectItem>
-                        <SelectItem value="1">1 guest</SelectItem>
-                        <SelectItem value="2">2 guests</SelectItem>
-                        <SelectItem value="3">3 guests</SelectItem>
-                        <SelectItem value="4">4 guests</SelectItem>
-                        <SelectItem value="5">5+ guests</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <GuestCountStepper
+                      id="rooms-filter-guests"
+                      value={guestCount}
+                      onChange={setGuestCount}
+                      max={MAX_ONLINE_GUESTS}
+                    />
                   </div>
 
                   <Button
@@ -296,7 +275,7 @@ function RoomsInner() {
                     onClick={() => {
                       setType("all");
                       setPriceRange([0, 100000]);
-                      setCapacity("any");
+                      setGuestCount(1);
                     }}
                   >
                     <RotateCcw className="mr-2 h-3.5 w-3.5" aria-hidden />
@@ -388,7 +367,7 @@ function RoomsInner() {
                       onClick={() => {
                         setType("all");
                         setPriceRange([0, 100000]);
-                        setCapacity("any");
+                        setGuestCount(1);
                       }}
                     >
                       <RotateCcw className="mr-2 h-3.5 w-3.5" aria-hidden />

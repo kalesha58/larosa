@@ -25,6 +25,5 @@ export async function getBookingTotal(
     )
   );
   const subtotal = room.price * nights;
-  const taxes = Math.floor(subtotal * 0.12); // Using 12% GST consistently
-  return { room, subtotal, taxes, total: subtotal + taxes, nights };
+  return { room, subtotal, taxes: 0, total: subtotal, nights };
 }

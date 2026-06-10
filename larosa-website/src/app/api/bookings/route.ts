@@ -4,15 +4,20 @@ import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
 import { Room } from "@/models/Room";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
+import {
+  MAX_ONLINE_GUESTS,
+  MIN_GUESTS,
+  validateGuestsForRoom,
+} from "@/lib/guest-limits";
 
 const createSchema = z.object({
   roomId: z.string(),
   checkIn: z.string(),
   checkOut: z.string(),
-  guests: z.number().int().positive(),
+  guests: z.number().int().min(MIN_GUESTS).max(MAX_ONLINE_GUESTS),
   guestName: z.string().min(2),
   guestEmail: z.string().email(),
-  guestPhone: z.string().optional(),
+  guestPhone: z.string().trim().min(10, "Phone number is required").max(20),
   specialRequests: z.string().optional(),
 });
 
@@ -80,6 +85,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
+    const guestCheck = validateGuestsForRoom(data.guests, room.capacity);
+    if (!guestCheck.ok) {
+      return NextResponse.json(
+        { error: guestCheck.error, code: "GUESTS_OVER_LIMIT" },
+        { status: 400 }
+      );
+    }
+
     const checkIn = new Date(data.checkIn);
     const checkOut = new Date(data.checkOut);
 
@@ -136,8 +149,7 @@ export async function POST(request: NextRequest) {
       Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
     );
     const subtotal = room.price * nights;
-    const taxes = Math.round(subtotal * 0.12); // 12% GST
-    const totalPrice = subtotal + taxes;
+    const totalPrice = subtotal;
 
     const booking = await Booking.create({
       roomId: room.id,
@@ -162,7 +174,6 @@ export async function POST(request: NextRequest) {
         totalPrice,
         nights,
         subtotal,
-        taxes,
       },
       { status: 201 }
     );

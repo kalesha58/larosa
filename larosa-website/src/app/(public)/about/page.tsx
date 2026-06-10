@@ -4,8 +4,9 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Award, Clock, Heart, Leaf, Mail, Phone, Star, Sparkles, Quote } from "lucide-react";
+import { Award, Clock, Heart, Leaf, Mail, Star, Sparkles, Quote } from "lucide-react";
 import Image from "next/image";
+import { SITE_EMAIL } from "@/lib/contact-info";
 
 const MILESTONES = [
   { year: "1987", title: "The Vision", desc: "Larosa opened its doors in Beverly Hills with 24 bespoke rooms and a singular vision: quiet luxury." },
@@ -278,7 +279,7 @@ export default function AboutPage() {
               We&apos;re here to help
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-8 rounded-[2rem] border border-border/50 bg-background/80 p-8 shadow-sm backdrop-blur-sm md:grid-cols-3 md:gap-6 md:p-10">
+          <div className="grid grid-cols-1 gap-8 rounded-[2rem] border border-border/50 bg-background/80 p-8 shadow-sm backdrop-blur-sm md:grid-cols-2 md:gap-6 md:p-10">
             <div className="flex gap-4 md:flex-col md:items-center md:text-center">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/5">
                 <Mail className="h-[18px] w-[18px] text-primary" aria-hidden />
@@ -288,26 +289,10 @@ export default function AboutPage() {
                   Email
                 </p>
                 <a
-                  href="mailto:info@larosa.co.in"
+                  href={`mailto:${SITE_EMAIL}`}
                   className="mt-1 block text-sm text-foreground underline-offset-4 hover:underline md:text-[15px]"
                 >
-                  info@larosa.co.in
-                </a>
-              </div>
-            </div>
-            <div className="flex gap-4 md:flex-col md:items-center md:text-center">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/5">
-                <Phone className="h-[18px] w-[18px] text-primary" aria-hidden />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Phone
-                </p>
-                <a
-                  href="tel:+917093939312"
-                  className="mt-1 block text-sm text-foreground underline-offset-4 hover:underline md:text-[15px]"
-                >
-                  +91 7093939312
+                  {SITE_EMAIL}
                 </a>
               </div>
             </div>

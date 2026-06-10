@@ -15,6 +15,7 @@ import {
   Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/lib/brand";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,7 +88,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <Link href="/" className="group flex items-center gap-2">
             <span className="h-8 w-8 bg-primary flex items-center justify-center text-primary-foreground font-serif text-xl">L</span>
             <span className="font-serif text-lg font-bold tracking-[0.15em] transition-colors group-hover:text-primary">
-              LAROSA
+              {BRAND_NAME}
             </span>
           </Link>
         </div>

@@ -26,11 +26,11 @@ export function MotionGuide() {
   // Vertical movement across the whole page
   const y = useTransform(smoothProgress, [0, 1], ["0vh", "90vh"]);
   
-  // Subtle horizontal "wandering" to interact with sections
+  // Stay near the rail during hero / villas overlap; wander later on the page
   const x = useTransform(
     smoothProgress,
-    [0, 0.2, 0.4, 0.6, 0.8, 1],
-    ["0px", "15px", "-10px", "12px", "-5px", "0px"]
+    [0, 0.28, 0.45, 0.65, 0.85, 1],
+    ["0px", "2px", "8px", "-6px", "6px", "0px"]
   );
 
   // Rotate based on scroll speed/progress

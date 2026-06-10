@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { BRAND_NAME } from "@/lib/brand";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -134,9 +135,9 @@ export default function LoginPage() {
             <div className="mb-8 text-center">
               <Link
                 href="/"
-                className="inline-block font-serif text-2xl font-bold tracking-widest text-white mb-2"
+                className="inline-block font-serif text-xl font-bold tracking-[0.12em] text-white mb-2"
               >
-                LAROSA
+                {BRAND_NAME}
               </Link>
               <h2 className="text-xl text-white/90 font-medium mt-4">
                 Sign in to your account

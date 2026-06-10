@@ -13,6 +13,7 @@ const subjectEnum = z.enum([
   "wedding",
   "corporate",
   "feedback",
+  "property",
   "other",
 ]);
 
@@ -33,6 +34,7 @@ const SUBJECT_LABELS: Record<z.infer<typeof subjectEnum>, string> = {
   wedding: "Wedding",
   corporate: "Corporate stay",
   feedback: "Feedback",
+  property: "Property partnership",
   other: "Other",
 };
 

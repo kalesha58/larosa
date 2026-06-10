@@ -4,11 +4,8 @@ import { motion } from "framer-motion";
 import {
   CarFront,
   Clapperboard,
-  Dumbbell,
   Leaf,
   TreePine,
-  Waves,
-  Wifi,
   Wind,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,34 +13,19 @@ import { IVillaAmenity } from "./VillaAmenitiesSection.interfaces";
 
 const AMENITIES: IVillaAmenity[] = [
   {
-    title: "High-Speed WiFi",
-    description: "Ultra-fast internet coverage throughout villas and outdoor lounges.",
-    icon: Wifi,
-  },
-  {
-    title: "Private Parking",
-    description: "Secure gated parking access with dedicated bays for each residence.",
-    icon: CarFront,
-  },
-  {
     title: "Home Cinema",
     description: "Immersive in-villa entertainment setup with premium surround audio.",
     icon: Clapperboard,
   },
   {
-    title: "Fitness Area",
-    description: "Private training spaces with curated modern equipment and recovery tools.",
-    icon: Dumbbell,
-  },
-  {
-    title: "Spa & Wellness",
-    description: "Serene treatment-ready spaces designed for restoration and stillness.",
-    icon: Waves,
-  },
-  {
     title: "Garden Dining",
     description: "Open-air dining terraces for intimate breakfasts and sunset dinners.",
     icon: TreePine,
+  },
+  {
+    title: "Private Parking",
+    description: "Secure gated parking access with dedicated bays for each residence.",
+    icon: CarFront,
   },
   {
     title: "Climate Control",
@@ -91,7 +73,7 @@ export function VillaAmenitiesSection() {
               <span className="italic text-primary/90">Expected</span>
             </h2>
             <p className="text-lg text-muted-foreground font-light leading-relaxed">
-              Every Larosa villa is a private world designed for absolute comfort, 
+              Every LaRosa villa is a private world designed for absolute comfort, 
               where world-class amenities meet the warmth of a personal sanctuary.
             </p>
           </motion.div>
@@ -126,8 +108,7 @@ export function VillaAmenitiesSection() {
               className={cn(
                 "group relative p-8 rounded-[2.5rem] transition-all duration-500 overflow-hidden",
                 "bg-card/40 border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl",
-                "hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:bg-card/60",
-                idx === 2 || idx === 3 ? "md:col-span-2 lg:col-span-1" : ""
+                "hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:-translate-y-1 hover:bg-card/60"
               )}
             >
               {/* Subtle Icon Decor */}

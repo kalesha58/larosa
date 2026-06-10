@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { DateRange } from "react-day-picker";
-import { ArrowRight, Mail, MapPin, MessageCircle, Phone, Star } from "lucide-react";
+import { Mail, Star } from "lucide-react";
 import {
   PreferredStayDatesField,
   stayRangeToPayload,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { SITE_EMAIL } from "@/lib/contact-info";
 
 const container = {
   hidden: { opacity: 0 },
@@ -68,7 +69,7 @@ export function HomeContactSection() {
           title: "Message not sent",
           description:
             data.error ??
-            "Something went wrong. Please try again or call us directly.",
+            "Something went wrong. Please try again or email us directly.",
         });
         return;
       }
@@ -119,34 +120,28 @@ export function HomeContactSection() {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-8">
-              {[
-                { icon: Phone, label: "Reservations", value: "+91 7093939312" },
-                { icon: Mail, label: "Email Us", value: "info@larosa.co.in" },
-                { icon: MapPin, label: "Location", value: "Beverly Hills, California" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="group flex items-center gap-6"
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="group flex items-center gap-6"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/10 bg-primary/5 text-primary transition-all duration-500 group-hover:bg-primary group-hover:text-primary-foreground">
+                <Mail size={20} strokeWidth={1.5} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Email Us
+                </p>
+                <a
+                  href={`mailto:${SITE_EMAIL}`}
+                  className="text-base font-medium text-foreground transition-colors group-hover:text-primary"
                 >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/5 border border-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500">
-                    <item.icon size={20} strokeWidth={1.5} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {item.label}
-                    </p>
-                    <p className="text-base text-foreground font-medium group-hover:text-primary transition-colors">
-                      {item.value}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  {SITE_EMAIL}
+                </a>
+              </div>
+            </motion.div>
           </div>
 
           {/* Form Column */}

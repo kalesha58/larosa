@@ -15,8 +15,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Larosa | Luxury Hotel & Sanctuary",
-  description: "Experience quiet opulence and modern sophistication at Larosa Hotel. An unhurried, elevated sanctuary designed exclusively for you.",
+  title: "LaRosa Villas | Private Luxury Residences",
+  description:
+    "Experience quiet opulence at LaRosa Villas. Private estates with pools, gardens, and lake views — an unhurried sanctuary designed for you.",
 };
 
 export default function RootLayout({
