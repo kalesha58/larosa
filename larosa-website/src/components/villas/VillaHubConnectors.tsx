@@ -2,8 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { VillaIcon } from "@/components/villas/VillaIcon";
-import { HOME_VILLAS } from "@/lib/villas-home";
-import type { VillaIconKey } from "@/lib/villas-home";
+import type { HomeVilla, VillaIconKey } from "@/lib/villas-home";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -19,6 +18,7 @@ const MOBILE_PATH = "M 400 200 V 280";
 
 type VillaHubConnectorsProps = {
   variant: "desktop" | "mobile";
+  villas: HomeVilla[];
   animate?: boolean;
 };
 
@@ -119,6 +119,7 @@ function IconNode({
 
 export function VillaHubConnectors({
   variant,
+  villas,
   animate: animateProp = true,
 }: VillaHubConnectorsProps) {
   const reducedMotion = useReducedMotion();
@@ -149,14 +150,14 @@ export function VillaHubConnectors({
       <IconNode
         x={LEFT_NODE.x}
         y={LEFT_NODE.y}
-        iconKey={HOME_VILLAS[0].iconKey}
+        iconKey={villas[0]?.iconKey ?? "trees"}
         delay={0.15}
         animate={animate}
       />
       <IconNode
         x={RIGHT_NODE.x}
         y={RIGHT_NODE.y}
-        iconKey={HOME_VILLAS[1].iconKey}
+        iconKey={villas[1]?.iconKey ?? "waves"}
         delay={0.28}
         animate={animate}
       />

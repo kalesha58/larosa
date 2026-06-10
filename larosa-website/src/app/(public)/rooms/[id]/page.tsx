@@ -47,9 +47,9 @@ export default function RoomDetailPage({ params }: { params: Promise<{ id: strin
   if (!room) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground text-sm uppercase tracking-widest">Room not found</p>
+        <p className="text-muted-foreground text-sm uppercase tracking-widest">Villa not found</p>
         <Button onClick={() => router.push("/rooms")} variant="outline" className="rounded-xl">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Browse Rooms
+          <ArrowLeft className="mr-2 h-4 w-4" /> Browse Villas
         </Button>
       </div>
     );
@@ -59,14 +59,18 @@ export default function RoomDetailPage({ params }: { params: Promise<{ id: strin
     <div className="min-h-screen bg-background">
       {/* Hero Image */}
       <div className="relative h-[60vh] overflow-hidden">
-        <Image
-          src={room.images[0] ?? "/Hero3.jpeg"}
-          alt={room.title}
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
-        />
+        {room.images[0] ? (
+          <Image
+            src={room.images[0]}
+            alt={room.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-muted" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -80,7 +84,7 @@ export default function RoomDetailPage({ params }: { params: Promise<{ id: strin
         {/* Back button */}
         <Link href="/rooms" className="absolute top-6 left-6 z-10">
           <Button variant="ghost" className="text-white hover:bg-white/20 rounded-xl gap-2 backdrop-blur-sm border border-white/20">
-            <ArrowLeft className="h-4 w-4" /> Rooms
+            <ArrowLeft className="h-4 w-4" /> Villas
           </Button>
         </Link>
       </div>
@@ -92,7 +96,7 @@ export default function RoomDetailPage({ params }: { params: Promise<{ id: strin
           <div className="lg:col-span-2 space-y-10">
             {/* Description */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60 mb-3">About This Suite</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60 mb-3">About This Villa</p>
               <p className="text-foreground text-lg leading-relaxed font-serif">{room.description}</p>
             </motion.div>
 

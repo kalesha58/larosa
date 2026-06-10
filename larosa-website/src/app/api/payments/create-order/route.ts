@@ -10,7 +10,7 @@ import {
 import { PAYMENT_NOT_CONFIGURED_CODE } from "@/lib/payments-env";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
-import { Room } from "@/models/Room";
+import { findRoomById } from "@/lib/room-api";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 
 const bodySchema = z.object({
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const room = await Room.findById(roomId);
+    const room = await findRoomById(roomId);
     if (room?.airbnbCalendarUrl) {
       const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
       if (hasExternalOverlap(checkInDate, checkOutDate, externalBookings)) {

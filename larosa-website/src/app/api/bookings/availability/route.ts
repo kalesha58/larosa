@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
-import { Room } from "@/models/Room";
+import { findRoomById } from "@/lib/room-api";
 import { fetchExternalBookings } from "@/lib/ical-service";
 
 // GET /api/bookings/availability?roomId=...
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }));
 
     // 2. Fetch external Airbnb bookings if configured
-    const room = await Room.findById(roomId);
+    const room = await findRoomById(roomId);
     if (room?.airbnbCalendarUrl) {
       const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
       externalBookings.forEach((eb) => {

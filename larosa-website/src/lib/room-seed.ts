@@ -35,11 +35,13 @@ function seedIcalForRoom(roomId: number): string {
   }
 }
 
-function catalogSetFields(r: (typeof INITIAL_ROOMS)[number]) {
+/** Content fields applied only on first insert — admin edits are preserved. */
+function catalogInsertFields(r: (typeof INITIAL_ROOMS)[number]) {
   return {
     title: r.title,
     description: r.description,
     type: r.type,
+    category: r.category,
     price: r.price,
     images: r.images,
     amenities: r.amenities,
@@ -47,6 +49,7 @@ function catalogSetFields(r: (typeof INITIAL_ROOMS)[number]) {
     sizeSqFt: r.sizeSqFt,
     totalRooms: 1,
     featured: r.featured ?? false,
+    status: r.status ?? "active",
   };
 }
 
@@ -96,18 +99,24 @@ export async function ensureCatalogRoomsSeeded(): Promise<CatalogSeedResult> {
       syncEnabled: true,
       syncStatus: "idle",
       calendarExportToken: randomBytes(24).toString("hex"),
+      ...catalogInsertFields(r),
     };
 
-    const $set: Record<string, unknown> = catalogSetFields(r);
+    const $set: Record<string, unknown> = {};
 
     if (seedIcal && !existing?.airbnbIcalUrl?.trim()) {
       $set.airbnbIcalUrl = seedIcal;
     }
 
     const hadExisting = !!existing;
+    const update: Record<string, unknown> = { $setOnInsert: setOnInsert };
+    if (Object.keys($set).length > 0) {
+      update.$set = $set;
+    }
+
     await Room.findOneAndUpdate(
       { roomId: numericId },
-      { $setOnInsert: setOnInsert, $set },
+      update,
       { upsert: true }
     );
 

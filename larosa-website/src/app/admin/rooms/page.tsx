@@ -46,6 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Plus, Trash2, Bed, Users, Layers, Star, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { RoomImageUpload } from "@/components/admin/RoomImageUpload";
 
 const roomSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -57,7 +58,7 @@ const roomSchema = z.object({
   totalRooms: z.coerce.number().min(1, "Total inventory must be at least 1"),
   featured: z.boolean(),
   status: z.enum(["active", "hidden"]),
-  images: z.string().min(1, "Images are required"),
+  images: z.array(z.string()).min(1, "At least one image is required"),
   amenities: z.string().min(1, "Amenities are required"),
   airbnbCalendarUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
@@ -72,7 +73,7 @@ type RoomFormValues = {
   totalRooms: number;
   featured: boolean;
   status: "active" | "hidden";
-  images: string;
+  images: string[];
   amenities: string;
   airbnbCalendarUrl?: string;
 };
@@ -100,7 +101,7 @@ export default function AdminRooms() {
       totalRooms: 5,
       featured: false,
       status: "active",
-      images: "",
+      images: [],
       amenities: "",
       airbnbCalendarUrl: "",
     }
@@ -119,7 +120,7 @@ export default function AdminRooms() {
       totalRooms: room.totalRooms,
       featured: room.featured ?? false,
       status: room.status ?? "active",
-      images: room.images.join(", "),
+      images: room.images,
       amenities: room.amenities.join(", "),
       airbnbCalendarUrl: room.airbnbCalendarUrl || "",
     });
@@ -138,7 +139,6 @@ export default function AdminRooms() {
   const onSubmit = async (values: RoomFormValues) => {
     const data = {
       ...values,
-      images: values.images.split(",").map(s => s.trim()).filter(Boolean),
       amenities: values.amenities.split(",").map(s => s.trim()).filter(Boolean),
     };
 
@@ -280,10 +280,15 @@ export default function AdminRooms() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField control={form.control} name="images" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Image Portfolio (URLs)</FormLabel>
-                        <FormControl><Textarea className="rounded-xl border-border resize-none h-24 font-mono text-[10px]" placeholder="url1, url2..." {...field} /></FormControl>
-                        <FormDescription className="text-[9px] uppercase tracking-wider">Comma separated URLs</FormDescription>
+                      <FormItem className="md:col-span-2">
+                        <FormLabel className="text-[10px] font-bold uppercase tracking-widest">Image Portfolio</FormLabel>
+                        <FormControl>
+                          <RoomImageUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            roomId={editingId ?? undefined}
+                          />
+                        </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )} />

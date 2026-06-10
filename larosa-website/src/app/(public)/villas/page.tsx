@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { HOME_VILLAS } from "@/lib/villas-home";
+import { useGetRooms } from "@/hooks/use-queries";
+import { roomsToDisplayVillas } from "@/lib/villa-display";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LIFESTYLE_FEATURES = [
   {
@@ -56,6 +58,8 @@ const HERO_IMAGES = [
 
 export default function VillasPage() {
   const [currentHeroIdx, setCurrentHeroIdx] = useState(0);
+  const { data: rooms, isLoading } = useGetRooms();
+  const villas = rooms ? roomsToDisplayVillas(rooms) : [];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -161,11 +165,17 @@ export default function VillasPage() {
       {/* The Villas - Asymmetrical Layout */}
       <section className="pb-32 px-4 md:px-8 overflow-hidden bg-background">
         <div className="container mx-auto max-w-[1400px] space-y-40">
-          {HOME_VILLAS.map((villa, index) => {
+          {isLoading ? (
+            <>
+              <Skeleton className="h-[700px] w-full rounded-3xl" />
+              <Skeleton className="h-[700px] w-full rounded-3xl" />
+            </>
+          ) : (
+          villas.map((villa, index) => {
             const isEven = index % 2 === 0;
             return (
               <motion.div
-                key={villa.name}
+                key={villa.roomId}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -245,14 +255,15 @@ export default function VillasPage() {
 
                     <div className="pt-8">
                       <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-serif tracking-[0.2em] px-10 h-14 shadow-xl shadow-primary/20 transition-all hover:translate-y-[-2px]">
-                        <Link href="/contact">ENQUIRE FOR STAY</Link>
+                        <Link href={`/rooms/${villa.roomId}`}>DISCOVER VILLA</Link>
                       </Button>
                     </div>
                   </div>
                 </div>
               </motion.div>
             );
-          })}
+          })
+          )}
         </div>
       </section>
 
