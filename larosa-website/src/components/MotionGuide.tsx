@@ -41,7 +41,7 @@ export function MotionGuide() {
 
   return (
     <div className={cn(
-      "pointer-events-none fixed left-8 top-0 z-[60] h-full w-px bg-gradient-to-b from-transparent via-primary/20 to-transparent transition-opacity duration-500",
+      "pointer-events-none fixed left-8 top-[var(--campaign-strip-height,0px)] z-[60] h-[calc(100%-var(--campaign-strip-height,0px))] w-px bg-gradient-to-b from-transparent via-primary/20 to-transparent transition-[top,height] duration-500",
       isMobile ? "opacity-0" : "opacity-100"
     )}>
       <motion.div

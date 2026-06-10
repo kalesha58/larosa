@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { statusStyles } from "@/lib/admin-status-styles";
 
 export default function AdminBookings() {
   const { data: bookings, isLoading } = useGetAllBookings();
@@ -161,7 +162,7 @@ export default function AdminBookings() {
                   <div key={roomTitle} className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:border-primary/30 transition-colors">
                     <div className="flex justify-between items-start mb-4">
                       <div className="text-xs font-bold uppercase tracking-widest text-primary">{roomTitle}</div>
-                      <Badge className="bg-emerald-500/10 text-emerald-600 text-[8px] border-none px-2 rounded-md">
+                      <Badge className={cn(statusStyles.success.bg, statusStyles.success.text, "text-[8px] border-none px-2 rounded-md")}>
                         {activeBookings.length} {activeBookings.length === 1 ? 'Booking' : 'Bookings'}
                       </Badge>
                     </div>
@@ -192,7 +193,7 @@ export default function AdminBookings() {
         </div>
         
         <div className="bg-card border border-border shadow-2xl relative overflow-hidden rounded-2xl">
-          <div className="absolute inset-0 bg-grid-white/5 pointer-events-none" />
+          <div className="absolute inset-0 bg-admin-grid pointer-events-none" />
           <Table>
             <TableHeader className="bg-secondary/20">
               <TableRow className="border-border hover:bg-transparent">
@@ -259,7 +260,7 @@ export default function AdminBookings() {
                       variant={booking.status === 'confirmed' ? 'default' : 'secondary'} 
                       className={cn(
                         "rounded-lg text-[8px] uppercase tracking-[0.2em] font-bold px-2 py-0.5 border-none",
-                        booking.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'
+                        booking.status === 'confirmed' ? cn(statusStyles.success.bg, statusStyles.success.text) : 'bg-destructive/10 text-destructive'
                       )}>
                       {booking.status}
                     </Badge>

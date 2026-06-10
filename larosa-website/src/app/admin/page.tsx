@@ -38,6 +38,7 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { statusStyles } from "@/lib/admin-status-styles";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import type { AdminStats, RevenueMonth } from "@/hooks/use-queries";
 
@@ -119,8 +120,8 @@ export default function AdminDashboard() {
       icon: DollarSign, 
       trend: "+12.5%", 
       description: "from last month",
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10"
+      color: statusStyles.success.text,
+      bg: statusStyles.success.bg
     },
     { 
       title: "Occupancy Rate", 
@@ -128,8 +129,8 @@ export default function AdminDashboard() {
       icon: Home, 
       trend: "+4.2%", 
       description: "avg guest stay 3.2 days",
-      color: "text-blue-500",
-      bg: "bg-blue-500/10"
+      color: statusStyles.info.text,
+      bg: statusStyles.info.bg
     },
     { 
       title: "Active Bookings", 
@@ -137,8 +138,8 @@ export default function AdminDashboard() {
       icon: CheckCircle, 
       trend: "+8", 
       description: "new this week",
-      color: "text-amber-500",
-      bg: "bg-amber-500/10"
+      color: statusStyles.warning.text,
+      bg: statusStyles.warning.bg
     },
     { 
       title: "Cancellations", 
@@ -146,8 +147,8 @@ export default function AdminDashboard() {
       icon: XCircle, 
       trend: "-2%", 
       description: "vs last month",
-      color: "text-rose-500",
-      bg: "bg-rose-500/10"
+      color: statusStyles.error.text,
+      bg: statusStyles.error.bg
     },
   ];
 
@@ -285,7 +286,7 @@ export default function AdminDashboard() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "0",
                       padding: "12px",
-                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)"
+                      boxShadow: "0 10px 15px -3px hsl(var(--foreground) / 0.1)"
                     }}
                     labelStyle={{
                       fontWeight: "bold",
@@ -434,13 +435,13 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-6">
-              <div className="flex gap-4 p-4 border border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-2 text-emerald-500/20 group-hover:scale-125 transition-transform">
+              <div className={cn("flex gap-4 p-4 border relative overflow-hidden group", statusStyles.success.border, statusStyles.success.bg)}>
+                <div className={cn("absolute top-0 right-0 p-2 opacity-20 group-hover:scale-125 transition-transform", statusStyles.success.text)}>
                   <CheckCircle size={40} />
                 </div>
-                <div className="h-10 w-px bg-emerald-500" />
+                <div className={cn("h-10 w-px", statusStyles.success.dot)} />
                 <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-1">System Healthy</p>
+                  <p className={cn("text-xs font-bold uppercase tracking-widest mb-1", statusStyles.success.text)}>System Healthy</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">All room services and integrations are operating within normal parameters.</p>
                 </div>
               </div>

@@ -143,7 +143,7 @@ export default function AdminSettings() {
                   <CardContent className="space-y-6">
                     <div className="p-4 border border-border rounded-xl bg-secondary/5 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-[#c9a96e]/10 rounded-lg flex items-center justify-center">
+                        <div className="h-10 w-10 bg-brand-gold/10 rounded-lg flex items-center justify-center">
                           <Wallet className="h-5 w-5 text-primary" />
                         </div>
                         <div>

@@ -8,6 +8,7 @@ import { LenisProvider } from "@/components/LenisProvider";
 import { VillasSection } from "@/components/VillasSection";
 import { VillaAmenitiesSection } from "@/components/VillaAmenitiesSection";
 import { LarosaCollectionSection } from "@/components/LarosaCollectionSection";
+import { CampaignShowcase } from "@/components/campaigns/CampaignShowcase";
 import { VideoSection } from "@/components/VideoSection";
 import { HomeContactSection } from "@/components/HomeContactSection";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ export default function Home() {
         <VillaAmenitiesSection />
 
         <LarosaCollectionSection />
+
+        <CampaignShowcase placement="after_collection" />
 
         <VideoSection />
 

@@ -11,6 +11,7 @@ type RoomImageUploadProps = {
   onChange: (urls: string[]) => void;
   roomId?: string;
   disabled?: boolean;
+  maxImages?: number;
 };
 
 type UploadState = {
@@ -26,6 +27,7 @@ export function RoomImageUpload({
   onChange,
   roomId,
   disabled,
+  maxImages = 10,
 }: RoomImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploads, setUploads] = useState<UploadState[]>([]);
@@ -86,8 +88,14 @@ export function RoomImageUpload({
 
   const handleFiles = (files: FileList | null) => {
     if (!files?.length || disabled) return;
-    Array.from(files).forEach((file) => uploadFile(file));
+    const remaining = maxImages - valueRef.current.length;
+    if (remaining <= 0) return;
+    Array.from(files)
+      .slice(0, remaining)
+      .forEach((file) => uploadFile(file));
   };
+
+  const atLimit = value.length >= maxImages;
 
   const removeImage = (url: string) => {
     onChange(value.filter((u) => u !== url));
@@ -101,7 +109,7 @@ export function RoomImageUpload({
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
         }}
-        onClick={() => !disabled && inputRef.current?.click()}
+        onClick={() => !disabled && !atLimit && inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -113,8 +121,8 @@ export function RoomImageUpload({
         }}
         className={cn(
           "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/10 p-6 transition-colors",
-          !disabled && "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
-          disabled && "opacity-50 cursor-not-allowed"
+          !disabled && !atLimit && "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
+          (disabled || atLimit) && "opacity-50 cursor-not-allowed"
         )}
       >
         <Upload className="h-5 w-5 text-muted-foreground" />
@@ -122,7 +130,7 @@ export function RoomImageUpload({
           Drop images or click to upload
         </p>
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70">
-          JPEG, PNG, WebP · max 10 MB
+          JPEG, PNG, WebP · max 10 MB · {value.length}/{maxImages} images
         </p>
         <input
           ref={inputRef}

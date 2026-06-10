@@ -15,7 +15,11 @@ import {
   Settings,
   Bell,
   RefreshCw,
+  Moon,
+  Sun,
+  Megaphone,
 } from "lucide-react";
+import { useAdminTheme } from "@/hooks/use-admin-theme";
 import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/brand";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,11 +36,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useAuth();
+  const { theme, toggleAdminTheme } = useAdminTheme();
   const pathname = usePathname();
+
+  const shellClass = cn(
+    "min-h-screen bg-background flex text-foreground",
+    theme === "dark" && "dark"
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className={cn(shellClass, "items-center justify-center")}>
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-muted-foreground text-xs tracking-[0.2em] uppercase animate-pulse">Initializing Terminal</p>
@@ -47,7 +57,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   if (!user || user.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className={cn(shellClass, "items-center justify-center")}>
         <div className="text-center max-w-sm px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -72,6 +82,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const nav = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Villas", href: "/admin/rooms", icon: BedDouble },
+    { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
     { name: "Calendar", href: "/admin/calendar", icon: CalendarRange },
     { name: "Bookings", href: "/admin/bookings", icon: CalendarDays },
     { name: "Sync logs", href: "/admin/sync-logs", icon: RefreshCw },
@@ -85,7 +96,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const breadcrumbs = pathname.split('/').filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-background flex text-foreground">
+    <div className={shellClass}>
       {/* Sidebar */}
       <aside className="w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden shadow-2xl">
         <div className="h-20 flex items-center px-8 border-b border-border/50">
@@ -212,6 +223,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleAdminTheme}
+              aria-label="Toggle theme"
+              className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+            <div className="h-8 w-px bg-border/50" />
             <Link href="/" target="_blank" className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group">
               View Website
               <ExternalLink className="h-3 w-3 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />

@@ -8,10 +8,12 @@ import {
 } from "@tanstack/react-query";
 import type { Room } from "@/lib/room-catalog";
 import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
+import type { CampaignClient } from "@/lib/campaign-api";
 
 export type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 
 export type { Room } from "@/lib/room-catalog";
+export type { CampaignClient as Campaign } from "@/lib/campaign-api";
 
 export interface AdminStats {
   totalRevenue: number;
@@ -146,7 +148,10 @@ export function useCreateRoom() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create room");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to create room");
+      }
       return res.json() as Promise<Room>;
     },
     onSuccess: () => {
@@ -171,7 +176,10 @@ export function useUpdateRoom() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update room");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to update room");
+      }
       return res.json() as Promise<Room>;
     },
     onSuccess: () => {
@@ -527,6 +535,140 @@ export function useSyncRoom(roomId: number) {
       queryClient.invalidateQueries({ queryKey: ["admin", "calendar", roomId] });
       queryClient.invalidateQueries({ queryKey: ["admin", "sync-logs"] });
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    },
+  });
+}
+
+// ── Campaign queries ─────────────────────────────────────────────────────────
+
+export interface CampaignUpsertInput {
+  name: string;
+  type: "strip" | "showcase";
+  status: "active" | "draft" | "archived";
+  headline: string;
+  message?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  imageUrl?: string;
+  accent: "gold" | "navy" | "neutral";
+  priority: number;
+  startsAt?: Date;
+  endsAt?: Date;
+  dismissible: boolean;
+}
+
+export function useGetCampaigns(options?: { admin?: boolean }) {
+  const admin = options?.admin ?? false;
+  return useQuery({
+    queryKey: admin ? ["campaigns", "admin"] : ["campaigns"],
+    queryFn: async (): Promise<CampaignClient[]> => {
+      const params = admin ? "?admin=true" : "";
+      const res = await fetch(`/api/campaigns${params}`);
+      if (!res.ok) throw new Error("Failed to fetch campaigns");
+      return res.json();
+    },
+    staleTime: admin ? 0 : 5 * 60 * 1000,
+  });
+}
+
+export function useGetCampaign(id: string) {
+  return useQuery({
+    queryKey: ["campaigns", id],
+    queryFn: async (): Promise<CampaignClient | undefined> => {
+      const res = await fetch(`/api/campaigns/${id}`);
+      if (res.status === 404) return undefined;
+      if (!res.ok) throw new Error("Failed to fetch campaign");
+      return res.json();
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ data }: { data: CampaignUpsertInput }) => {
+      const res = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to create campaign");
+      }
+      return res.json() as Promise<CampaignClient>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+  });
+}
+
+export function useUpdateCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<CampaignUpsertInput>;
+    }) => {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to update campaign");
+      }
+      return res.json() as Promise<CampaignClient>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+  });
+}
+
+export function useDeleteCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete campaign");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+  });
+}
+
+export function useToggleCampaignVisibility() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      visible,
+    }: {
+      id: string;
+      visible: boolean;
+    }) => {
+      const res = await fetch(`/api/campaigns/${id}/visibility`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visible }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to update visibility");
+      }
+      return res.json() as Promise<CampaignClient>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
   });
 }
