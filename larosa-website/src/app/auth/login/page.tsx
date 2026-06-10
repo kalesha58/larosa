@@ -173,7 +173,7 @@ export default function LoginPage() {
                         <Input
                           type="email"
                           autoComplete="email"
-                          placeholder="Name"
+                          placeholder="Email"
                           className="h-9 rounded-none border-0 border-b border-gray-200 bg-transparent px-0 pb-1 text-gray-800 placeholder:text-gray-300 focus-visible:border-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none transition-colors"
                           {...field}
                         />

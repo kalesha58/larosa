@@ -1,4 +1,4 @@
-import type { IRoom } from "@/models/Room";
+import { Room, type IRoom } from "@/models/Room";
 
 /** Client-safe room shape (matches public Room type + sync metadata). */
 export function serializeRoom(doc: IRoom) {
@@ -22,4 +22,19 @@ export function serializeRoom(doc: IRoom) {
       : null,
     calendarExportUrl: `/api/rooms/${doc.roomId}/calendar.ics?token=${encodeURIComponent(doc.calendarExportToken)}`,
   };
+}
+
+/**
+ * Finds a room by either its stable numeric `roomId` or MongoDB `_id` string.
+ */
+export async function findRoomById(id: string) {
+  const num = Number(id);
+  if (!isNaN(num) && String(num) === id) {
+    return await Room.findOne({ roomId: num });
+  }
+  try {
+    return await Room.findById(id);
+  } catch {
+    return null;
+  }
 }

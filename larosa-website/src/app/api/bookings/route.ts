@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
-import { Room } from "@/models/Room";
+import { findRoomById } from "@/lib/room-api";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 import {
   MAX_ONLINE_GUESTS,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
-    const room = await Room.findById(data.roomId);
+    const room = await findRoomById(data.roomId);
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
