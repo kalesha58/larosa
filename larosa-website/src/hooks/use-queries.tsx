@@ -344,6 +344,87 @@ export function useCancelBooking() {
   });
 }
 
+// ── Admin pricing calendar ───────────────────────────────────────────────────
+
+export interface AdminPricingDay {
+  date: string;
+  effectivePrice: number;
+  hasCustomPrice: boolean;
+  blocked: boolean;
+  reserved: boolean;
+}
+
+export interface AdminRoomPricingData {
+  roomId: number;
+  roomTitle: string;
+  basePrice: number;
+  days: AdminPricingDay[];
+  overrides: { date: string; price?: number; blocked: boolean }[];
+  bookings: {
+    id: string;
+    checkIn: string;
+    checkOut: string;
+    source: "website" | "airbnb";
+    guestName: string;
+    status: string;
+    displayTitle: string;
+    airbnbKind?: string;
+  }[];
+}
+
+export function useGetAdminRoomPricing(
+  roomId: number,
+  range: { from: string; to: string } | null
+) {
+  return useQuery({
+    queryKey: ["admin", "pricing", roomId, range?.from, range?.to],
+    queryFn: async (): Promise<AdminRoomPricingData> => {
+      const params = new URLSearchParams({
+        from: range!.from,
+        to: range!.to,
+      });
+      const res = await fetch(
+        `/api/admin/rooms/${roomId}/pricing?${params.toString()}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch pricing calendar");
+      return res.json() as Promise<AdminRoomPricingData>;
+    },
+    enabled: !!range && !isNaN(roomId) && roomId > 0,
+  });
+}
+
+export function useUpdateAdminRoomDay(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      date: string;
+      price?: number | null;
+      blocked?: boolean;
+    }) => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/pricing/day`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Failed to update day";
+        throw new Error(msg);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "pricing", roomId] });
+    },
+  });
+}
+
 // ── Admin queries — REAL API ─────────────────────────────────────────────────
 
 export function useGetAdminStats() {

@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -43,9 +44,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, Bed, Users, IndianRupee, Layers, Star } from "lucide-react";
+import { Edit, Plus, Trash2, Bed, Users, Layers, Star, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
 
 const roomSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -86,6 +86,7 @@ export default function AdminRooms() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCalendarUrl, setEditingCalendarUrl] = useState<string>("");
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomSchema) as Resolver<RoomFormValues>,
@@ -107,6 +108,7 @@ export default function AdminRooms() {
 
   const handleEdit = (room: Room) => {
     setEditingId(room.id);
+    setEditingCalendarUrl(room.calendarExportUrl ?? "");
     form.reset({
       title: room.title,
       category: room.category ?? "room",
@@ -127,6 +129,7 @@ export default function AdminRooms() {
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setEditingId(null);
+      setEditingCalendarUrl("");
       form.reset();
     }
     setOpen(newOpen);
@@ -317,7 +320,7 @@ export default function AdminRooms() {
                           <div className="flex gap-2">
                             <Input 
                               readOnly 
-                              value={`${typeof window !== "undefined" ? window.location.origin : ""}/api/rooms/${editingId}/calendar/export`} 
+                              value={editingCalendarUrl || `${typeof window !== "undefined" ? window.location.origin : ""}/api/rooms/${editingId}/calendar.ics`} 
                               className="rounded-xl border-border h-11 bg-background font-mono text-[9px] truncate"
                             />
                             <Button 
@@ -325,7 +328,7 @@ export default function AdminRooms() {
                               variant="outline" 
                               className="h-11 rounded-xl px-4 text-[10px] font-bold uppercase"
                               onClick={() => {
-                                const url = `${window.location.origin}/api/rooms/${editingId}/calendar/export`;
+                                const url = editingCalendarUrl || `${window.location.origin}/api/rooms/${editingId}/calendar.ics`;
                                 navigator.clipboard.writeText(url);
                                 toast({ title: "URL Copied", description: "Paste this into Airbnb's 'Import Calendar' setting." });
                               }}
