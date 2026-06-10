@@ -82,110 +82,124 @@ export default function LoginPage() {
   if (user) return null;
 
   return (
-    <div className="relative min-h-[100dvh] lg:min-h-screen flex items-center justify-center p-4 lg:p-8">
-      {/* Full screen background image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/hero.png"
-          alt="Larosa Hotel"
-          fill
-          className="object-cover object-center"
-          priority
-          sizes="100vw"
-        />
-        {/* Modern dark gradient overlay */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center p-4 md:p-8 bg-gradient-to-br from-[#1d2b40] via-[#121c2c] to-[#0a0f18] overflow-hidden">
+      {/* Background stars overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.1] pointer-events-none" 
+        style={{
+          backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
+          backgroundSize: "32px 32px"
+        }}
+      />
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
-        {/* Left Typography Content */}
-        <div className="flex-1 text-white hidden lg:block">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-white/80">
-            Larosa Sanctuary
-          </p>
-          <h1 className="font-serif text-5xl leading-tight sm:text-6xl lg:text-7xl mb-6">
-            Welcome <br /> Back
-          </h1>
-          <p className="max-w-md text-lg font-light text-white/90 leading-relaxed">
-            Your exclusive sanctuary awaits your return. Rediscover tranquility, luxury, and unparalleled hospitality.
-          </p>
-          
-          <div className="mt-10 flex items-center gap-4">
-            <div className="flex -space-x-4">
-              <div className="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <span className="text-xs">✨</span>
-              </div>
-              <div className="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <span className="text-xs">🛎️</span>
-              </div>
-              <div className="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <span className="text-xs">🥂</span>
-              </div>
-            </div>
-            <p className="text-sm font-medium text-white/80">
-              Exclusive experiences await
-            </p>
+      <div className="relative z-10 w-full max-w-[1000px] min-h-[580px] md:h-[620px] flex flex-col md:grid md:grid-cols-12 bg-[#fcfcfc] rounded-[2rem] overflow-hidden shadow-[0_24px_55px_-15px_rgba(0,0,0,0.6)]">
+        
+        {/* Mobile Header Image with Wave */}
+        <div className="md:hidden relative h-36 w-full overflow-hidden shrink-0">
+          <Image
+            src="/starry-night-lake.png"
+            alt="Starry Lake"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/15" />
+          <div className="absolute bottom-0 left-0 right-0 h-8">
+            <svg className="w-full h-full text-[#fcfcfc] fill-current" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M0,100 C35,65 65,65 100,100 Z" />
+            </svg>
+          </div>
+          {/* Logo overlay */}
+          <div className="absolute top-6 left-6 z-10">
+            <span className="font-serif font-bold text-xs tracking-wider uppercase text-white/90">{BRAND_NAME}</span>
           </div>
         </div>
 
-        {/* Right Form Card - Glassmorphism */}
-        <div className="w-full max-w-md lg:w-[480px] dark">
-          <div className="rounded-[2.5rem] border border-white/10 bg-black/40 p-8 sm:p-10 shadow-2xl backdrop-blur-2xl supports-[backdrop-filter]:bg-black/20">
-            <div className="mb-8 text-center">
-              <Link
-                href="/"
-                className="inline-block font-serif text-xl font-bold tracking-[0.12em] text-white mb-2"
-              >
-                {BRAND_NAME}
-              </Link>
-              <h2 className="text-xl text-white/90 font-medium mt-4">
-                Sign in to your account
-              </h2>
+        {/* Left Column - Image & Wave SVG (Desktop only) */}
+        <div className="hidden md:flex md:col-span-5 relative flex-col justify-end p-8 text-white select-none">
+          <Image
+            src="/starry-night-lake.png"
+            alt="Larosa Sanctuary"
+            fill
+            className="object-cover object-center"
+            priority
+            sizes="40vw"
+          />
+          <div className="absolute inset-0 bg-black/15 z-10" />
+          
+          {/* Logo */}
+          <div className="absolute top-8 left-8 z-20">
+            <span className="font-serif font-bold text-xs tracking-wider uppercase text-white/90">{BRAND_NAME}</span>
+          </div>
+
+          <div className="relative z-20 space-y-2 mb-6">
+            <h2 className="font-serif text-3xl font-light leading-snug tracking-wide text-white">
+              Let&apos;s go to a<br />
+              <span className="font-bold">new journey</span>
+            </h2>
+          </div>
+
+          {/* SVG Wave Separator */}
+          <div className="absolute top-0 bottom-0 right-0 w-[45px] h-full z-20 translate-x-[0.5px]">
+            <svg className="w-full h-full text-[#fcfcfc] fill-current" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M100,0 L100,100 L95,100 C75,90 85,75 60,60 C30,45 40,30 65,15 C75,5 80,0 95,0 Z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Right Column - Form */}
+        <div className="col-span-1 md:col-span-7 flex flex-col justify-center px-6 py-8 sm:px-12 md:px-16 bg-[#fcfcfc]">
+          <div className="w-full max-w-[360px] mx-auto space-y-6">
+            
+            {/* Header */}
+            <div className="space-y-1">
+              <h1 className="font-serif text-3xl font-medium text-gray-800">
+                Sign In
+              </h1>
             </div>
 
+            {/* Form */}
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5 sm:space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs uppercase tracking-widest text-white/70">
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         Email
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="email"
                           autoComplete="email"
-                          className="h-12 rounded-xl border-white/20 bg-white/5 text-white placeholder:text-white/40 transition-colors focus-visible:border-white/50 focus-visible:ring-white/20"
+                          placeholder="Name"
+                          className="h-9 rounded-none border-0 border-b border-gray-200 bg-transparent px-0 pb-1 text-gray-800 placeholder:text-gray-300 focus-visible:border-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none transition-colors"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-xs text-red-500" />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs uppercase tracking-widest text-white/70">
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         Password
                       </FormLabel>
                       <FormControl>
                         <PasswordInput
                           autoComplete="current-password"
-                          placeholder="Enter your password"
-                          className="rounded-xl border-white/20 bg-white/5 text-white placeholder:text-white/40 transition-colors focus-visible:border-white/50 focus-visible:ring-white/20"
+                          placeholder="Password"
+                          className="h-9 rounded-none border-0 border-b border-gray-200 bg-transparent px-0 pb-1 text-gray-800 placeholder:text-gray-300 focus-visible:border-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none transition-colors"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-xs text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -193,18 +207,19 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="mt-6 h-14 w-full rounded-xl bg-white font-serif text-lg tracking-[0.2em] text-black transition-all hover:-translate-y-0.5 hover:bg-white/90 lg:mt-8"
+                  className="h-10 w-full rounded-full bg-[#0e1626] hover:bg-[#1a2842] text-white font-semibold text-xs tracking-widest uppercase transition-all shadow-md shadow-[#0e1626]/10 mt-2"
                 >
                   {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
                 </Button>
               </form>
             </Form>
 
-            <p className="mt-8 text-center text-sm text-white/60">
+            {/* Links */}
+            <p className="text-xs text-gray-500">
               Don&apos;t have an account?{" "}
               <Link
                 href="/auth/register"
-                className="font-medium text-white hover:text-white/80 transition-colors"
+                className="font-semibold text-[#c9a96e] hover:text-[#b08f53] transition-colors"
               >
                 Register here
               </Link>
