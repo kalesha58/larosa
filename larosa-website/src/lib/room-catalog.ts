@@ -15,6 +15,8 @@ export interface Room {
   featured?: boolean;
   status?: "active" | "hidden";
   airbnbCalendarUrl?: string;
+  airbnbIcalUrl?: string;
+  lastSyncedAt?: string | null;
   calendarExportUrl?: string;
 }
 

@@ -448,3 +448,93 @@ export function useGetRevenueData() {
     },
   });
 }
+
+// ── Admin calendar events ────────────────────────────────────────────────────
+
+export interface AdminCalendarBooking {
+  id: string;
+  checkIn: string;
+  checkOut: string;
+  source: "website" | "airbnb";
+  guestName: string;
+  status: string;
+  displayTitle: string;
+  airbnbKind?: string;
+}
+
+export function useGetAdminRoomCalendar(
+  roomId: number,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ["admin", "calendar", roomId],
+    queryFn: async (): Promise<AdminCalendarBooking[]> => {
+      const res = await fetch(`/api/admin/rooms/${roomId}/calendar`);
+      if (!res.ok) throw new Error("Failed to fetch calendar");
+      return res.json() as Promise<AdminCalendarBooking[]>;
+    },
+    enabled: options?.enabled !== false && !isNaN(roomId) && roomId > 0,
+  });
+}
+
+// ── Sync logs ────────────────────────────────────────────────────────────────
+
+export interface SyncLog {
+  id: string;
+  roomId: number;
+  source: string;
+  success: boolean;
+  startedAt: string;
+  finishedAt: string;
+  eventsImported: number;
+  eventsRemoved: number;
+  errorMessage: string;
+  createdAt: string;
+}
+
+export function useGetSyncLogs(roomId?: number) {
+  return useQuery({
+    queryKey: ["admin", "sync-logs", roomId ?? null],
+    queryFn: async (): Promise<SyncLog[]> => {
+      const params = roomId != null ? `?roomId=${roomId}` : "";
+      const res = await fetch(`/api/admin/sync-logs${params}`);
+      if (!res.ok) throw new Error("Failed to load sync logs");
+      return res.json() as Promise<SyncLog[]>;
+    },
+  });
+}
+
+// ── Room sync (manual Airbnb iCal import) ───────────────────────────────────
+
+export function useSyncRoom(roomId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<{
+      success: boolean;
+      imported: number;
+      removed: number;
+      error?: string;
+    }> => {
+      const res = await fetch(`/api/rooms/${roomId}/sync`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const msg =
+          typeof payload === "object" &&
+          payload !== null &&
+          "error" in payload &&
+          typeof (payload as { error: unknown }).error === "string"
+            ? (payload as { error: string }).error
+            : "Sync failed";
+        throw new Error(msg);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "calendar", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+    },
+  });
+}
