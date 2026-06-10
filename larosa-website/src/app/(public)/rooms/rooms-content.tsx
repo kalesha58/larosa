@@ -165,9 +165,9 @@ function RoomsInner() {
         </button>
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {HERO_SLIDES.map((_, i) => (
+          {HERO_SLIDES.map((slide, i) => (
             <button
-              key={i}
+              key={slide.src}
               type="button"
               onClick={() => goTo(i)}
               className={`transition-all duration-500 rounded-full ${
@@ -327,7 +327,7 @@ function RoomsInner() {
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                     {[1, 2, 3, 4].map((i) => (
                       <div
-                        key={i}
+                        key={`rooms-result-skeleton-${i}`}
                         className="overflow-hidden rounded-2xl border border-border/40 bg-card/40"
                       >
                         <div className="aspect-[4/3] animate-pulse bg-muted/60" />
@@ -342,7 +342,11 @@ function RoomsInner() {
                 ) : rooms && rooms.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 xl:gap-10">
                     {rooms.map((room, idx) => (
-                      <RoomCard key={room.id} room={room} index={idx} />
+                      <RoomCard
+                        key={`room-${room.id}-${idx}`}
+                        room={room}
+                        index={idx}
+                      />
                     ))}
                   </div>
                 ) : (

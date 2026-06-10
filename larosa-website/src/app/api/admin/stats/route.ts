@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
+import { requireAdminResponse, isUnauthorized } from "@/lib/auth-guard";
 
 // GET /api/admin/stats
 export async function GET() {
+  const auth = await requireAdminResponse();
+  if (isUnauthorized(auth)) return auth;
+
   try {
     await connectMongo();
 
     const [confirmed, cancelled, revenueAgg] = await Promise.all([
-      Booking.countDocuments({ status: "confirmed" }),
-      Booking.countDocuments({ status: "cancelled" }),
+      Booking.countDocuments({ status: "confirmed", source: "website" }),
+      Booking.countDocuments({ status: "cancelled", source: "website" }),
       Booking.aggregate([
-        { $match: { status: "confirmed" } },
+        { $match: { status: "confirmed", source: "website" } },
         { $group: { _id: null, total: { $sum: "$totalPrice" } } },
       ]),
     ]);

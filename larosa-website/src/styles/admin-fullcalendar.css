@@ -1,0 +1,110 @@
+/* Minimal FullCalendar layout styles (v6 ships without bundled CSS) */
+.admin-fullcalendar .fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-button-bg-color: hsl(var(--primary));
+  --fc-button-border-color: hsl(var(--primary));
+  --fc-button-hover-bg-color: hsl(var(--primary) / 0.9);
+  --fc-button-hover-border-color: hsl(var(--primary) / 0.9);
+  --fc-button-active-bg-color: hsl(var(--primary) / 0.8);
+  --fc-button-active-border-color: hsl(var(--primary) / 0.8);
+  --fc-today-bg-color: hsl(var(--primary) / 0.08);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: hsl(var(--secondary) / 0.3);
+  --fc-list-event-hover-bg-color: hsl(var(--secondary) / 0.5);
+  font-size: 0.875rem;
+}
+
+.admin-fullcalendar .fc .fc-toolbar-title {
+  font-family: var(--font-serif, ui-serif, Georgia, serif);
+  font-size: 1.25rem;
+}
+
+.admin-fullcalendar .fc .fc-button {
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+}
+
+.admin-fullcalendar .fc .fc-col-header-cell-cushion,
+.admin-fullcalendar .fc .fc-daygrid-day-number {
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+
+.admin-fullcalendar .fc .fc-daygrid-day-frame {
+  min-height: 4.5rem;
+}
+
+.admin-fullcalendar .fc .fc-event {
+  border-radius: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 2px;
+  cursor: pointer;
+}
+
+.admin-fullcalendar .fc-theme-standard td,
+.admin-fullcalendar .fc-theme-standard th {
+  border-color: hsl(var(--border));
+}
+
+.admin-fullcalendar .fc-scrollgrid {
+  border-color: hsl(var(--border));
+}
+
+/* Pricing calendar day cells */
+.admin-pricing-calendar .fc-daygrid-day-frame {
+  min-height: 5.5rem;
+  cursor: pointer;
+}
+
+.admin-pricing-calendar .fc-day-pricing-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.15rem 0.25rem;
+  width: 100%;
+}
+
+.admin-pricing-calendar .fc-day-pricing-price {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  line-height: 1.1;
+}
+
+.admin-pricing-calendar .fc-day-pricing-price--custom {
+  color: hsl(var(--primary));
+}
+
+.admin-pricing-calendar .fc-day-pricing-price--blocked {
+  color: hsl(var(--muted-foreground));
+  text-decoration: line-through;
+}
+
+.admin-pricing-calendar .fc-day-pricing-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+
+.admin-pricing-calendar .fc-day-selected .fc-daygrid-day-frame {
+  background: hsl(var(--primary) / 0.12);
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: -2px;
+}
+
+.admin-pricing-calendar .fc-day-reserved .fc-daygrid-day-frame {
+  background: hsl(var(--destructive) / 0.06);
+}
+
+.admin-pricing-calendar .fc-day-blocked .fc-daygrid-day-frame {
+  background: hsl(var(--muted) / 0.35);
+}
