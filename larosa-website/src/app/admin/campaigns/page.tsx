@@ -89,8 +89,8 @@ export default function AdminCampaignsPage() {
           </p>
           <h1 className="font-serif text-4xl text-foreground">Campaigns</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Only one strip and one showcase can be live at a time. Use Show to publish a campaign
-            — it automatically hides other campaigns of the same type.
+            The strip is a scrolling bar below the navbar. The showcase card appears only on
+            the homepage after the Villa Collection. One strip and one showcase live at a time.
           </p>
         </div>
         <Button

@@ -38,19 +38,6 @@ export function showcaseTextClasses(accent: CampaignClient["accent"]) {
   };
 }
 
-export function dismissStorageKey(campaignId: string) {
-  return `larosa-campaign-dismissed:${campaignId}`;
-}
-
-export function isCampaignDismissed(campaignId: string): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(dismissStorageKey(campaignId)) === "1";
-}
-
-export function dismissCampaign(campaignId: string) {
-  localStorage.setItem(dismissStorageKey(campaignId), "1");
-}
-
 export function setStripHeight(px: number) {
   document.documentElement.style.setProperty("--campaign-strip-height", `${px}px`);
 }

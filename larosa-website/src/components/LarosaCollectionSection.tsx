@@ -1,7 +1,14 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useInView,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,23 +25,26 @@ import {
 const EASE = [0.16, 1, 0.3, 1] as const;
 const VIEWPORT = { once: true, margin: "-60px" } as const;
 
+/* ── Header stagger variants ── */
 const headerContainer = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.05 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.08 },
   },
 };
 
 const headerItem = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 28, filter: "blur(4px)" },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.85, ease: EASE },
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: EASE },
   },
 };
 
+/* ── Criteria stagger variants ── */
 const criteriaContainer = {
   hidden: { opacity: 0 },
   show: {
@@ -44,15 +54,17 @@ const criteriaContainer = {
 };
 
 const criteriaItem = {
-  hidden: { opacity: 0, y: 24, scale: 0.98 },
+  hidden: { opacity: 0, y: 24, scale: 0.97, filter: "blur(3px)" },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.65, ease: EASE },
+    filter: "blur(0px)",
+    transition: { duration: 0.55, ease: EASE },
   },
 };
 
+/* ── Criterion card with hover tilt ── */
 type CriterionCardProps = {
   criterion: CollectionCriterion;
   index: number;
@@ -63,10 +75,33 @@ function CriterionCard({ criterion, index, animate }: CriterionCardProps) {
   const Icon = getCollectionCriterionIcon(criterion.iconKey);
   const num = String(index + 1).padStart(2, "0");
 
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const rotateX = useTransform(mouseY, [0, 1], [2.5, -2.5]);
+  const rotateY = useTransform(mouseX, [0, 1], [-2.5, 2.5]);
+
+  function handleMove(e: React.MouseEvent<HTMLLIElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  }
+
+  function handleLeave() {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  }
+
   return (
     <motion.li
       variants={animate ? criteriaItem : undefined}
       whileHover={animate ? { y: -4, transition: { duration: 0.25 } } : undefined}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{
+        rotateX: animate ? rotateX : 0,
+        rotateY: animate ? rotateY : 0,
+        transformPerspective: 600,
+      }}
       className="group relative list-none"
     >
       <div
@@ -77,21 +112,47 @@ function CriterionCard({ criterion, index, animate }: CriterionCardProps) {
           "dark:hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)]"
         )}
       >
-        <span
+        {/* Large number watermark */}
+        <motion.span
           className="pointer-events-none absolute -right-2 -top-3 font-serif text-6xl font-light leading-none text-primary/[0.06] transition-colors duration-500 group-hover:text-primary/[0.1] sm:text-7xl"
           aria-hidden
+          initial={animate ? { opacity: 0, scale: 0.6 } : false}
+          whileInView={animate ? { opacity: 1, scale: 1 } : undefined}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 + index * 0.06, ease: EASE }}
         >
           {num}
-        </span>
+        </motion.span>
 
-        <div
-          className={cn(
-            "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15",
-            "bg-primary/5 text-primary transition-all duration-500",
-            "group-hover:scale-105 group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground"
+        {/* Shimmer sweep */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+        </div>
+
+        {/* Icon with pulse ring */}
+        <div className="relative">
+          <div
+            className={cn(
+              "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15",
+              "bg-primary/5 text-primary transition-all duration-500",
+              "group-hover:scale-105 group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground"
+            )}
+          >
+            <Icon size={18} strokeWidth={1.5} aria-hidden />
+          </div>
+          {animate && (
+            <motion.div
+              className="absolute inset-0 rounded-xl border border-primary/15"
+              animate={{ scale: [1, 1.5, 1.5], opacity: [0.3, 0, 0] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 5,
+                delay: 2 + index * 0.4,
+                ease: "easeOut",
+              }}
+            />
           )}
-        >
-          <Icon size={18} strokeWidth={1.5} aria-hidden />
         </div>
 
         <p className="relative z-10 flex-1 pt-1.5 text-sm font-light leading-snug text-foreground sm:text-[15px] sm:leading-relaxed">
@@ -105,6 +166,8 @@ function CriterionCard({ criterion, index, animate }: CriterionCardProps) {
 export function LarosaCollectionSection() {
   const shouldReduceMotion = useReducedMotion();
   const animate = !shouldReduceMotion;
+  const headerRef = useRef<HTMLDivElement>(null);
+  const headerInView = useInView(headerRef, { once: true, margin: "-60px" });
 
   return (
     <section
@@ -151,32 +214,73 @@ export function LarosaCollectionSection() {
 
       <div className="container relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-12 xl:gap-16 lg:items-start">
-          {/* Copy column */}
+          {/* ── Copy column with enhanced stagger ── */}
           <motion.div
+            ref={headerRef}
             className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-24 xl:top-28"
             variants={animate ? headerContainer : undefined}
             initial={animate ? "hidden" : false}
             whileInView={animate ? "show" : undefined}
             viewport={VIEWPORT}
           >
+            {/* Label with line + letter-spacing reveal */}
             <motion.span
               variants={animate ? headerItem : undefined}
               className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-primary"
             >
-              <span className="h-px w-8 bg-primary/40" aria-hidden />
-              The LaRosa Collection
+              <motion.span
+                className="h-px bg-primary/40"
+                initial={animate ? { width: 0 } : false}
+                animate={
+                  animate && headerInView ? { width: 32 } : undefined
+                }
+                transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                aria-hidden
+              />
+              <motion.span
+                animate={
+                  animate && headerInView
+                    ? { letterSpacing: "0.4em" }
+                    : { letterSpacing: "0.15em" }
+                }
+                transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
+              >
+                The LaRosa Collection
+              </motion.span>
             </motion.span>
 
+            {/* Heading with italic slide-in */}
             <motion.h2
               id="collection-heading"
               variants={animate ? headerItem : undefined}
               className="mt-6 font-serif text-[2rem] leading-[1.08] text-foreground sm:text-5xl lg:text-[3.25rem] xl:text-6xl"
             >
               What Makes a{" "}
-              <span className="block italic text-primary/90 sm:inline">
+              <motion.span
+                className="block italic text-primary/90 sm:inline"
+                initial={animate ? { opacity: 0, x: -24 } : false}
+                animate={
+                  animate && headerInView
+                    ? { opacity: 1, x: 0 }
+                    : undefined
+                }
+                transition={{ duration: 0.7, delay: 0.4, ease: EASE }}
+              >
                 LaRosa Property
-              </span>
+              </motion.span>
             </motion.h2>
+
+            {/* Decorative reveal line */}
+            <motion.div
+              className="mt-5 h-[2px] bg-gradient-to-r from-primary/40 via-primary/20 to-transparent"
+              initial={animate ? { width: 0, opacity: 0 } : false}
+              animate={
+                animate && headerInView
+                  ? { width: 72, opacity: 1 }
+                  : undefined
+              }
+              transition={{ duration: 0.7, delay: 0.55, ease: EASE }}
+            />
 
             <motion.p
               variants={animate ? headerItem : undefined}
@@ -194,29 +298,50 @@ export function LarosaCollectionSection() {
               </p>
             </motion.div>
 
+            {/* CTA card with hover glow */}
             <motion.div
               variants={animate ? headerItem : undefined}
-              className="mt-10 hidden rounded-[1.75rem] border border-border/60 bg-card/60 p-6 backdrop-blur-sm sm:p-8 lg:block"
+              className="mt-10 hidden rounded-[1.75rem] border border-border/60 bg-card/60 p-6 backdrop-blur-sm sm:p-8 lg:block group/cta overflow-hidden relative transition-shadow duration-500 hover:shadow-[0_16px_50px_-12px_rgba(0,0,0,0.1)]"
             >
-              <p className="text-sm font-medium text-foreground sm:text-base">
+              {/* CTA shimmer */}
+              <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[1.75rem]">
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/5 to-transparent transition-transform duration-1000 group-hover/cta:translate-x-full" />
+              </div>
+
+              <p className="relative z-10 text-sm font-medium text-foreground sm:text-base">
                 {LAROSA_COLLECTION_CTA_PROMPT}
               </p>
               <Button
                 asChild
-                className="mt-5 h-12 w-full rounded-full px-8 font-serif text-xs tracking-[0.18em] shadow-lg shadow-primary/10 transition-shadow hover:shadow-xl hover:shadow-primary/15 sm:h-14 sm:w-auto"
+                className="relative z-10 mt-5 h-12 w-full rounded-full px-8 font-serif text-xs tracking-[0.18em] shadow-lg shadow-primary/10 transition-shadow hover:shadow-xl hover:shadow-primary/15 sm:h-14 sm:w-auto"
               >
                 <Link
                   href={`/contact?subject=${CONTACT_SUBJECT_PROPERTY}`}
                   className="group inline-flex items-center"
                 >
                   Connect with us
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
+                  <motion.span
+                    className="ml-2 inline-flex"
+                    animate={
+                      animate
+                        ? { x: [0, 4, 0] }
+                        : undefined
+                    }
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      repeatDelay: 2.5,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </motion.span>
                 </Link>
               </Button>
             </motion.div>
           </motion.div>
 
-          {/* Criteria column */}
+          {/* ── Criteria column with enhanced cards ── */}
           <div className="lg:col-span-7 xl:col-span-7">
             <motion.ul
               className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-1 lg:gap-3.5"
@@ -235,7 +360,7 @@ export function LarosaCollectionSection() {
               ))}
             </motion.ul>
 
-            {/* Mobile / tablet closing + CTA duplicate for flow after list on smaller screens */}
+            {/* Mobile / tablet closing + CTA */}
             <motion.div
               initial={animate ? { opacity: 0, y: 20 } : false}
               whileInView={animate ? { opacity: 1, y: 0 } : undefined}

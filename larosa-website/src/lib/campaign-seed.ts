@@ -1,9 +1,11 @@
 import { Campaign } from "@/models/Campaign";
+import { deactivateOtherCampaignsOfType } from "@/lib/campaign-visibility";
 
-export const SEED_CAMPAIGN_ID = "larosa-seed-monsoon-showcase";
+export const SEED_SHOWCASE_ID = "larosa-seed-monsoon-showcase";
+export const SEED_STRIP_ID = "larosa-seed-announcement-strip";
 
-const SEED_CAMPAIGN = {
-  campaignId: SEED_CAMPAIGN_ID,
+const SEED_SHOWCASE = {
+  campaignId: SEED_SHOWCASE_ID,
   name: "Monsoon Sanctuary Offer",
   type: "showcase" as const,
   status: "draft" as const,
@@ -18,17 +20,58 @@ const SEED_CAMPAIGN = {
   dismissible: true,
 };
 
+const SEED_STRIP = {
+  campaignId: SEED_STRIP_ID,
+  name: "Site announcement bar",
+  type: "strip" as const,
+  status: "active" as const,
+  headline: "Monsoon rates now available — book direct for the best price",
+  message: "Limited villa availability this season",
+  ctaLabel: "View rooms",
+  ctaUrl: "/rooms",
+  imageUrl: "",
+  accent: "gold" as const,
+  priority: 10,
+  dismissible: true,
+};
+
 export type CampaignSeedResult = {
-  inserted: boolean;
-  campaignId: string;
+  insertedShowcase: boolean;
+  insertedStrip: boolean;
 };
 
 export async function ensureCampaignSeeded(): Promise<CampaignSeedResult> {
-  const existing = await Campaign.findOne({ campaignId: SEED_CAMPAIGN_ID }).lean();
-  if (existing) {
-    return { inserted: false, campaignId: SEED_CAMPAIGN_ID };
+  const result: CampaignSeedResult = {
+    insertedShowcase: false,
+    insertedStrip: false,
+  };
+
+  const existingShowcase = await Campaign.findOne({
+    campaignId: SEED_SHOWCASE_ID,
+  }).lean();
+  if (!existingShowcase) {
+    await Campaign.create(SEED_SHOWCASE);
+    result.insertedShowcase = true;
   }
 
-  await Campaign.create(SEED_CAMPAIGN);
-  return { inserted: true, campaignId: SEED_CAMPAIGN_ID };
+  const existingStrip = await Campaign.findOne({ campaignId: SEED_STRIP_ID }).lean();
+  if (!existingStrip) {
+    await deactivateOtherCampaignsOfType("strip", SEED_STRIP_ID);
+    await Campaign.create(SEED_STRIP);
+    result.insertedStrip = true;
+  } else {
+    const anyActiveStrip = await Campaign.findOne({
+      type: "strip",
+      status: "active",
+    }).lean();
+    if (!anyActiveStrip) {
+      await deactivateOtherCampaignsOfType("strip", SEED_STRIP_ID);
+      await Campaign.updateOne(
+        { campaignId: SEED_STRIP_ID },
+        { $set: { status: "active" } }
+      );
+    }
+  }
+
+  return result;
 }

@@ -90,6 +90,9 @@
   --brand-gold: 38 42% 61%;
   --brand-navy: 222 35% 12%;
 
+  --navbar-height: 4.25rem;
+  --campaign-strip-height: 0px;
+
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -151,6 +154,12 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground relative;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --navbar-height: 4.5rem;
+    }
   }
 
   body::before {
@@ -245,5 +254,24 @@
   }
   .border-status-neutral {
     @apply border-zinc-500/20 dark:border-zinc-500/30;
+  }
+
+  @keyframes campaign-marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-campaign-marquee {
+    animation: campaign-marquee 28s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-campaign-marquee {
+      animation: none;
+    }
   }
 }

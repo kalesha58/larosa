@@ -1,10 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { AuthSplitPanel } from "@/components/auth/AuthSplitPanel";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -16,35 +23,76 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { AuthSplitPanel } from "@/components/auth/AuthSplitPanel";
+
+const PROMPT_DELAY_MS = 2 * 60 * 1000;
+const DISMISSED_KEY = "larosa-auth-prompt-dismissed";
+const LEGACY_SHOWN_KEY = "larosa-auth-prompt-shown";
 
 const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password is required"),
 });
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { toast } = useToast();
-  const { user, login, loading } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/");
+function isPromptDismissed(): boolean {
+  try {
+    // Older builds marked the prompt as shown when the timer fired, even if
+    // the dialog never appeared — clear that so guests aren't stuck forever.
+    if (sessionStorage.getItem(LEGACY_SHOWN_KEY) === "1") {
+      sessionStorage.removeItem(LEGACY_SHOWN_KEY);
     }
-  }, [user, loading, router]);
+    return sessionStorage.getItem(DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPromptDismissed(): void {
+  try {
+    sessionStorage.setItem(DISMISSED_KEY, "1");
+  } catch {
+    // Ignore private browsing / storage errors.
+  }
+}
+
+export function GuestAuthPrompt() {
+  const { user, loading, login } = useAuth();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const promptDeadlineRef = useRef<number | null>(null);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
+
+  const handleOpenChange = useCallback((next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      markPromptDismissed();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || user) return;
+    if (isPromptDismissed()) return;
+
+    const now = Date.now();
+    if (promptDeadlineRef.current === null) {
+      promptDeadlineRef.current = now + PROMPT_DELAY_MS;
+    }
+
+    const remaining = promptDeadlineRef.current - now;
+    const timer = window.setTimeout(() => {
+      setOpen(true);
+    }, Math.max(0, remaining));
+
+    return () => window.clearTimeout(timer);
+  }, [loading, user]);
+
+  useEffect(() => {
+    if (user) setOpen(false);
+  }, [user]);
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
@@ -54,7 +102,7 @@ export default function LoginPage() {
         title: "Welcome Back",
         description: "You have successfully signed in to Larosa.",
       });
-      router.push("/");
+      setOpen(false);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Invalid credentials.";
@@ -68,36 +116,24 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground text-sm tracking-widest uppercase">
-          Loading
-        </p>
-      </div>
-    );
-  }
-
   if (user) return null;
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 md:p-8 bg-gradient-to-br from-[#1d2b40] via-[#121c2c] to-[#0a0f18] overflow-hidden">
-      {/* Background stars overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.1] pointer-events-none" 
-        style={{
-          backgroundImage: `radial-gradient(circle, #ffffff 1px, transparent 1px)`,
-          backgroundSize: "32px 32px"
-        }}
-      />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        overlayClassName="z-[100]"
+        className="z-[100] max-w-[min(1000px,calc(100vw-2rem))] gap-0 border-0 bg-transparent p-0 shadow-none overflow-y-auto max-h-[95vh] [&>button]:absolute [&>button]:right-5 [&>button]:top-5 [&>button]:z-30 [&>button]:rounded-full [&>button]:bg-white/90 [&>button]:p-1.5 [&>button]:text-gray-500 [&>button]:shadow-sm hover:[&>button]:bg-white"
+        aria-describedby={undefined}
+      >
+        <AuthSplitPanel compact>
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <h2 className="font-serif text-3xl font-medium text-gray-800">
+                Sign In
+              </h2>
+            </div>
 
-      <AuthSplitPanel className="relative z-10 max-w-[1000px]">
-        <div className="space-y-6">
-          <h1 className="font-serif text-3xl font-medium text-gray-800">
-            Sign In
-          </h1>
-
-          <Form {...form}>
+            <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
@@ -150,19 +186,21 @@ export default function LoginPage() {
                   {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
                 </Button>
               </form>
-          </Form>
+            </Form>
 
-          <p className="text-xs text-gray-500">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/auth/register"
-              className="font-semibold text-[#c9a96e] hover:text-[#b08f53] transition-colors"
-            >
-              Register here
-            </Link>
-          </p>
-        </div>
-      </AuthSplitPanel>
-    </div>
+            <p className="text-xs text-gray-500">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/register"
+                className="font-semibold text-[#c9a96e] hover:text-[#b08f53] transition-colors"
+                onClick={() => handleOpenChange(false)}
+              >
+                Register here
+              </Link>
+            </p>
+          </div>
+        </AuthSplitPanel>
+      </DialogContent>
+    </Dialog>
   );
 }
