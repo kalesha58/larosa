@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { MotionGuide } from "@/components/MotionGuide";
 import { FloatingBookingCTA } from "@/components/FloatingBookingCTA";
 import { CampaignStrip } from "@/components/campaigns/CampaignStrip";
-import { CampaignShowcase } from "@/components/campaigns/CampaignShowcase";
+import { GuestAuthPrompt } from "@/components/GuestAuthPrompt";
 
 export default function PublicLayout({
   children,
@@ -12,12 +12,12 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen relative">
-      <CampaignStrip />
       <Navbar />
+      <CampaignStrip />
       <MotionGuide />
       <FloatingBookingCTA />
-      <main className="flex-1">
-        <CampaignShowcase placement="main_top" />
+      <GuestAuthPrompt />
+      <main className="flex-1 pt-[var(--campaign-strip-height,0px)] transition-[padding-top] duration-300">
         {children}
       </main>
       <Footer />

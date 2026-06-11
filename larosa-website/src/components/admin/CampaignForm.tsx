@@ -179,8 +179,8 @@ export function CampaignForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="strip">Top strip (above navbar)</SelectItem>
-                        <SelectItem value="showcase">Showcase banner</SelectItem>
+                        <SelectItem value="strip">Scrolling strip (below navbar)</SelectItem>
+                        <SelectItem value="showcase">Showcase card (homepage, after collection)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

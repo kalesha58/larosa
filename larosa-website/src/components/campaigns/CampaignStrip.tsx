@@ -7,34 +7,66 @@ import { useGetCampaigns } from "@/hooks/use-queries";
 import { cn } from "@/lib/utils";
 import {
   clearStripHeight,
-  dismissCampaign,
-  dismissStorageKey,
-  isCampaignDismissed,
   setStripHeight,
   stripAccentClasses,
 } from "@/lib/campaign-display";
 
+function MarqueeTrack({
+  headline,
+  message,
+  ctaLabel,
+}: {
+  headline: string;
+  message?: string;
+  ctaLabel?: string;
+}) {
+  const segment = (
+    <span className="inline-flex shrink-0 items-center gap-6 px-8">
+      <span className="font-bold uppercase tracking-[0.2em]">{headline}</span>
+      {message ? (
+        <>
+          <span className="text-brand-gold" aria-hidden>
+            ✦
+          </span>
+          <span className="font-normal normal-case tracking-normal opacity-90">
+            {message}
+          </span>
+        </>
+      ) : null}
+      {ctaLabel ? (
+        <>
+          <span className="text-brand-gold" aria-hidden>
+            ✦
+          </span>
+          <span className="inline-flex items-center gap-1 font-bold uppercase tracking-widest">
+            {ctaLabel}
+            <ChevronRight className="h-3 w-3" />
+          </span>
+        </>
+      ) : null}
+    </span>
+  );
+
+  return (
+    <div className="flex w-max animate-campaign-marquee">
+      {segment}
+      {segment}
+      {segment}
+    </div>
+  );
+}
+
 export function CampaignStrip() {
-  const { data: campaigns } = useGetCampaigns();
+  const { data: campaigns, isLoading } = useGetCampaigns();
   const stripRef = useRef<HTMLDivElement>(null);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [mounted, setMounted] = useState(false);
+  const [dismissedForSession, setDismissedForSession] = useState(false);
+
+  const activeStrip = campaigns?.find((c) => c.type === "strip");
+
+  const isVisible = activeStrip && !dismissedForSession;
 
   useEffect(() => {
-    setMounted(true);
-    const stored = new Set<string>();
-    campaigns?.forEach((c) => {
-      if (c.type === "strip" && isCampaignDismissed(c.id)) {
-        stored.add(c.id);
-      }
-    });
-    setDismissedIds(stored);
-  }, [campaigns]);
-
-  const activeStrip = campaigns?.find((c) => c.type === "strip" && !dismissedIds.has(c.id));
-
-  useEffect(() => {
-    if (!activeStrip) {
+    if (!isVisible) {
       clearStripHeight();
       return;
     }
@@ -53,14 +85,13 @@ export function CampaignStrip() {
       ro.disconnect();
       clearStripHeight();
     };
-  }, [activeStrip, dismissedIds]);
+  }, [isVisible, activeStrip?.id]);
 
-  if (!mounted || !activeStrip) return null;
+  if (isLoading || !isVisible || !activeStrip) return null;
 
   const handleDismiss = () => {
     if (activeStrip.dismissible) {
-      dismissCampaign(activeStrip.id);
-      setDismissedIds((prev) => new Set(prev).add(activeStrip.id));
+      setDismissedForSession(true);
     }
   };
 
@@ -70,34 +101,37 @@ export function CampaignStrip() {
       role="region"
       aria-label="Site announcement"
       className={cn(
-        "fixed top-0 z-[70] w-full",
+        "fixed top-[var(--navbar-height)] z-[55] w-full overflow-hidden shadow-md transition-[top] duration-300",
         stripAccentClasses(activeStrip.accent)
       )}
     >
-      <div className="container mx-auto flex max-w-[1400px] items-center justify-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-        <p className="min-w-0 flex-1 text-center text-[10px] font-bold uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.25em]">
-          <span>{activeStrip.headline}</span>
-          {activeStrip.message && (
-            <span className="hidden font-normal normal-case tracking-normal text-white/80 sm:ml-2 sm:inline">
-              — {activeStrip.message}
-            </span>
+      <div className="relative flex h-9 items-center sm:h-10">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          {activeStrip.ctaUrl ? (
+            <Link
+              href={activeStrip.ctaUrl}
+              className="block text-inherit hover:opacity-90"
+            >
+              <MarqueeTrack
+                headline={activeStrip.headline}
+                message={activeStrip.message}
+                ctaLabel={activeStrip.ctaLabel}
+              />
+            </Link>
+          ) : (
+            <MarqueeTrack
+              headline={activeStrip.headline}
+              message={activeStrip.message}
+              ctaLabel={activeStrip.ctaLabel}
+            />
           )}
-        </p>
-        {activeStrip.ctaUrl && activeStrip.ctaLabel && (
-          <Link
-            href={activeStrip.ctaUrl}
-            className="hidden shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest underline-offset-4 hover:underline sm:flex"
-          >
-            {activeStrip.ctaLabel}
-            <ChevronRight className="h-3 w-3" />
-          </Link>
-        )}
+        </div>
         {activeStrip.dismissible && (
           <button
             type="button"
             onClick={handleDismiss}
             aria-label="Dismiss announcement"
-            className="shrink-0 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
+            className="relative z-10 flex h-full shrink-0 items-center border-l border-white/15 px-3 opacity-80 transition-opacity hover:opacity-100"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -106,6 +140,3 @@ export function CampaignStrip() {
     </div>
   );
 }
-
-// Re-export for tests / hydration check
-export { dismissStorageKey };
