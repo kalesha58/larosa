@@ -1,23 +1,51 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { BookingWidget } from "@/components/BookingWidget";
 import { useCursorParallax } from "@/hooks/useCursorParallax";
 import { useScrollSequence } from "@/hooks/useScrollSequence";
+import { cn } from "@/lib/utils";
 
-export function CinematicHero() {
+type CinematicHeroProps = {
+  onInteractiveChange?: (interactive: boolean) => void;
+};
+
+export function CinematicHero({ onInteractiveChange }: CinematicHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentOverlayRef = useRef<HTMLDivElement>(null);
 
   const { getOffset } = useCursorParallax();
-  const { isReady, isFullyLoaded, loadProgress } = useScrollSequence({
+  const {
+    isInteractive,
+    isFullyLoaded,
+    loadProgress,
+    firstFrameUrl,
+  } = useScrollSequence({
     sectionRef,
     canvasRef,
     contentOverlayRef,
     getParallaxOffset: getOffset,
   });
+
+  useEffect(() => {
+    onInteractiveChange?.(isInteractive);
+  }, [isInteractive, onInteractiveChange]);
+
+  useEffect(() => {
+    if (isInteractive) return;
+
+    const html = document.documentElement;
+    const previousOverflow = html.style.overflow;
+    html.style.overflow = "hidden";
+    window.scrollTo(0, 0);
+
+    return () => {
+      html.style.overflow = previousOverflow;
+    };
+  }, [isInteractive]);
 
   return (
     <section
@@ -26,20 +54,37 @@ export function CinematicHero() {
       aria-label="Cinematic hero"
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 h-full w-full"
+        <Image
+          src={firstFrameUrl}
+          alt=""
+          fill
+          priority
+          fetchPriority="high"
+          className={cn(
+            "object-cover transition-opacity duration-700 ease-out",
+            isInteractive ? "opacity-0" : "opacity-100"
+          )}
+          sizes="100vw"
           aria-hidden
         />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
+        <canvas
+          ref={canvasRef}
+          className={cn(
+            "absolute inset-0 z-[1] h-full w-full transition-opacity duration-700 ease-out",
+            isInteractive ? "opacity-100" : "opacity-0"
+          )}
+          aria-hidden
+        />
 
-        {!isReady && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black">
+        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-black/50 via-black/20 to-black/60" />
+
+        {!isInteractive && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
             <div className="mb-4 h-px w-32 overflow-hidden bg-white/20">
               <div
                 className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${loadProgress}%` }}
+                style={{ width: `${Math.max(loadProgress, 8)}%` }}
               />
             </div>
             <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-white/60">
@@ -51,12 +96,17 @@ export function CinematicHero() {
 
         <div
           ref={contentOverlayRef}
-          className="relative z-10 flex h-full flex-col items-center justify-center px-4 sm:px-6 lg:px-10"
+          className={cn(
+            "relative z-10 flex h-full flex-col items-center justify-center px-4 sm:px-6 lg:px-10 transition-opacity duration-500",
+            isInteractive ? "opacity-100" : "opacity-0"
+          )}
         >
           <div className="w-full max-w-[1320px]">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={
+                isInteractive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+              }
               transition={{ duration: 1, delay: 0.2 }}
             >
               <p className="mb-3 text-left text-[10px] font-medium uppercase tracking-[0.3em] text-white/80 sm:text-xs">
@@ -74,7 +124,9 @@ export function CinematicHero() {
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={
+                isInteractive ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+              }
               transition={{ duration: 1, delay: 0.6 }}
               className="hidden w-full md:-mb-24 md:block"
             >

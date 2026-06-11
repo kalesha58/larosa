@@ -53,6 +53,22 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function getNearestLoadedImage(
+  images: (HTMLImageElement | null)[],
+  index: number
+): HTMLImageElement | null {
+  if (images[index]) return images[index];
+
+  for (let offset = 1; offset < images.length; offset++) {
+    const before = index - offset;
+    const after = index + offset;
+    if (before >= 0 && images[before]) return images[before];
+    if (after < images.length && images[after]) return images[after];
+  }
+
+  return null;
+}
+
 async function preloadBatched(urls: string[]): Promise<(HTMLImageElement | null)[]> {
   const images: (HTMLImageElement | null)[] = new Array(urls.length).fill(null);
 
@@ -88,10 +104,12 @@ export function useScrollSequence({
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const frameIndexRef = useRef(0);
   const progressRef = useRef(0);
+  const hasPaintedRef = useRef(false);
   const reducedMotionRef = useRef(false);
   const mobileRef = useRef(false);
 
   const [isReady, setIsReady] = useState(false);
+  const [hasPainted, setHasPainted] = useState(false);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
 
@@ -111,15 +129,21 @@ export function useScrollSequence({
     ]);
 
     const loadCriticalFirst = async () => {
-      const criticalUrls = Array.from(criticalIndices).map((i) => urls[i]);
-      const criticalImages = await Promise.all(criticalUrls.map(loadImage));
+      imagesRef.current = new Array(urls.length).fill(null);
+
+      const firstFrame = await loadImage(urls[0]);
+      if (cancelled) return;
+      if (firstFrame) {
+        imagesRef.current[0] = firstFrame;
+      }
+
+      const remainingCritical = Array.from(criticalIndices).filter((i) => i !== 0);
+      const criticalImages = await Promise.all(
+        remainingCritical.map((index) => loadImage(urls[index]))
+      );
       if (cancelled) return;
 
-      const store = imagesRef.current;
-      if (store.length === 0) {
-        imagesRef.current = new Array(urls.length).fill(null);
-      }
-      Array.from(criticalIndices).forEach((index, i) => {
+      remainingCritical.forEach((index, i) => {
         imagesRef.current[index] = criticalImages[i];
       });
 
@@ -188,10 +212,7 @@ export function useScrollSequence({
 
     const drawFrame = (index: number, progress: number) => {
       const images = imagesRef.current;
-      const img =
-        images[index] ??
-        images.find((entry) => entry != null) ??
-        null;
+      const img = getNearestLoadedImage(images, index);
       if (!img) return;
 
       const rect = canvas.getBoundingClientRect();
@@ -202,6 +223,11 @@ export function useScrollSequence({
 
       ctx.clearRect(0, 0, width, height);
       drawCoverImage(ctx, img, width, height, scale, parallax);
+
+      if (!hasPaintedRef.current) {
+        hasPaintedRef.current = true;
+        setHasPainted(true);
+      }
     };
 
     const updateOverlays = (progress: number) => {
@@ -257,6 +283,8 @@ export function useScrollSequence({
 
   return {
     isReady,
+    hasPainted,
+    isInteractive: isReady && hasPainted,
     isFullyLoaded,
     loadProgress,
     progressRef,
