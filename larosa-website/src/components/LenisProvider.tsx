@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Lenis from "lenis";
 
 type LenisProviderProps = {
   children: ReactNode;
+  scrollEnabled?: boolean;
 };
 
-export function LenisProvider({ children }: LenisProviderProps) {
+export function LenisProvider({
+  children,
+  scrollEnabled = true,
+}: LenisProviderProps) {
+  const lenisRef = useRef<Lenis | null>(null);
+
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -20,6 +26,11 @@ export function LenisProvider({ children }: LenisProviderProps) {
       smoothWheel: true,
       touchMultiplier: 1.5,
     });
+    lenisRef.current = lenis;
+
+    if (!scrollEnabled) {
+      lenis.stop();
+    }
 
     let rafId = 0;
     function raf(time: number) {
@@ -31,8 +42,21 @@ export function LenisProvider({ children }: LenisProviderProps) {
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+
+    if (scrollEnabled) {
+      lenis.start();
+    } else {
+      lenis.stop();
+      window.scrollTo(0, 0);
+    }
+  }, [scrollEnabled]);
 
   return <>{children}</>;
 }
