@@ -11,7 +11,7 @@ import {
 } from "@/lib/guest-limits";
 
 const createSchema = z.object({
-  roomId: z.string(),
+  roomId: z.union([z.string(), z.number()]).transform(String),
   checkIn: z.string(),
   checkOut: z.string(),
   guests: z.number().int().min(MIN_GUESTS).max(MAX_ONLINE_GUESTS),
@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (checkIn < today) {
+    // Allow a 24-hour grace period for timezone differences (e.g. user in IST vs server in UTC)
+    const gracePeriod = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    if (checkIn < gracePeriod) {
       return NextResponse.json(
         { error: "Check-in date cannot be in the past" },
         { status: 400 }

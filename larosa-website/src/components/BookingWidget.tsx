@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -20,6 +20,18 @@ export function BookingWidget({ className }: { className?: string }) {
   const router = useRouter();
   const [date, setDate] = useState<DateRange | undefined>();
   const [guests, setGuests] = useState(2);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isPopoverOpen) return;
+    
+    const handleScroll = () => {
+      setIsPopoverOpen(false);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isPopoverOpen]);
 
   const handleCheck = () => {
     if (!date?.from || !date?.to) return;
@@ -40,7 +52,7 @@ export function BookingWidget({ className }: { className?: string }) {
       )}
     >
       <div className="flex-1 w-full flex flex-col md:flex-row gap-4">
-        <Popover>
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"

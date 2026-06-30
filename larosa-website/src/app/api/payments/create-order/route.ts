@@ -14,7 +14,7 @@ import { findRoomById } from "@/lib/room-api";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 
 const bodySchema = z.object({
-  roomId: z.string(),
+  roomId: z.union([z.string(), z.number()]).transform(String),
   checkIn: z.string(),
   checkOut: z.string(),
   bookingId: z.string().optional(),
@@ -119,11 +119,15 @@ export async function POST(request: Request) {
       keyId,
       total: pricing.total,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
+    const isRazorpayError = err && err.statusCode === 400 && err.error;
+    const errorMsg = isRazorpayError ? err.error.description : "Could not create payment order";
+    const status = isRazorpayError ? 400 : 500;
+    
     return NextResponse.json(
-      { error: "Could not create payment order" },
-      { status: 500 }
+      { error: errorMsg },
+      { status }
     );
   }
 }
