@@ -11,6 +11,7 @@ import { AuthSplitPanel } from "@/components/auth/AuthSplitPanel";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +126,7 @@ export function GuestAuthPrompt() {
         className="z-[100] max-w-[min(1000px,calc(100vw-2rem))] gap-0 border-0 bg-transparent p-0 shadow-none overflow-y-auto max-h-[95vh] [&>button]:absolute [&>button]:right-5 [&>button]:top-5 [&>button]:z-30 [&>button]:rounded-full [&>button]:bg-white/90 [&>button]:p-1.5 [&>button]:text-gray-500 [&>button]:shadow-sm hover:[&>button]:bg-white"
         aria-describedby={undefined}
       >
+        <DialogTitle className="sr-only">Sign In</DialogTitle>
         <AuthSplitPanel compact>
           <div className="space-y-6">
             <div className="space-y-1">
