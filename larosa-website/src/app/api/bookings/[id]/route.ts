@@ -3,6 +3,8 @@ import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import mongoose from "mongoose";
 import { getAuthPayload } from "@/lib/auth-guard";
+import Razorpay from "razorpay";
+import { getRazorpayKeyId, getRazorpaySecret } from "@/lib/razorpay-config";
 
 // GET /api/bookings/[id]
 export async function GET(
@@ -111,6 +113,31 @@ export async function PATCH(
       }
     }
 
+    // Handle Razorpay Refund if booking is cancelled, was previously confirmed, and has a payment ID
+    let refundId = "";
+    if (status === "cancelled" && existing.status === "confirmed" && existing.razorpayPaymentId) {
+      const keyId = getRazorpayKeyId();
+      const secret = getRazorpaySecret();
+      if (keyId && secret) {
+        try {
+          const razorpay = new Razorpay({
+            key_id: keyId,
+            key_secret: secret,
+          });
+          const refund = await razorpay.payments.refund(existing.razorpayPaymentId, {
+            notes: {
+              bookingId: id,
+              reason: "User cancelled stay",
+            },
+          });
+          refundId = refund.id;
+          console.log(`[PATCH /api/bookings/${id}] Automatically refunded payment: ${existing.razorpayPaymentId}, Refund ID: ${refundId}`);
+        } catch (refundErr) {
+          console.error(`[PATCH /api/bookings/${id}] Failed to auto-refund via Razorpay:`, refundErr);
+        }
+      }
+    }
+
     const booking = await Booking.findByIdAndUpdate(
       id,
       { status },
@@ -124,6 +151,7 @@ export async function PATCH(
     return NextResponse.json({
       id: booking._id.toString(),
       status: booking.status,
+      refundId: refundId || undefined,
     });
   } catch (err) {
     console.error("[PATCH /api/bookings/[id]]", err);

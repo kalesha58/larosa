@@ -141,17 +141,44 @@ export default function AdminSettings() {
                     <CardDescription className="text-xs uppercase tracking-widest mt-1">Manage transactional accounts and fees</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="p-4 border border-border rounded-xl bg-secondary/5 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-brand-gold/10 rounded-lg flex items-center justify-center">
-                          <Wallet className="h-5 w-5 text-primary" />
+                    <div className="p-4 border border-border rounded-xl bg-secondary/5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-brand-gold/10 rounded-lg flex items-center justify-center">
+                            <Wallet className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-widest">Razorpay Integration</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Status: Connected (Live Mode)</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-widest">Razorpay Integration</p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Status: Connected (Live Mode)</p>
-                        </div>
+                        <Button variant="outline" size="sm" className="text-[10px] font-bold uppercase tracking-widest rounded-lg">Configure</Button>
                       </div>
-                      <Button variant="outline" size="sm" className="text-[10px] font-bold uppercase tracking-widest rounded-lg">Configure</Button>
+                      <div className="border-t border-border/40 pt-3 space-y-2">
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Razorpay Webhook URL</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            readOnly 
+                            value={typeof window !== "undefined" ? `${window.location.origin}/api/payments/webhook` : ""} 
+                            className="h-9 text-xs font-mono rounded-lg bg-secondary/10 border-border/50 flex-1" 
+                          />
+                          <Button 
+                            type="button"
+                            variant="secondary" 
+                            size="sm" 
+                            className="h-9 text-[9px] font-bold uppercase tracking-widest rounded-lg"
+                            onClick={() => {
+                              if (typeof window !== "undefined") {
+                                navigator.clipboard.writeText(`${window.location.origin}/api/payments/webhook`);
+                                alert("Webhook URL copied to clipboard!");
+                              }
+                            }}
+                          >
+                            Copy
+                          </Button>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Configure this in your Razorpay Dashboard with events: order.paid, payment.captured</p>
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
