@@ -9,11 +9,13 @@ import {
 import type { Room } from "@/lib/room-catalog";
 import type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 import type { CampaignClient } from "@/lib/campaign-api";
+import type { SerializedUser } from "@/lib/user-api";
 
 export type { AdminCalendarBooking } from "@/lib/booking-calendar-events";
 
 export type { Room } from "@/lib/room-catalog";
 export type { CampaignClient as Campaign } from "@/lib/campaign-api";
+export type { SerializedUser as AdminUser } from "@/lib/user-api";
 
 export interface AdminStats {
   totalRevenue: number;
@@ -62,7 +64,18 @@ export interface Booking {
   specialRequests?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  razorpayRefundId?: string;
+  cancelledAt?: string | null;
+  cancelledBy?: "admin" | "guest" | null;
   createdAt?: string;
+}
+
+export interface CancelBookingResult {
+  id: string;
+  status: string;
+  refundId?: string;
+  refunded: boolean;
+  refundPending?: boolean;
 }
 
 
@@ -329,11 +342,29 @@ export function useCreateBooking() {
 export function useCancelBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
+    mutationFn: async ({
+      id,
+      skipRefund,
+      feedback,
+    }: {
+      id: string;
+      skipRefund?: boolean;
+      feedback?: {
+        reason: string;
+        reasonOther?: string;
+        experienceRating?: number;
+        wouldBookAgain?: "yes" | "no" | "maybe";
+        comments?: string;
+      };
+    }): Promise<CancelBookingResult> => {
       const res = await fetch(`/api/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "cancelled" }),
+        body: JSON.stringify({
+          status: "cancelled",
+          ...(skipRefund ? { skipRefund: true } : {}),
+          ...(feedback ? { feedback } : {}),
+        }),
       });
       if (!res.ok) {
         const payload: unknown = await res.json().catch(() => ({}));
@@ -346,11 +377,13 @@ export function useCancelBooking() {
             : "Failed to cancel booking";
         throw new Error(msg);
       }
-      return id;
+      return res.json() as Promise<CancelBookingResult>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "feedback"] });
     },
   });
 }
@@ -669,6 +702,127 @@ export function useToggleCampaignVisibility() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+  });
+}
+
+export function getGetUsersQueryKey() {
+  return ["admin", "users"] as const;
+}
+
+export interface UserCreateInput {
+  name: string;
+  email: string;
+  password: string;
+  role?: "admin" | "user";
+}
+
+export interface UserUpdateInput {
+  name?: string;
+  role?: "admin" | "user";
+  password?: string;
+}
+
+export function useGetUsers() {
+  return useQuery({
+    queryKey: getGetUsersQueryKey(),
+    queryFn: async (): Promise<SerializedUser[]> => {
+      const res = await fetch("/api/admin/users");
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json() as Promise<SerializedUser[]>;
+    },
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: UserCreateInput) => {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to create user");
+      }
+      return res.json() as Promise<SerializedUser>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UserUpdateInput }) => {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to update user");
+      }
+      return res.json() as Promise<SerializedUser>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to delete user");
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() });
+    },
+  });
+}
+
+export interface CancellationFeedbackItem {
+  id: string;
+  bookingId: string;
+  guestName: string;
+  guestEmail: string;
+  roomTitle: string;
+  roomType: string;
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+  reason: string;
+  reasonLabel: string;
+  reasonOther: string;
+  experienceRating: number | null;
+  wouldBookAgain: "yes" | "no" | "maybe" | null;
+  comments: string;
+  createdAt: string;
+}
+
+export function getGetCancellationFeedbackQueryKey() {
+  return ["admin", "feedback"] as const;
+}
+
+export function useGetCancellationFeedback() {
+  return useQuery({
+    queryKey: getGetCancellationFeedbackQueryKey(),
+    queryFn: async (): Promise<CancellationFeedbackItem[]> => {
+      const res = await fetch("/api/admin/feedback");
+      if (!res.ok) throw new Error("Failed to fetch feedback");
+      return res.json() as Promise<CancellationFeedbackItem[]>;
     },
   });
 }

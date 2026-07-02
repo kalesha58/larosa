@@ -18,6 +18,7 @@ import {
 } from "@/lib/room-day-pricing";
 import { getBookingAvailabilityRanges } from "@/lib/room-availability-ranges";
 import { ensureCatalogRoomsSeeded } from "@/lib/room-seed";
+import { resolveBookingRoomIds } from "@/lib/room-api";
 import { Booking } from "@/models/Booking";
 import { Room } from "@/models/Room";
 
@@ -61,13 +62,16 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const [bookingRanges, calendarDays, bookings] = await Promise.all([
       getBookingAvailabilityRanges(roomId),
       getRoomCalendarDayMap(roomId, enumeratePropertyDates(from, to)),
-      Booking.find({
-        ...activeBookingMongoFilter(roomId),
-        ...adminCalendarDateWindow(),
-      })
-        .select("checkIn checkOut source guestName status")
-        .sort({ checkIn: 1 })
-        .lean(),
+      (async () => {
+        const roomIds = await resolveBookingRoomIds(String(roomId));
+        return Booking.find({
+          ...activeBookingMongoFilter(roomIds),
+          ...adminCalendarDateWindow(),
+        })
+          .select("checkIn checkOut source guestName status")
+          .sort({ checkIn: 1 })
+          .lean();
+      })(),
     ]);
 
     const reservedNights = buildReservedNightSet(bookingRanges);

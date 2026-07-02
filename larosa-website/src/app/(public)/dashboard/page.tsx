@@ -4,57 +4,24 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
-import { useGetUserBookings, useCancelBooking, getGetUserBookingsQueryKey } from "@/hooks/use-queries";
+import { useGetUserBookings } from "@/hooks/use-queries";
+import { GuestCancelBookingDialog } from "@/components/GuestCancelBookingDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: bookings, isLoading } = useGetUserBookings();
-  const cancelBooking = useCancelBooking();
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/auth/login");
     }
   }, [user, loading, router]);
-
-  const handleCancelStatus = async (id: string) => {
-    try {
-      await cancelBooking.mutateAsync({ id });
-      toast({
-        title: "Booking Cancelled",
-        description: "Your reservation has been successfully cancelled.",
-      });
-      queryClient.invalidateQueries({ queryKey: getGetUserBookingsQueryKey() });
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unable to cancel booking.";
-      toast({
-        variant: "destructive",
-        title: "Cancellation Failed",
-        description: msg,
-      });
-    }
-  };
 
   if (loading || !user) {
     return loading ? (
@@ -141,30 +108,7 @@ export default function DashboardPage() {
 
                   {booking.status === 'confirmed' && new Date(booking.checkIn) > new Date() && (
                     <div className="flex justify-end pt-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" className="rounded-none border-border border text-muted-foreground hover:bg-destructive hover:text-white hover:border-destructive text-xs tracking-widest p-5 uppercase font-serif">
-                            Cancel Reservation
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-card border-border rounded-none shadow-2xl">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="font-serif text-2xl">Relinquish Stay?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-muted-foreground italic">
-                              Are you sure you want to cancel your stay in the {booking.room.title}? This sanctuary will be made available to other guests.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="mt-6">
-                            <AlertDialogCancel className="rounded-none h-12 border-border tracking-widest uppercase font-serif px-8">KEEP BOOKING</AlertDialogCancel>
-                            <AlertDialogAction 
-                              className="rounded-none h-12 bg-destructive text-destructive-foreground hover:bg-destructive/90 tracking-widest uppercase font-serif px-8"
-                              onClick={() => handleCancelStatus(booking.id)}
-                            >
-                              YES, CANCEL
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <GuestCancelBookingDialog booking={booking} />
                     </div>
                   )}
                 </div>

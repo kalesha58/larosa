@@ -12,15 +12,17 @@ import {
 } from "@/lib/booking-availability";
 import { Booking, PENDING_BOOKING_HOLD_MS } from "@/models/Booking";
 import { RoomCalendarDay } from "@/models/RoomCalendarDay";
+import { resolveBookingRoomIds } from "@/lib/room-api";
 
 export async function getBookingAvailabilityRanges(
   roomId: number
 ): Promise<AvailabilityRange[]> {
   await connectMongo();
   const holdSince = new Date(Date.now() - PENDING_BOOKING_HOLD_MS);
+  const roomIds = await resolveBookingRoomIds(String(roomId));
 
   const bookings = await Booking.find({
-    roomId,
+    roomId: roomIds.length === 1 ? roomIds[0] : { $in: roomIds },
     status: { $ne: "cancelled" },
     ...adminCalendarDateWindow(),
     $or: [

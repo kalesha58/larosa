@@ -19,6 +19,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { XCircle, Calendar as CalendarIcon, User, Mail, CreditCard, Search, Filter, Download, Home, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,16 +45,36 @@ export default function AdminBookings() {
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+  const [cancelRefundError, setCancelRefundError] = useState<string | null>(null);
 
-  const handleCancel = async (id: string) => {
-    if (!confirm("Are you certain you want to void this reservation? This action is permanent.")) return;
+  const isPaidConfirmed = (booking: Booking) =>
+    booking.status === "confirmed" && Boolean(booking.razorpayPaymentId?.trim());
+
+  const handleCancelConfirm = async (skipRefund = false) => {
+    if (!cancelTarget) return;
     try {
-      await cancelBooking.mutateAsync({ id });
-      toast({ title: "Reservation Voided", description: "The booking has been successfully cancelled." });
+      const result = await cancelBooking.mutateAsync({
+        id: cancelTarget.id,
+        skipRefund,
+      });
+      setCancelTarget(null);
+      setCancelRefundError(null);
+      toast({
+        title: "Reservation cancelled",
+        description: result.refunded
+          ? `Full refund issued${result.refundId ? ` (${result.refundId})` : ""}. Cancellation emails sent.`
+          : result.refundPending
+            ? "Booking cancelled. Process the refund manually from your Razorpay dashboard."
+            : "Booking cancelled. Cancellation emails sent.",
+      });
       queryClient.invalidateQueries({ queryKey: getGetAllBookingsQueryKey() });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to cancel booking";
-      toast({ variant: "destructive", title: "Error", description: msg });
+      if (!skipRefund && cancelTarget && isPaidConfirmed(cancelTarget)) {
+        setCancelRefundError(msg);
+      }
+      toast({ variant: "destructive", title: "Cancellation failed", description: msg });
     }
   };
 
@@ -275,13 +305,14 @@ export default function AdminBookings() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      {booking.status === 'confirmed' && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-xl h-9 w-9" 
-                          onClick={() => handleCancel(booking.id)}
-                          title="Cancel Booking"
+                      {(booking.status === "confirmed" || booking.status === "pending") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive transition-colors hover:bg-destructive/10 rounded-xl h-9 w-9"
+                          onClick={() => setCancelTarget(booking)}
+                          title="Cancel booking"
+                          disabled={cancelBooking.isPending}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>
@@ -294,6 +325,90 @@ export default function AdminBookings() {
           </Table>
         </div>
       </div>
+
+      <AlertDialog
+        open={cancelTarget != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelTarget(null);
+            setCancelRefundError(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Cancel reservation?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                {cancelTarget ? (
+                  <>
+                    <p>
+                      <strong>{cancelTarget.guestName}</strong> · {cancelTarget.room.title}
+                    </p>
+                    <p>
+                      {format(parseISO(cancelTarget.checkIn), "MMM d, yyyy")} →{" "}
+                      {format(parseISO(cancelTarget.checkOut), "MMM d, yyyy")}
+                    </p>
+                    {isPaidConfirmed(cancelTarget) ? (
+                      <p className="text-foreground font-medium">
+                        A full Razorpay refund of ₹{cancelTarget.totalPrice.toLocaleString("en-IN")} will be issued automatically.
+                      </p>
+                    ) : (
+                      <p>No payment to refund — this pending hold will be released.</p>
+                    )}
+                    {cancelRefundError ? (
+                      <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                        <strong>Refund failed:</strong> {cancelRefundError}
+                        <span className="mt-1 block text-xs font-normal">
+                          Add funds in your{" "}
+                          <a
+                            href="https://dashboard.razorpay.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline"
+                          >
+                            Razorpay dashboard
+                          </a>
+                          , then retry — or cancel without refund and process it manually.
+                        </span>
+                      </p>
+                    ) : null}
+                    <p>Guest and admin will receive cancellation emails.</p>
+                  </>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel className="rounded-xl">Keep booking</AlertDialogCancel>
+            {cancelTarget && isPaidConfirmed(cancelTarget) ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                disabled={cancelBooking.isPending}
+                onClick={() => void handleCancelConfirm(true)}
+              >
+                {cancelBooking.isPending ? "Cancelling…" : "Cancel without refund"}
+              </Button>
+            ) : null}
+            <AlertDialogAction
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelBooking.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleCancelConfirm(false);
+              }}
+            >
+              {cancelBooking.isPending
+                ? "Cancelling…"
+                : cancelTarget && isPaidConfirmed(cancelTarget)
+                  ? "Cancel & refund"
+                  : "Cancel booking"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export interface IRoom extends Document {
   airbnbIcalUrl?: string;
   airbnbCalendarUrl?: string;
   syncEnabled: boolean;
-  syncStatus: "idle" | "syncing" | "error";
+  syncStatus: "idle" | "syncing" | "error" | "ok";
   lastSyncedAt?: Date;
   calendarExportToken: string;
 }
@@ -44,7 +44,7 @@ const RoomSchema = new Schema<IRoom>(
     syncEnabled: { type: Boolean, default: true },
     syncStatus: {
       type: String,
-      enum: ["idle", "syncing", "error"],
+      enum: ["idle", "syncing", "error", "ok"],
       default: "idle",
     },
     lastSyncedAt: { type: Date },

@@ -117,6 +117,7 @@ export interface SyncRoomResult {
 
 export async function syncRoomFromAirbnb(roomId: number): Promise<SyncRoomResult> {
   const startedAt = new Date();
+  const bookingRoomId = String(roomId);
   await connectMongo();
 
   const room = await Room.findOne({ roomId }).lean();
@@ -221,11 +222,11 @@ export async function syncRoomFromAirbnb(roomId: number): Promise<SyncRoomResult
 
   let removed = 0;
   if (uidSet.size === 0) {
-    const del = await Booking.deleteMany({ roomId, source: "airbnb" });
+    const del = await Booking.deleteMany({ roomId: bookingRoomId, source: "airbnb" });
     removed = del.deletedCount ?? 0;
   } else {
     const del = await Booking.deleteMany({
-      roomId,
+      roomId: bookingRoomId,
       source: "airbnb",
       externalUid: { $nin: [...uidSet] },
     });
@@ -243,9 +244,10 @@ export async function syncRoomFromAirbnb(roomId: number): Promise<SyncRoomResult
     const guestLabel = r.summary || "Airbnb reservation";
 
     await Booking.findOneAndUpdate(
-      { roomId, source: "airbnb", externalUid: r.uid },
+      { roomId: bookingRoomId, source: "airbnb", externalUid: r.uid },
       {
         $set: {
+          roomId: bookingRoomId,
           roomTitle: room.title,
           roomType: room.type,
           pricePerNight: 0,
@@ -308,7 +310,7 @@ export async function buildWebsiteExportIcs(params: {
 }): Promise<string> {
   await connectMongo();
   const bookings = await Booking.find({
-    roomId: params.roomId,
+    roomId: String(params.roomId),
     source: "website",
     status: "confirmed",
     checkOut: { $gte: new Date(Date.now() - 86400000) },

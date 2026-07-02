@@ -54,6 +54,47 @@ export function normalizeStayFromInstant(
   };
 }
 
+/** Parse YYYY-MM-DD from API strings or ISO prefixes. */
+export function parsePropertyYmd(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+  return m?.[1];
+}
+
+/** FullCalendar all-day instants are UTC — map back to property YMD. */
+export function fullCalendarAllDayToYmd(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Blocked nights between inclusive check-in and exclusive check-out. */
+export function blockedNightsBetween(
+  checkInYmd: string,
+  checkOutYmd: string
+): number {
+  const checkIn = parsePropertyYmd(checkInYmd);
+  const checkOut = parsePropertyYmd(checkOutYmd);
+  if (!checkIn || !checkOut) return 0;
+  const ms =
+    propertyDateToInstant(checkOut).getTime() -
+    propertyDateToInstant(checkIn).getTime();
+  return Math.max(0, Math.round(ms / 86400000));
+}
+
+/** e.g. "July 2026" for modal / navigation context. */
+export function propertyMonthYearLabel(ymd: string): string {
+  const dateYmd = parsePropertyYmd(ymd);
+  if (!dateYmd) return ymd;
+  const [y, m] = dateYmd.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    year: "numeric",
+    timeZone: PROPERTY_TIMEZONE,
+  }).format(new Date(Date.UTC(y, m - 1, 1, 12, 0, 0)));
+}
+
 /** Display YYYY-MM-DD in UI without timezone shift from parseISO. */
 export function formatPropertyDateLabel(ymd: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);

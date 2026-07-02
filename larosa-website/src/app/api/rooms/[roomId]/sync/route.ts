@@ -21,9 +21,13 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     }
 
     const result = await syncRoomFromAirbnb(roomId);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 422 });
+    }
     return NextResponse.json(result);
   } catch (err) {
     console.error("[POST /api/rooms/[roomId]/sync]", err);
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Sync failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

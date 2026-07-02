@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
-import { findRoomById } from "@/lib/room-api";
+import { findRoomById, resolveBookingRoomIds } from "@/lib/room-api";
 import { fetchExternalBookings } from "@/lib/ical-service";
 
 // GET /api/bookings/availability?roomId=...
@@ -15,9 +15,11 @@ export async function GET(request: NextRequest) {
 
     await connectMongo();
 
+    const roomIds = await resolveBookingRoomIds(roomId);
+
     // 1. Fetch internal confirmed bookings
     const internalBookings = await Booking.find({
-      roomId,
+      roomId: roomIds.length === 1 ? roomIds[0] : { $in: roomIds },
       status: "confirmed",
       checkOut: { $gte: new Date() },
     }).select("checkIn checkOut").lean();
@@ -30,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // 2. Fetch external Airbnb bookings if configured
     const room = await findRoomById(roomId);
-    if (room?.airbnbCalendarUrl) {
-      const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
+    if (room?.airbnbIcalUrl) {
+      const externalBookings = await fetchExternalBookings(room.airbnbIcalUrl);
       externalBookings.forEach((eb) => {
         ranges.push({
           checkIn: eb.start.toISOString().split("T")[0],

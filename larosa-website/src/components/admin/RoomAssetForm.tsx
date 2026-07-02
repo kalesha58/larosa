@@ -174,11 +174,20 @@ export function RoomAssetForm({
     }
   };
 
-  const exportUrl =
+  const resolveExportUrl = (url: string): string => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const base =
+      process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    if (!base) return url;
+    return `${base.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`;
+  };
+
+  const exportUrl = resolveExportUrl(
     calendarExportUrl ||
-    (typeof window !== "undefined" && roomId
-      ? `${window.location.origin}/api/rooms/${roomId}/calendar.ics`
-      : "");
+      (roomId ? `/api/rooms/${roomId}/calendar.ics` : "")
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-24">

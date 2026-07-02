@@ -64,8 +64,8 @@ export async function POST(request: Request) {
     }
 
     const room = await findRoomById(roomId);
-    if (room?.airbnbCalendarUrl) {
-      const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
+    if (room?.airbnbIcalUrl) {
+      const externalBookings = await fetchExternalBookings(room.airbnbIcalUrl);
       if (hasExternalOverlap(checkInDate, checkOutDate, externalBookings)) {
         return NextResponse.json(
           {
