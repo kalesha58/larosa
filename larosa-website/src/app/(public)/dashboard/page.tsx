@@ -40,10 +40,12 @@ export default function DashboardPage() {
 
   const handleCancelStatus = async (id: string) => {
     try {
-      await cancelBooking.mutateAsync({ id });
+      const result = await cancelBooking.mutateAsync({ id });
       toast({
         title: "Booking Cancelled",
-        description: "Your reservation has been successfully cancelled.",
+        description: result.refunded
+          ? `Your reservation was cancelled and a full refund has been initiated${result.refundId ? ` (ref: ${result.refundId})` : ""}.`
+          : "Your reservation has been successfully cancelled.",
       });
       queryClient.invalidateQueries({ queryKey: getGetUserBookingsQueryKey() });
     } catch (error: unknown) {

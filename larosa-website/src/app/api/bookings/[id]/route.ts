@@ -3,8 +3,14 @@ import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import mongoose from "mongoose";
 import { getAuthPayload } from "@/lib/auth-guard";
-import Razorpay from "razorpay";
-import { getRazorpayKeyId, getRazorpaySecret } from "@/lib/razorpay-config";
+import {
+  issueFullRazorpayRefund,
+  RazorpayRefundError,
+} from "@/lib/razorpay-refund";
+import {
+  bookingToEmailData,
+  sendBookingCancellationEmails,
+} from "@/lib/booking-mailer";
 
 // GET /api/bookings/[id]
 export async function GET(
@@ -46,6 +52,9 @@ export async function GET(
       specialRequests: booking.specialRequests ?? "",
       razorpayOrderId: booking.razorpayOrderId ?? "",
       razorpayPaymentId: booking.razorpayPaymentId ?? "",
+      razorpayRefundId: booking.razorpayRefundId ?? "",
+      cancelledAt: booking.cancelledAt?.toISOString() ?? null,
+      cancelledBy: booking.cancelledBy ?? null,
       createdAt: booking.createdAt.toISOString(),
     });
   } catch (err) {
@@ -90,12 +99,26 @@ export async function PATCH(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    if (existing.status === "cancelled") {
+      return NextResponse.json(
+        { error: "Booking is already cancelled" },
+        { status: 409 }
+      );
+    }
+
     const isAdmin = session.role === "admin";
     const isOwner =
       existing.guestEmail.toLowerCase() === session.email.toLowerCase();
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if ((existing.source ?? "website") === "airbnb") {
+      return NextResponse.json(
+        { error: "Airbnb-synced reservations cannot be cancelled here" },
+        { status: 403 }
+      );
     }
 
     if (!isAdmin) {
@@ -105,42 +128,58 @@ export async function PATCH(
           { status: 403 }
         );
       }
-      if ((existing.source ?? "website") === "airbnb") {
-        return NextResponse.json(
-          { error: "This reservation cannot be cancelled here" },
-          { status: 403 }
-        );
-      }
     }
 
-    // Handle Razorpay Refund if booking is cancelled, was previously confirmed, and has a payment ID
-    let refundId = "";
-    if (status === "cancelled" && existing.status === "confirmed" && existing.razorpayPaymentId) {
-      const keyId = getRazorpayKeyId();
-      const secret = getRazorpaySecret();
-      if (keyId && secret) {
-        try {
-          const razorpay = new Razorpay({
-            key_id: keyId,
-            key_secret: secret,
-          });
-          const refund = await razorpay.payments.refund(existing.razorpayPaymentId, {
-            notes: {
-              bookingId: id,
-              reason: "User cancelled stay",
-            },
-          });
-          refundId = refund.id;
-          console.log(`[PATCH /api/bookings/${id}] Automatically refunded payment: ${existing.razorpayPaymentId}, Refund ID: ${refundId}`);
-        } catch (refundErr) {
-          console.error(`[PATCH /api/bookings/${id}] Failed to auto-refund via Razorpay:`, refundErr);
-        }
+    if (status !== "cancelled") {
+      const booking = await Booking.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }
+      ).lean();
+      if (!booking) {
+        return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+      }
+      return NextResponse.json({
+        id: booking._id.toString(),
+        status: booking.status,
+        refunded: false,
+      });
+    }
+
+    const cancelledBy: "admin" | "guest" = isAdmin ? "admin" : "guest";
+    let refundId: string | undefined;
+    let refunded = false;
+
+    const needsRefund =
+      existing.status === "confirmed" &&
+      Boolean(existing.razorpayPaymentId?.trim());
+
+    if (needsRefund && existing.razorpayPaymentId) {
+      try {
+        refundId = await issueFullRazorpayRefund({
+          paymentId: existing.razorpayPaymentId,
+          bookingId: id,
+          reason: `${cancelledBy} cancelled stay`,
+        });
+        refunded = true;
+      } catch (err) {
+        const msg =
+          err instanceof RazorpayRefundError
+            ? err.message
+            : "Failed to issue Razorpay refund";
+        console.error(`[PATCH /api/bookings/${id}] Refund failed:`, err);
+        return NextResponse.json({ error: msg }, { status: 502 });
       }
     }
 
     const booking = await Booking.findByIdAndUpdate(
       id,
-      { status },
+      {
+        status: "cancelled",
+        cancelledAt: new Date(),
+        cancelledBy,
+        ...(refundId ? { razorpayRefundId: refundId } : {}),
+      },
       { new: true }
     ).lean();
 
@@ -148,10 +187,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    try {
+      await sendBookingCancellationEmails({
+        ...bookingToEmailData(booking),
+        cancelledBy,
+        refunded,
+        razorpayRefundId: refundId,
+      });
+    } catch (emailErr) {
+      console.warn(`[PATCH /api/bookings/${id}] Cancellation email failed:`, emailErr);
+    }
+
     return NextResponse.json({
       id: booking._id.toString(),
       status: booking.status,
       refundId: refundId || undefined,
+      refunded,
     });
   } catch (err) {
     console.error("[PATCH /api/bookings/[id]]", err);

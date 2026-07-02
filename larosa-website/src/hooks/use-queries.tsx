@@ -62,7 +62,17 @@ export interface Booking {
   specialRequests?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  razorpayRefundId?: string;
+  cancelledAt?: string | null;
+  cancelledBy?: "admin" | "guest" | null;
   createdAt?: string;
+}
+
+export interface CancelBookingResult {
+  id: string;
+  status: string;
+  refundId?: string;
+  refunded: boolean;
 }
 
 
@@ -329,7 +339,7 @@ export function useCreateBooking() {
 export function useCancelBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
+    mutationFn: async ({ id }: { id: string }): Promise<CancelBookingResult> => {
       const res = await fetch(`/api/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -346,11 +356,12 @@ export function useCancelBooking() {
             : "Failed to cancel booking";
         throw new Error(msg);
       }
-      return id;
+      return res.json() as Promise<CancelBookingResult>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "calendar"] });
     },
   });
 }

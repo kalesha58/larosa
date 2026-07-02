@@ -3,7 +3,10 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import { getRazorpayWebhookSecret } from "@/lib/razorpay-config";
-import { sendBookingEmails } from "@/lib/booking-mailer";
+import {
+  bookingToEmailData,
+  sendBookingConfirmationEmailsIfNeeded,
+} from "@/lib/booking-mailer";
 import { sendAdminBookingNotifications, isMsg91Configured } from "@/lib/notifications";
 
 /**
@@ -75,19 +78,9 @@ export async function POST(request: NextRequest) {
 
       // Send emails
       try {
-        await sendBookingEmails({
-          guestName: booking.guestName,
-          guestEmail: booking.guestEmail,
-          guestPhone: booking.guestPhone,
-          roomTitle: booking.roomTitle,
-          roomType: booking.roomType,
-          checkIn: booking.checkIn,
-          checkOut: booking.checkOut,
-          nights: booking.nights,
-          guests: booking.guests,
-          totalPrice: booking.totalPrice,
+        await sendBookingConfirmationEmailsIfNeeded(booking._id.toString(), {
+          ...bookingToEmailData(booking),
           razorpayPaymentId: paymentId,
-          specialRequests: booking.specialRequests,
         });
         console.log(`[razorpay-webhook] Emails sent for ${booking._id}`);
       } catch (emailErr) {

@@ -5,10 +5,11 @@ import { getRazorpaySecret } from "@/lib/razorpay-config";
 import { PAYMENT_NOT_CONFIGURED_CODE } from "@/lib/payments-env";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
-import { isMailConfigured } from "@/lib/mailer";
-import { sendBookingEmails } from "@/lib/booking-mailer";
+import {
+  bookingToEmailData,
+  sendBookingConfirmationEmailsIfNeeded,
+} from "@/lib/booking-mailer";
 import { sendAdminBookingNotifications, isMsg91Configured } from "@/lib/notifications";
-import { format } from "date-fns";
 
 const bodySchema = z.object({
   razorpay_order_id: z.string(),
@@ -99,26 +100,13 @@ export async function POST(request: Request) {
       if (booking) {
         confirmedBookingId = booking._id.toString();
 
-        // ── Send confirmation emails (Client & Admin) ───────────────────────
-        if (isMailConfigured()) {
-          try {
-            await sendBookingEmails({
-              guestName: booking.guestName,
-              guestEmail: booking.guestEmail,
-              guestPhone: booking.guestPhone,
-              roomTitle: booking.roomTitle,
-              roomType: booking.roomType,
-              checkIn: booking.checkIn,
-              checkOut: booking.checkOut,
-              nights: booking.nights,
-              guests: booking.guests,
-              totalPrice: booking.totalPrice,
-              razorpayPaymentId: razorpay_payment_id,
-              specialRequests: booking.specialRequests,
-            });
-          } catch (emailErr) {
-            console.warn("[verify] Email send failed:", emailErr);
-          }
+        try {
+          await sendBookingConfirmationEmailsIfNeeded(booking._id.toString(), {
+            ...bookingToEmailData(booking),
+            razorpayPaymentId: razorpay_payment_id,
+          });
+        } catch (emailErr) {
+          console.warn("[verify] Email send failed:", emailErr);
         }
 
         // ── Send WhatsApp/SMS notifications (Admin) ─────────────────────────

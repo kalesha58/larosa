@@ -4,10 +4,11 @@ import { formatPropertyDate } from "@/lib/property-dates";
 export { formatPropertyDate };
 
 /** Shared filter for non-cancelled bookings that block availability. */
-export function activeBookingMongoFilter(roomId: number) {
+export function activeBookingMongoFilter(roomIds: string | string[]) {
+  const ids = Array.isArray(roomIds) ? roomIds : [roomIds];
   const holdSince = new Date(Date.now() - PENDING_BOOKING_HOLD_MS);
   return {
-    roomId,
+    roomId: ids.length === 1 ? ids[0] : { $in: ids },
     status: { $ne: "cancelled" as const },
     $or: [
       { status: "confirmed" as const },

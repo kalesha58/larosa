@@ -8,6 +8,7 @@ import {
   formatPropertyDate,
 } from "@/lib/active-booking-filter";
 import { calendarDisplayTitle } from "@/lib/airbnb-event-label";
+import { resolveBookingRoomIds } from "@/lib/room-api";
 import { Booking } from "@/models/Booking";
 
 type Ctx = { params: Promise<{ roomId: string }> };
@@ -26,8 +27,10 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
       return NextResponse.json({ error: "Invalid room id" }, { status: 400 });
     }
 
+    const roomIds = await resolveBookingRoomIds(String(roomId));
+
     const bookings = await Booking.find({
-      ...activeBookingMongoFilter(roomId),
+      ...activeBookingMongoFilter(roomIds),
       ...adminCalendarDateWindow(),
     })
       .select("checkIn checkOut source guestName status")

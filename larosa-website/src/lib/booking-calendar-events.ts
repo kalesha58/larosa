@@ -18,10 +18,15 @@ export const CALENDAR_COLORS = {
   airbnbBlocked: "hsl(0 0% 28%)",
   airbnbOther: "hsl(25 85% 45%)",
   website: "hsl(220 65% 42%)",
+  websitePending: "hsl(45 93% 47%)",
 } as const;
 
 function colorForBooking(b: AdminCalendarBooking): string {
-  if (b.source === "website") return CALENDAR_COLORS.website;
+  if (b.source === "website") {
+    return b.status === "pending"
+      ? CALENDAR_COLORS.websitePending
+      : CALENDAR_COLORS.website;
+  }
   const kind = b.airbnbKind ?? "other";
   switch (kind) {
     case "booking":

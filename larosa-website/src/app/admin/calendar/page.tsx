@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import type { EventClickArg } from "@fullcalendar/core";
 import "@/styles/admin-fullcalendar.css";
-import { useGetRooms, useGetAdminRoomCalendar } from "@/hooks/use-queries";
+import { useGetRooms, useGetAdminRoomCalendar, useCancelBooking } from "@/hooks/use-queries";
 import {
   bookingsToFullCalendarEvents,
   CALENDAR_COLORS,
@@ -35,9 +35,26 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, CalendarRange } from "lucide-react";
+import { Loader2, CalendarRange, XCircle } from "lucide-react";
 import { format } from "date-fns";
-import { formatPropertyDateLabel } from "@/lib/property-dates";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  blockedNightsBetween,
+  formatPropertyDateLabel,
+  fullCalendarAllDayToYmd,
+  parsePropertyYmd,
+  propertyMonthYearLabel,
+} from "@/lib/property-dates";
 import type { Room } from "@/hooks/use-queries";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { cn } from "@/lib/utils";
@@ -50,6 +67,8 @@ function normalizeRoomId(room: Room): number | null {
 
 export default function AdminCalendarPage() {
   const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const cancelBooking = useCancelBooking();
   const roomIdFromUrl = searchParams.get("roomId");
   const {
     data: rooms,
@@ -120,13 +139,15 @@ export default function AdminCalendarPage() {
   const selectedRoom = roomOptions.find((r) => r.id === effectiveRoomId)?.room;
 
   const bookingCounts = useMemo(() => {
-    let website = 0;
+    let websiteConfirmed = 0;
+    let websitePending = 0;
     let airbnbBooking = 0;
     let airbnbBlocked = 0;
     let airbnbOther = 0;
     for (const b of bookings) {
       if (b.source === "website") {
-        website++;
+        if (b.status === "pending") websitePending++;
+        else websiteConfirmed++;
         continue;
       }
       const kind = b.airbnbKind ?? classifyAirbnbSummary(b.guestName);
@@ -142,12 +163,21 @@ export default function AdminCalendarPage() {
           break;
       }
     }
-    return { website, airbnbBooking, airbnbBlocked, airbnbOther };
+    return {
+      websiteConfirmed,
+      websitePending,
+      airbnbBooking,
+      airbnbBlocked,
+      airbnbOther,
+    };
   }, [bookings]);
 
   const hasIcalUrl = Boolean(selectedRoom?.airbnbIcalUrl?.trim());
 
+  const calendarRef = useRef<FullCalendar>(null);
+
   const [detailOpen, setDetailOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{
     title: string;
     source: string;
@@ -170,18 +200,53 @@ export default function AdminCalendarPage() {
       displayTitle?: string;
       airbnbKind?: AirbnbEventKind;
     };
+
+    const checkIn =
+      parsePropertyYmd(props.checkIn) ??
+      (info.event.start ? fullCalendarAllDayToYmd(info.event.start) : "");
+    const checkOut =
+      parsePropertyYmd(props.checkOut) ??
+      (info.event.end ? fullCalendarAllDayToYmd(info.event.end) : checkIn);
+
+    if (checkIn && calendarRef.current) {
+      calendarRef.current.getApi().gotoDate(checkIn);
+    }
+
     setSelectedEvent({
       id: props.bookingId ?? info.event.id,
       title: props.displayTitle ?? info.event.title,
       source: props.source ?? "website",
       status: props.status ?? "",
-      checkIn: props.checkIn ?? String(info.event.start ?? ""),
-      checkOut: props.checkOut ?? String(info.event.end ?? ""),
+      checkIn,
+      checkOut,
       guestName: props.guestName,
       airbnbKind: props.airbnbKind,
     });
     setDetailOpen(true);
   }, []);
+
+  const handleCancelFromCalendar = async () => {
+    if (!selectedEvent) return;
+    try {
+      const result = await cancelBooking.mutateAsync({ id: selectedEvent.id });
+      setCancelConfirmOpen(false);
+      setDetailOpen(false);
+      setSelectedEvent(null);
+      toast({
+        title: "Booking cancelled",
+        description: result.refunded
+          ? `Full refund issued${result.refundId ? ` (${result.refundId})` : ""}.`
+          : "Reservation cancelled.",
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to cancel booking";
+      toast({ variant: "destructive", title: "Cancellation failed", description: msg });
+    }
+  };
+
+  const canCancelSelectedEvent =
+    selectedEvent?.source === "website" &&
+    selectedEvent.status !== "cancelled";
 
   if (roomsLoading) {
     return (
@@ -278,18 +343,26 @@ export default function AdminCalendarPage() {
               className="h-3 w-3 rounded-sm"
               style={{ backgroundColor: CALENDAR_COLORS.website }}
             />
-            Website booking
+            Website confirmed
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="h-3 w-3 rounded-sm"
+              style={{ backgroundColor: CALENDAR_COLORS.websitePending }}
+            />
+            Website pending
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground normal-case tracking-normal font-normal max-w-2xl">
-          Airbnb booking and blocked dates are not bookable on your site. Website
-          bookings appear in blue when confirmed or recently pending.
+          Airbnb booking and blocked dates are not bookable on your site. Confirmed
+          website bookings appear in blue; unpaid holds (30 min) appear in yellow.
         </p>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {effectiveRoomId > 0 && !calendarLoading ? (
             <span className="font-mono text-[10px] uppercase tracking-widest">
               Loaded: {bookingCounts.airbnbBooking + bookingCounts.airbnbBlocked + bookingCounts.airbnbOther}{" "}
-              Airbnb · {bookingCounts.website} website
+              Airbnb · {bookingCounts.websiteConfirmed} confirmed ·{" "}
+              {bookingCounts.websitePending} pending
             </span>
           ) : null}
           {selectedRoom && !hasIcalUrl ? (
@@ -345,6 +418,7 @@ export default function AdminCalendarPage() {
               </div>
             ) : (
               <FullCalendar
+                ref={calendarRef}
                 plugins={[dayGridPlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={{
@@ -356,6 +430,9 @@ export default function AdminCalendarPage() {
                 events={events}
                 eventClick={handleEventClick}
                 fixedWeekCount={false}
+                showNonCurrentDates={false}
+                displayEventEnd
+                eventDisplay="block"
               />
             )}
           </div>
@@ -370,7 +447,10 @@ export default function AdminCalendarPage() {
             </DialogTitle>
           </DialogHeader>
           {selectedEvent ? (
-            <div className="space-y-3 text-sm">
+            <div className="space-y-4 text-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-primary/70">
+                {propertyMonthYearLabel(selectedEvent.checkIn)}
+              </p>
               <div className="flex flex-wrap gap-2">
                 <Badge
                   variant="outline"
@@ -394,20 +474,83 @@ export default function AdminCalendarPage() {
                   Airbnb feed: {selectedEvent.guestName}
                 </p>
               ) : null}
-              <p className="text-muted-foreground">
-                {formatPropertyDateLabel(selectedEvent.checkIn)} →{" "}
-                {formatPropertyDateLabel(selectedEvent.checkOut)}
-                <span className="block text-[10px] uppercase tracking-widest mt-1">
-                  (checkout day available)
-                </span>
-              </p>
+              <div className="rounded-xl border border-border/60 bg-secondary/15 p-4 space-y-2">
+                <div className="flex justify-between gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Check-in
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {formatPropertyDateLabel(selectedEvent.checkIn)}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Check-out
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {formatPropertyDateLabel(selectedEvent.checkOut)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                  {blockedNightsBetween(
+                    selectedEvent.checkIn,
+                    selectedEvent.checkOut
+                  )}{" "}
+                  night
+                  {blockedNightsBetween(
+                    selectedEvent.checkIn,
+                    selectedEvent.checkOut
+                  ) === 1
+                    ? ""
+                    : "s"}{" "}
+                  blocked · checkout day is available for new guests
+                </p>
+              </div>
               <p className="font-mono text-[10px] text-muted-foreground">
                 ID: {selectedEvent.id.slice(0, 12)}…
               </p>
+              {canCancelSelectedEvent ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                  disabled={cancelBooking.isPending}
+                  onClick={() => setCancelConfirmOpen(true)}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel booking
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Cancel this booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedEvent?.status === "confirmed"
+                ? "A full Razorpay refund will be issued and cancellation emails will be sent."
+                : "This pending hold will be released and cancellation emails will be sent."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Keep</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelBooking.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleCancelFromCalendar();
+              }}
+            >
+              {cancelBooking.isPending ? "Cancelling…" : "Confirm cancel"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

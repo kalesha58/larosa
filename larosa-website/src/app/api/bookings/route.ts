@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
-import { findRoomById } from "@/lib/room-api";
+import { findRoomById, catalogRoomIdFromDoc } from "@/lib/room-api";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 import {
   MAX_ONLINE_GUESTS,
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
     }
 
     // NEW: Airbnb Overlap Check
-    if (room.airbnbCalendarUrl) {
-      const externalBookings = await fetchExternalBookings(room.airbnbCalendarUrl);
+    if (room.airbnbIcalUrl) {
+      const externalBookings = await fetchExternalBookings(room.airbnbIcalUrl);
       if (hasExternalOverlap(checkIn, checkOut, externalBookings)) {
         return NextResponse.json(
           {
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     const totalPrice = subtotal;
 
     const booking = await Booking.create({
-      roomId: room.id,
+      roomId: catalogRoomIdFromDoc(room),
       roomTitle: room.title,
       roomType: room.type,
       pricePerNight: room.price,
@@ -168,6 +168,7 @@ export async function POST(request: NextRequest) {
       totalPrice,
       specialRequests: data.specialRequests,
       status: "pending",
+      source: "website",
     });
 
     return NextResponse.json(

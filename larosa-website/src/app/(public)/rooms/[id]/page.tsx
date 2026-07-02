@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetRoom } from "@/hooks/use-queries";
+import { RoomImageGallery } from "@/components/rooms/RoomImageGallery";
 
 const AMENITY_ICONS: Record<string, React.ElementType> = {
   Wifi,
@@ -141,13 +142,7 @@ export default function RoomDetailPage({ params }: { params: Promise<{ id: strin
             {room.images.length > 1 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60 mb-5">Gallery</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {room.images.slice(1).map((img, i) => (
-                    <div key={i} className="relative aspect-video rounded-xl overflow-hidden">
-                      <Image src={img} alt={`${room.title} ${i + 2}`} fill className="object-cover hover:scale-105 transition-transform duration-500" sizes="300px" />
-                    </div>
-                  ))}
-                </div>
+                <RoomImageGallery images={room.images} title={room.title} />
               </motion.div>
             )}
           </div>
