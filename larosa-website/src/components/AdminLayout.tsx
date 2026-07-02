@@ -18,6 +18,8 @@ import {
   Moon,
   Sun,
   Megaphone,
+  Users,
+  MessageSquareQuote,
 } from "lucide-react";
 import { useAdminTheme } from "@/hooks/use-admin-theme";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   ];
 
   const systemNav = [
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Feedback", href: "/admin/feedback", icon: MessageSquareQuote },
     { name: "Settings", href: "/admin/settings", icon: Settings },
     { name: "Notifications", href: "/admin/notifications", icon: Bell },
   ];

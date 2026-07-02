@@ -1,8 +1,12 @@
-import { format } from "date-fns";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
 import { formatPropertyDate } from "@/lib/property-dates";
 import { sendContactMail, isMailConfigured } from "./mailer";
+import {
+  CANCELLATION_REASON_LABELS,
+  type GuestCancelFeedbackInput,
+} from "./cancellation-feedback";
+import { SITE_EMAIL, SITE_MOBILE_DISPLAY } from "./contact-info";
 
 export interface BookingEmailData {
   bookingId?: string;
@@ -23,7 +27,10 @@ export interface BookingEmailData {
 export interface BookingCancellationEmailData extends BookingEmailData {
   cancelledBy: "admin" | "guest";
   refunded: boolean;
+  /** Paid booking cancelled without an automatic Razorpay refund */
+  refundPending?: boolean;
   razorpayRefundId?: string;
+  guestFeedback?: GuestCancelFeedbackInput;
 }
 
 const BRAND_GOLD = "#c9a96e";
@@ -41,6 +48,24 @@ function appUrl(): string {
 
 function formatStayDate(d: Date): string {
   return formatPropertyDate(d);
+}
+
+function feedbackHtmlBlock(feedback?: GuestCancelFeedbackInput): string {
+  if (!feedback) return "";
+  const reasonLabel =
+    feedback.reason === "other" && feedback.reasonOther?.trim()
+      ? `Other — ${feedback.reasonOther.trim()}`
+      : CANCELLATION_REASON_LABELS[feedback.reason];
+  const wouldBookLabels = { yes: "Yes", no: "No", maybe: "Maybe" };
+  return `
+    <div style="margin-top: 20px; padding: 16px; background: ${BG_OFF_WHITE}; border-radius: 8px; border: 1px solid #e5e0d8;">
+      <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: ${BRAND_GRAY}; font-weight: bold; margin: 0 0 12px;">Guest feedback</p>
+      <p style="font-size: 14px; color: #444; margin: 0 0 8px;"><strong>Reason:</strong> ${reasonLabel}</p>
+      ${feedback.experienceRating ? `<p style="font-size: 14px; color: #444; margin: 0 0 8px;"><strong>Experience:</strong> ${feedback.experienceRating}/5</p>` : ""}
+      ${feedback.wouldBookAgain ? `<p style="font-size: 14px; color: #444; margin: 0 0 8px;"><strong>Would book again:</strong> ${wouldBookLabels[feedback.wouldBookAgain]}</p>` : ""}
+      ${feedback.comments?.trim() ? `<p style="font-size: 14px; color: #444; margin: 0;"><strong>Comments:</strong> ${feedback.comments.trim()}</p>` : ""}
+    </div>
+  `;
 }
 
 function buildClientConfirmationEmail(data: BookingEmailData): string {
@@ -82,7 +107,8 @@ function buildClientConfirmationEmail(data: BookingEmailData): string {
     <div class="content">
       <h2 class="h2">Dear ${data.guestName},</h2>
       <p style="color: #4a4a4a; line-height: 1.8; margin-bottom: 24px; font-size: 15px;">
-        Your reservation at <strong>${data.roomTitle}</strong> is confirmed. This email serves as your booking contract.
+        Thank you for choosing <strong>LaRosa Villas</strong>. We are delighted to confirm your stay at
+        <strong>${data.roomTitle}</strong>. This email is your official booking confirmation — please keep it for your records.
       </p>
 
       <div class="contract-box">
@@ -125,11 +151,18 @@ function buildClientConfirmationEmail(data: BookingEmailData): string {
       <div class="divider"></div>
 
       <p style="font-size: 13px; color: #4a4a4a; line-height: 1.8;">
+        <strong>Before you arrive</strong><br>
+        Standard check-in from 2:00 PM · check-out by 11:00 AM.<br>
+        Contact us at <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD}; text-decoration: none;">${SITE_EMAIL}</a>
+        or ${SITE_MOBILE_DISPLAY} for directions or special arrangements.
+      </p>
+      <p style="font-size: 13px; color: #4a4a4a; line-height: 1.8; margin-top: 16px;">
         <strong>Cancellation policy</strong><br>
-        To cancel, use your guest dashboard or contact us. Confirmed paid bookings receive a full refund when cancelled in accordance with our policy.
+        You may cancel from your guest dashboard. Confirmed paid bookings receive a full refund when cancelled in accordance with our policy.
       </p>
       <p style="font-size: 14px; color: #4a4a4a; line-height: 1.8; margin-top: 16px;">
-        Questions? Reply to this email or write to <a href="mailto:info@larosa.co.in" style="color: ${BRAND_GOLD}; text-decoration: none;">info@larosa.co.in</a>.
+        We look forward to welcoming you. Questions? Reply to this email or write to
+        <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD}; text-decoration: none;">${SITE_EMAIL}</a>.
       </p>
     </div>
     <div class="footer">
@@ -175,7 +208,28 @@ function buildGuestCancellationEmail(data: BookingCancellationEmailData): string
         <strong>Refund issued:</strong> ₹${data.totalPrice.toLocaleString("en-IN")}<br>
         <span style="font-size: 11px; color: ${BRAND_GRAY};">Refund ID: ${data.razorpayRefundId || "Processing"}</span>
       </p>`
-    : `<p style="margin-top: 16px; color: ${BRAND_GRAY}; font-size: 13px;">No payment was captured for this reservation.</p>`;
+    : data.refundPending
+      ? data.cancelledBy === "guest"
+        ? `<p style="margin-top: 16px; padding: 16px; background: ${BG_OFF_WHITE}; border-radius: 8px;">
+        <strong>Refund initiated:</strong> ₹${data.totalPrice.toLocaleString("en-IN")}<br>
+        <span style="font-size: 13px; color: ${BRAND_GRAY}; line-height: 1.6;">
+          Your refund has been initiated and will reflect in your bank account within <strong>2–3 business days</strong>.
+        </span>
+      </p>`
+        : `<p style="margin-top: 16px; padding: 16px; background: ${BG_OFF_WHITE}; border-radius: 8px;">
+        <strong>Refund pending:</strong> ₹${data.totalPrice.toLocaleString("en-IN")}<br>
+        <span style="font-size: 13px; color: ${BRAND_GRAY};">Your refund will be processed manually within 5–7 business days.</span>
+      </p>`
+      : `<p style="margin-top: 16px; color: ${BRAND_GRAY}; font-size: 13px;">No payment was captured for this reservation.</p>`;
+
+  const intro =
+    data.cancelledBy === "admin"
+      ? `<p>We regret to inform you that your reservation for <strong>${data.roomTitle}</strong> has been cancelled by our team. We apologise for any inconvenience.</p>`
+      : `<p>Your reservation for <strong>${data.roomTitle}</strong> has been cancelled as requested. We're sorry your plans changed — we hope to welcome you another time.</p>`;
+
+  const ref = data.bookingId
+    ? data.bookingId.slice(0, 12).toUpperCase()
+    : "—";
 
   return `
 <!DOCTYPE html>
@@ -189,14 +243,18 @@ function buildGuestCancellationEmail(data: BookingCancellationEmailData): string
     </div>
     <div style="padding: 32px;">
       <p>Dear ${data.guestName},</p>
-      <p>Your reservation for <strong>${data.roomTitle}</strong> has been cancelled.</p>
+      ${intro}
+      <p style="font-size: 11px; color: ${BRAND_GRAY}; margin: 12px 0;">Booking ref: ${ref}</p>
       <p style="font-size: 14px; color: #555;">
-        <strong>Was:</strong> ${formatStayDate(data.checkIn)} → ${formatStayDate(data.checkOut)}<br>
-        ${data.nights} night${data.nights === 1 ? "" : "s"} · ${data.guests} guest${data.guests === 1 ? "" : "s"}
+        <strong>Property:</strong> ${data.roomTitle} · ${data.roomType}<br>
+        <strong>Check-in:</strong> ${formatStayDate(data.checkIn)}<br>
+        <strong>Check-out:</strong> ${formatStayDate(data.checkOut)}<br>
+        ${data.nights} night${data.nights === 1 ? "" : "s"} · ${data.guests} guest${data.guests === 1 ? "" : "s"} · ₹${data.totalPrice.toLocaleString("en-IN")}
       </p>
       ${refundBlock}
       <p style="font-size: 13px; color: ${BRAND_GRAY}; margin-top: 24px;">
-        Questions? Contact <a href="mailto:info@larosa.co.in" style="color: ${BRAND_GOLD};">info@larosa.co.in</a>
+        Questions? Contact <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD};">${SITE_EMAIL}</a>
+        or ${SITE_MOBILE_DISPLAY}.
       </p>
     </div>
   </div>
@@ -207,6 +265,9 @@ function buildGuestCancellationEmail(data: BookingCancellationEmailData): string
 
 function buildAdminCancellationEmail(data: BookingCancellationEmailData): string {
   const who = data.cancelledBy === "admin" ? "Admin" : "Guest";
+  const ref = data.bookingId
+    ? data.bookingId.slice(0, 12).toUpperCase()
+    : "—";
   return `
 <!DOCTYPE html>
 <html>
@@ -215,9 +276,27 @@ function buildAdminCancellationEmail(data: BookingCancellationEmailData): string
   <div style="background: white; border-radius: 8px; padding: 32px; max-width: 600px; margin: 0 auto;">
     <p style="color: #c0392b; font-weight: bold; font-size: 12px; text-transform: uppercase;">Booking cancelled by ${who}</p>
     <h1 style="font-size: 18px;">${data.guestName} — ${data.roomTitle}</h1>
-    <p>${formatStayDate(data.checkIn)} → ${formatStayDate(data.checkOut)} · ₹${data.totalPrice.toLocaleString("en-IN")}</p>
-    <p>Refund: ${data.refunded ? `Yes (${data.razorpayRefundId || "ID pending"})` : "No payment to refund"}</p>
-    <p style="font-size: 11px; color: #999;"><a href="${appUrl()}/admin/bookings">Admin bookings</a></p>
+    <p style="font-size: 11px; color: #999;">Ref: ${ref}</p>
+    <p><strong>${data.guestName}</strong><br>${data.guestEmail}${data.guestPhone ? `<br>${data.guestPhone}` : ""}</p>
+    <p><strong>${data.roomTitle}</strong> (${data.roomType})<br>
+    Check-in: ${formatStayDate(data.checkIn)}<br>
+    Check-out: ${formatStayDate(data.checkOut)}<br>
+    ${data.nights} nights · ${data.guests} guests</p>
+    <p style="font-size: 18px; color: ${BRAND_GOLD}; font-weight: bold;">₹${data.totalPrice.toLocaleString("en-IN")}</p>
+    <p>Refund: ${
+      data.refunded
+        ? `Yes (${data.razorpayRefundId || "ID pending"})`
+        : data.refundPending
+          ? data.cancelledBy === "guest"
+            ? `Initiate manually — ₹${data.totalPrice.toLocaleString("en-IN")} (guest notified: 2–3 business days)`
+            : `Manual refund required — ₹${data.totalPrice.toLocaleString("en-IN")} (payment ${data.razorpayPaymentId || "N/A"})`
+          : "No payment to refund"
+    }</p>
+    ${feedbackHtmlBlock(data.guestFeedback)}
+    <p style="font-size: 11px; color: #999; margin-top: 24px;">
+      <a href="${appUrl()}/admin/bookings">Admin bookings</a>
+      ${data.guestFeedback ? ` · <a href="${appUrl()}/admin/feedback">View feedback</a>` : ""}
+    </p>
   </div>
 </body>
 </html>
@@ -284,7 +363,10 @@ export async function sendBookingCancellationEmails(
   await sendContactMail({
     to: data.guestEmail,
     replyTo: adminEmail,
-    subject: `Booking Cancelled — ${data.roomTitle} | LaRosa Villas`,
+    subject:
+      data.cancelledBy === "admin"
+        ? `Reservation Cancelled by LaRosa — ${data.roomTitle}`
+        : `Booking Cancelled — ${data.roomTitle} | LaRosa Villas`,
     html: buildGuestCancellationEmail(data),
   });
 

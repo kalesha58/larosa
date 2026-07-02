@@ -1,4 +1,5 @@
 import { Room, type IRoom } from "@/models/Room";
+import { absoluteUrl } from "@/lib/site-url";
 
 /** Stable catalog id (1, 2, …) for booking documents — never Mongo `_id`. */
 export function catalogRoomIdFromDoc(room: Pick<IRoom, "roomId">): string {
@@ -50,7 +51,9 @@ export function serializeRoom(doc: IRoom) {
     lastSyncedAt: doc.lastSyncedAt
       ? doc.lastSyncedAt.toISOString()
       : null,
-    calendarExportUrl: `/api/rooms/${doc.roomId}/calendar.ics?token=${encodeURIComponent(doc.calendarExportToken)}`,
+    calendarExportUrl: absoluteUrl(
+      `/api/rooms/${doc.roomId}/calendar.ics?token=${encodeURIComponent(doc.calendarExportToken)}`
+    ),
   };
 }
 

@@ -178,6 +178,7 @@ export default function AdminCalendarPage() {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelRefundError, setCancelRefundError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<{
     title: string;
     source: string;
@@ -225,24 +226,36 @@ export default function AdminCalendarPage() {
     setDetailOpen(true);
   }, []);
 
-  const handleCancelFromCalendar = async () => {
+  const handleCancelFromCalendar = async (skipRefund = false) => {
     if (!selectedEvent) return;
     try {
-      const result = await cancelBooking.mutateAsync({ id: selectedEvent.id });
+      const result = await cancelBooking.mutateAsync({
+        id: selectedEvent.id,
+        skipRefund,
+      });
       setCancelConfirmOpen(false);
+      setCancelRefundError(null);
       setDetailOpen(false);
       setSelectedEvent(null);
       toast({
         title: "Booking cancelled",
         description: result.refunded
           ? `Full refund issued${result.refundId ? ` (${result.refundId})` : ""}.`
-          : "Reservation cancelled.",
+          : result.refundPending
+            ? "Process the refund manually from your Razorpay dashboard."
+            : "Reservation cancelled.",
       });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Failed to cancel booking";
+      if (!skipRefund && selectedEvent.status === "confirmed") {
+        setCancelRefundError(msg);
+      }
       toast({ variant: "destructive", title: "Cancellation failed", description: msg });
     }
   };
+
+  const isPaidConfirmedEvent =
+    selectedEvent?.source === "website" && selectedEvent.status === "confirmed";
 
   const canCancelSelectedEvent =
     selectedEvent?.source === "website" &&
@@ -526,27 +539,69 @@ export default function AdminCalendarPage() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+      <AlertDialog
+        open={cancelConfirmOpen}
+        onOpenChange={(open) => {
+          setCancelConfirmOpen(open);
+          if (!open) setCancelRefundError(null);
+        }}
+      >
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-serif">Cancel this booking?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedEvent?.status === "confirmed"
-                ? "A full Razorpay refund will be issued and cancellation emails will be sent."
-                : "This pending hold will be released and cancellation emails will be sent."}
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                {isPaidConfirmedEvent ? (
+                  <p>A full Razorpay refund will be issued and cancellation emails will be sent.</p>
+                ) : (
+                  <p>This pending hold will be released and cancellation emails will be sent.</p>
+                )}
+                {cancelRefundError ? (
+                  <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-destructive">
+                    <strong>Refund failed:</strong> {cancelRefundError}
+                    <span className="mt-1 block text-xs font-normal">
+                      Add funds in your{" "}
+                      <a
+                        href="https://dashboard.razorpay.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        Razorpay dashboard
+                      </a>
+                      , then retry — or cancel without refund and process it manually.
+                    </span>
+                  </p>
+                ) : null}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
             <AlertDialogCancel className="rounded-xl">Keep</AlertDialogCancel>
+            {isPaidConfirmedEvent ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                disabled={cancelBooking.isPending}
+                onClick={() => void handleCancelFromCalendar(true)}
+              >
+                {cancelBooking.isPending ? "Cancelling…" : "Cancel without refund"}
+              </Button>
+            ) : null}
             <AlertDialogAction
               className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={cancelBooking.isPending}
               onClick={(e) => {
                 e.preventDefault();
-                void handleCancelFromCalendar();
+                void handleCancelFromCalendar(false);
               }}
             >
-              {cancelBooking.isPending ? "Cancelling…" : "Confirm cancel"}
+              {cancelBooking.isPending
+                ? "Cancelling…"
+                : isPaidConfirmedEvent
+                  ? "Cancel & refund"
+                  : "Confirm cancel"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
