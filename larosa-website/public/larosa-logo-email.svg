@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" role="img" aria-label="LaRosa Villas">
+  <text
+    x="110"
+    y="36"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="34"
+    font-weight="400"
+    fill="#ffffff"
+    letter-spacing="1.5"
+  >LaRosa</text>
+  <text
+    x="110"
+    y="56"
+    text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif"
+    font-size="10"
+    font-weight="700"
+    fill="#c9a96e"
+    letter-spacing="5"
+  >VILLAS</text>
+</svg>

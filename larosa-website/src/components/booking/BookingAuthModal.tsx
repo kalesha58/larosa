@@ -26,6 +26,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -61,6 +63,7 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
 
   const onLogin = async (data: z.infer<typeof loginSchema>) => {
     setBusy(true);
+    loginForm.clearErrors("root");
     try {
       await login(data.email, data.password);
       toast({
@@ -68,7 +71,8 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
         description: "You can complete your reservation.",
       });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Sign in failed";
+      const msg = getAuthErrorMessage(e);
+      loginForm.setError("root", { type: "server", message: msg });
       toast({
         variant: "destructive",
         title: "Sign in failed",
@@ -78,6 +82,8 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
       setBusy(false);
     }
   };
+
+  const loginRootError = loginForm.formState.errors.root?.message;
 
   const onRegister = async (data: z.infer<typeof registerSchema>) => {
     setBusy(true);
@@ -153,6 +159,15 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
                 onSubmit={loginForm.handleSubmit(onLogin)}
                 className="space-y-4"
               >
+                {loginRootError ? (
+                  <Alert variant="destructive" aria-live="polite">
+                    <AlertTitle className="text-sm">Sign in failed</AlertTitle>
+                    <AlertDescription className="text-sm">
+                      {loginRootError}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
                 <FormField
                   control={loginForm.control}
                   name="email"
@@ -167,6 +182,10 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
                           autoComplete="email"
                           className="h-11 rounded-xl border-border"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            loginForm.clearErrors("root");
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -186,6 +205,10 @@ export function BookingAuthModal({ open }: BookingAuthModalProps) {
                           autoComplete="current-password"
                           className="rounded-xl border-border"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            loginForm.clearErrors("root");
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

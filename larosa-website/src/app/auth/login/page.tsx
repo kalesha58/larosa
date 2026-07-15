@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthSplitPanel } from "@/components/auth/AuthSplitPanel";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -48,6 +50,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
+    form.clearErrors("root");
     try {
       await login(data.email, data.password);
       toast({
@@ -56,17 +59,19 @@ export default function LoginPage() {
       });
       router.push("/");
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Invalid credentials.";
+      const message = getAuthErrorMessage(error);
+      form.setError("root", { type: "server", message });
       toast({
         variant: "destructive",
-        title: "Authentication Failed",
+        title: "Sign in failed",
         description: message,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const rootError = form.formState.errors.root?.message;
 
   if (loading) {
     return (
@@ -99,6 +104,21 @@ export default function LoginPage() {
 
           <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {rootError ? (
+                  <Alert
+                    variant="destructive"
+                    className="rounded-xl border-red-200 bg-red-50 text-red-800"
+                    aria-live="polite"
+                  >
+                    <AlertTitle className="text-sm font-semibold">
+                      Sign in failed
+                    </AlertTitle>
+                    <AlertDescription className="text-sm text-red-700">
+                      {rootError}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -114,6 +134,10 @@ export default function LoginPage() {
                           placeholder="Email"
                           className="h-9 rounded-none border-0 border-b border-gray-200 bg-transparent px-0 pb-1 text-gray-800 placeholder:text-gray-300 focus-visible:border-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none transition-colors"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            form.clearErrors("root");
+                          }}
                         />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500" />
@@ -135,6 +159,10 @@ export default function LoginPage() {
                           placeholder="Password"
                           className="h-9 rounded-none border-0 border-b border-gray-200 bg-transparent px-0 pb-1 text-gray-800 placeholder:text-gray-300 focus-visible:border-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none transition-colors"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            form.clearErrors("root");
+                          }}
                         />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500" />
