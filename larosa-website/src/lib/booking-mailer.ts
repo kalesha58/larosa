@@ -1,12 +1,16 @@
 import { connectMongo } from "@/lib/mongodb";
 import { Booking } from "@/models/Booking";
-import { formatPropertyDate } from "@/lib/property-dates";
+import { formatPropertyDate, formatStayPeriod } from "@/lib/property-dates";
+import { buildConfirmationTermsHtml } from "@/lib/booking-confirmation-terms";
 import { sendContactMail, isMailConfigured } from "./mailer";
 import {
   CANCELLATION_REASON_LABELS,
   type GuestCancelFeedbackInput,
 } from "./cancellation-feedback";
 import { SITE_EMAIL, SITE_MOBILE_DISPLAY } from "./contact-info";
+import { absoluteUrl } from "@/lib/site-url";
+
+const EMAIL_LOGO_PATH = "/larosa-logo-email.svg";
 
 export interface BookingEmailData {
   bookingId?: string;
@@ -46,6 +50,12 @@ function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL?.trim() || "";
 }
 
+function emailLogoUrl(): string {
+  const custom = process.env.EMAIL_LOGO_URL?.trim();
+  if (custom) return custom;
+  return absoluteUrl(EMAIL_LOGO_PATH);
+}
+
 function formatStayDate(d: Date): string {
   return formatPropertyDate(d);
 }
@@ -72,6 +82,13 @@ function buildClientConfirmationEmail(data: BookingEmailData): string {
   const ref = data.bookingId
     ? data.bookingId.slice(0, 12).toUpperCase()
     : "—";
+  const stayPeriod = formatStayPeriod(data.checkIn, data.checkOut);
+  const termsHtml = buildConfirmationTermsHtml({
+    guests: data.guests,
+    totalPrice: data.totalPrice,
+    amountPaid: data.totalPrice,
+  });
+
   return `
 <!DOCTYPE html>
 <html>
@@ -90,52 +107,70 @@ function buildClientConfirmationEmail(data: BookingEmailData): string {
     .grid { display: flex; flex-wrap: wrap; margin-bottom: 32px; }
     .grid-item { flex: 1; min-width: 50%; margin-bottom: 24px; }
     .divider { height: 1px; background: #e5e0d8; margin: 32px 0; }
-    .total-box { background: ${BG_OFF_WHITE}; border-radius: 8px; padding: 24px; text-align: right; }
+    .total-box { background: ${BG_OFF_WHITE}; border-radius: 8px; padding: 24px; text-align: right; margin-bottom: 32px; }
     .total-label { font-size: 12px; color: ${BRAND_GRAY}; text-transform: uppercase; letter-spacing: 2px; }
     .total-value { font-size: 32px; color: ${BRAND_GOLD}; font-weight: bold; margin-top: 4px; }
     .tag { display: inline-block; padding: 4px 12px; background: ${BRAND_GOLD}20; color: ${BRAND_GOLD}; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-radius: 4px; margin-bottom: 12px; }
     .contract-box { background: ${BG_OFF_WHITE}; border: 1px solid #e5e0d8; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .cta-box { background: ${BRAND_GOLD}15; border: 1px solid ${BRAND_GOLD}40; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <a href="${appUrl() || absoluteUrl("/")}" style="display: inline-block; text-decoration: none;">
+        <img
+          src="${emailLogoUrl()}"
+          alt="LaRosa Villas"
+          width="160"
+          style="display: block; margin: 0 auto 20px; border: 0; outline: none; text-decoration: none; max-width: 160px; height: auto;"
+        />
+      </a>
       <div class="tag">Reservation Contract</div>
-      <h1 class="h1">LaRosa Villas</h1>
-      <p style="font-size: 13px; opacity: 0.7; margin: 0; text-transform: uppercase; letter-spacing: 3px;">Booking Confirmation</p>
+      <p style="font-size: 13px; opacity: 0.85; margin: 12px 0 0; text-transform: uppercase; letter-spacing: 3px;">Booking Confirmation</p>
     </div>
     <div class="content">
       <h2 class="h2">Dear ${data.guestName},</h2>
+      <p style="color: #4a4a4a; line-height: 1.8; margin-bottom: 16px; font-size: 15px;">
+        Thank you for choosing <strong>LaRosa ${data.roomTitle}</strong>. This email serves as the official
+        confirmation of your booking for the period ${stayPeriod}.
+      </p>
       <p style="color: #4a4a4a; line-height: 1.8; margin-bottom: 24px; font-size: 15px;">
-        Thank you for choosing <strong>LaRosa Villas</strong>. We are delighted to confirm your stay at
-        <strong>${data.roomTitle}</strong>. This email is your official booking confirmation — please keep it for your records.
+        To ensure a smooth and comfortable experience for all guests, we kindly request
+        that you carefully review the following terms and conditions. By replying to this
+        email with &ldquo;I Agree,&rdquo; you confirm that you have read, understood, and accepted all
+        terms outlined below.
       </p>
 
       <div class="contract-box">
         <div class="label">Booking reference</div>
         <div class="value" style="font-family: monospace; margin-bottom: 12px;">${ref}</div>
         <div class="label">Property</div>
-        <div class="value">${data.roomTitle} · ${data.roomType}</div>
+        <div class="value" style="margin-bottom: 0;">${data.roomTitle} · ${data.roomType}</div>
       </div>
 
-      <div class="grid">
-        <div class="grid-item">
-          <div class="label">Check-in</div>
-          <div class="value">${formatStayDate(data.checkIn)}</div>
-        </div>
-        <div class="grid-item">
-          <div class="label">Check-out</div>
-          <div class="value">${formatStayDate(data.checkOut)}</div>
-        </div>
-        <div class="grid-item">
-          <div class="label">Stay length</div>
-          <div class="value">${data.nights} night${data.nights === 1 ? "" : "s"}</div>
-        </div>
-        <div class="grid-item">
-          <div class="label">Guests</div>
-          <div class="value">${data.guests}</div>
-        </div>
-      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+        <tr>
+          <td width="50%" valign="top" style="padding: 0 8px 24px 0;">
+            <div class="label">Check-in</div>
+            <div class="value" style="margin-bottom: 0;">${formatStayDate(data.checkIn)}</div>
+          </td>
+          <td width="50%" valign="top" style="padding: 0 0 24px 8px;">
+            <div class="label">Check-out</div>
+            <div class="value" style="margin-bottom: 0;">${formatStayDate(data.checkOut)}</div>
+          </td>
+        </tr>
+        <tr>
+          <td width="50%" valign="top" style="padding: 0 8px 0 0;">
+            <div class="label">Stay length</div>
+            <div class="value" style="margin-bottom: 0;">${data.nights} night${data.nights === 1 ? "" : "s"}</div>
+          </td>
+          <td width="50%" valign="top" style="padding: 0 0 0 8px;">
+            <div class="label">Guests</div>
+            <div class="value" style="margin-bottom: 0;">${data.guests}</div>
+          </td>
+        </tr>
+      </table>
 
       ${data.specialRequests ? `
       <div class="label">Special requests</div>
@@ -148,21 +183,22 @@ function buildClientConfirmationEmail(data: BookingEmailData): string {
         <p style="font-size: 10px; color: ${BRAND_GRAY}; margin: 8px 0 0;">Payment ID: ${data.razorpayPaymentId || "Verified"}</p>
       </div>
 
+      <div class="cta-box">
+        <p style="font-size: 14px; color: ${BRAND_DARK}; margin: 0; line-height: 1.6;">
+          Please reply to this email with <strong>&ldquo;I Agree&rdquo;</strong> to confirm acceptance of all terms and conditions.
+        </p>
+      </div>
+
       <div class="divider"></div>
 
-      <p style="font-size: 13px; color: #4a4a4a; line-height: 1.8;">
-        <strong>Before you arrive</strong><br>
-        Standard check-in from 2:00 PM · check-out by 11:00 AM.<br>
-        Contact us at <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD}; text-decoration: none;">${SITE_EMAIL}</a>
-        or ${SITE_MOBILE_DISPLAY} for directions or special arrangements.
-      </p>
+      ${termsHtml}
+
+      <div class="divider"></div>
+
       <p style="font-size: 13px; color: #4a4a4a; line-height: 1.8; margin-top: 16px;">
-        <strong>Cancellation policy</strong><br>
-        You may cancel from your guest dashboard. Confirmed paid bookings receive a full refund when cancelled in accordance with our policy.
-      </p>
-      <p style="font-size: 14px; color: #4a4a4a; line-height: 1.8; margin-top: 16px;">
-        We look forward to welcoming you. Questions? Reply to this email or write to
-        <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD}; text-decoration: none;">${SITE_EMAIL}</a>.
+        Questions? Contact us at
+        <a href="mailto:${SITE_EMAIL}" style="color: ${BRAND_GOLD}; text-decoration: none;">${SITE_EMAIL}</a>
+        or ${SITE_MOBILE_DISPLAY}.
       </p>
     </div>
     <div class="footer">
@@ -314,7 +350,7 @@ export async function sendBookingEmails(data: BookingEmailData): Promise<void> {
   await sendContactMail({
     to: data.guestEmail,
     replyTo: adminEmail,
-    subject: `Reservation Confirmed — ${data.roomTitle} | LaRosa Villas`,
+    subject: `Booking Confirmation — ${data.roomTitle} | LaRosa Villas`,
     html: buildClientConfirmationEmail(data),
   });
 

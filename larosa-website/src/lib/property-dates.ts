@@ -95,6 +95,40 @@ export function propertyMonthYearLabel(ymd: string): string {
   }).format(new Date(Date.UTC(y, m - 1, 1, 12, 0, 0)));
 }
 
+function ordinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) return "th";
+  switch (day % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+/** e.g. "25th August" in the property timezone. */
+export function formatPropertyDateOrdinal(d: Date): string {
+  const ymd = formatPropertyDate(d);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return ymd;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const day = Number(match[3]);
+  const month = new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    timeZone: PROPERTY_TIMEZONE,
+  }).format(new Date(Date.UTC(y, m - 1, day, 12, 0, 0)));
+  return `${day}${ordinalSuffix(day)} ${month}`;
+}
+
+/** e.g. "from 25th August to 26th August". */
+export function formatStayPeriod(checkIn: Date, checkOut: Date): string {
+  return `from ${formatPropertyDateOrdinal(checkIn)} to ${formatPropertyDateOrdinal(checkOut)}`;
+}
+
 /** Display YYYY-MM-DD in UI without timezone shift from parseISO. */
 export function formatPropertyDateLabel(ymd: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);

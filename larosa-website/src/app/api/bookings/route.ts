@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectMongo } from "@/lib/mongodb";
 import { Booking, hasOverlap } from "@/models/Booking";
+import { Room } from "@/models/Room";
 import { findRoomById, catalogRoomIdFromDoc } from "@/lib/room-api";
 import { fetchExternalBookings, hasExternalOverlap } from "@/lib/ical-service";
 import {
@@ -9,6 +10,7 @@ import {
   MIN_GUESTS,
   validateGuestsForRoom,
 } from "@/lib/guest-limits";
+import { getAuthPayload } from "@/lib/auth-guard";
 
 const createSchema = z.object({
   roomId: z.union([z.string(), z.number()]).transform(String),
@@ -21,13 +23,55 @@ const createSchema = z.object({
   specialRequests: z.string().optional(),
 });
 
-// GET /api/bookings — list all bookings (admin use)
-export async function GET() {
+async function roomImageMap(roomIds: string[]): Promise<Map<string, string[]>> {
+  const unique = [...new Set(roomIds.filter(Boolean))];
+  if (unique.length === 0) return new Map();
+
+  const numericIds: number[] = [];
+  const mongoIds: string[] = [];
+  for (const id of unique) {
+    const n = Number(id);
+    if (!isNaN(n) && String(n) === id) numericIds.push(n);
+    else if (/^[a-f0-9]{24}$/i.test(id)) mongoIds.push(id);
+  }
+
+  const or: Record<string, unknown>[] = [];
+  if (numericIds.length) or.push({ roomId: { $in: numericIds } });
+  if (mongoIds.length) or.push({ _id: { $in: mongoIds } });
+  if (or.length === 0) return new Map();
+
+  const rooms = await Room.find({ $or: or }).select("roomId images").lean();
+  const map = new Map<string, string[]>();
+  for (const room of rooms) {
+    const images = room.images ?? [];
+    map.set(String(room.roomId), images);
+    map.set(room._id.toString(), images);
+  }
+  return map;
+}
+
+// GET /api/bookings — admin: all bookings; guest: own bookings only
+// Pass ?mine=1 to always scope to the signed-in user's email (guest dashboard).
+export async function GET(request: NextRequest) {
   try {
+    const session = await getAuthPayload();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectMongo();
-    const bookings = await Booking.find()
+
+    const wantMine = request.nextUrl.searchParams.get("mine") === "1";
+    const filter =
+      session.role === "admin" && !wantMine
+        ? {}
+        : { guestEmail: session.email.toLowerCase() };
+
+    const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })
       .lean();
+
+    const imagesByRoom = await roomImageMap(bookings.map((b) => b.roomId));
 
     const serialized = bookings.map((b) => ({
       id: b._id.toString(),
@@ -36,6 +80,7 @@ export async function GET() {
         id: b.roomId,
         title: b.roomTitle,
         type: b.roomType,
+        images: imagesByRoom.get(b.roomId) ?? [],
       },
       guestName: b.guestName,
       guestEmail: b.guestEmail,
