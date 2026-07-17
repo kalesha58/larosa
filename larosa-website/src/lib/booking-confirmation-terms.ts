@@ -79,6 +79,7 @@ export function buildConfirmationTermsHtml(params: ConfirmationTermsParams): str
     ${subHeading("Pool Area Rules")}
     ${bulletList([
       "Food and beverages are strictly prohibited inside or near the pool area.",
+      "The use of the pool is at your own risk; there is no lifeguard on duty.",
       "Violations will result in a substantial fine.",
     ])}
 

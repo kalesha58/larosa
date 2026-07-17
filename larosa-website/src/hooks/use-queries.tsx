@@ -50,6 +50,7 @@ export interface Booking {
     id: string;
     title: string;
     type: string;
+    images?: string[];
   };
   guestName: string;
   guestEmail: string;
@@ -230,7 +231,7 @@ export function useGetAllBookings() {
   return useQuery({
     queryKey: getGetAllBookingsQueryKey(),
     queryFn: async (): Promise<Booking[]> => {
-      const res = await fetch("/api/bookings");
+      const res = await fetch("/api/bookings", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json() as Promise<Booking[]>;
     },
@@ -256,7 +257,7 @@ export function useGetUserBookings() {
   return useQuery({
     queryKey: ["bookings", "user"],
     queryFn: async (): Promise<Booking[]> => {
-      const res = await fetch("/api/bookings");
+      const res = await fetch("/api/bookings?mine=1", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json() as Promise<Booking[]>;
     },
