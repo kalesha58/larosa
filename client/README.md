@@ -1,97 +1,148 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Larosa Mobile App — Luxury Farmhouse & Villa Booking Platform
 
-# Getting Started
+**Larosa** is a luxury mobile application built with **React Native** and **TypeScript**, designed for discovering, booking, hosting, and administering premium farmhouse and villa getaways.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 🌟 Overview
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+The Larosa platform provides a multi-role experience tailored for **Guests**, **Hosts**, and **Platform Administrators**:
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Guests** can search luxury properties, filter by amenities, check real-time availability, select booking modes, and manage their reservations.
+- **Hosts** can onboard their farmhouses, manage pricing & calendar availability (including Airbnb iCal sync), submit verification credentials, and view revenue payouts.
+- **Administrators** have complete oversight through a centralized command dashboard to manage property qualification approvals, host identity verification, platform service fee calculations, booking dispute resolution, customer reviews moderation, and content control.
 
-```sh
-# Using npm
+---
+
+## ✨ Key Features & User Flows
+
+### 1. Guest Experience 🏡
+- **Luxury Browsing**: Rich visual presentation of villas and farmhouses with photo carousels, pricing breakdowns, and amenity badges.
+- **Filter & Search**: Search by location, guest capacity, price range, and key amenities (swimming pool, lawn, Wi-Fi, etc.).
+- **Booking Flow**: Flexible instant booking or request-to-book workflows with clear security deposit terms.
+- **My Bookings & Profile**: Manage upcoming and past trips with cancellation and dispute options.
+
+### 2. Host Onboarding & Management 🔑
+- **Property Listing Manager**: Create and edit farmhouses with customized pricing, capacity, room counts, and photo galleries.
+- **Calendar & iCal Sync**: Synchronize calendar availability with external platforms like Airbnb using iCal integration.
+- **Host Verification Submission**: Submit Government ID scans, bank account details for payouts, and property ownership deeds for platform verification.
+
+### 3. Admin Command Center 📊
+- **Property Approval Checklist**: Strict quality gate engine requiring validation of minimum qualifications:
+  - 🏊‍♂️ Swimming Pool present
+  - 🏡 Private Landscaped Lawn present
+  - 🛏️ Minimum 3 Bedrooms
+  - ✨ Cleanliness standards
+  - 👮‍♂️ On-property staff or security assistance
+- **Host Identity Verification**: Verify host government identity documents, bank accounts, and property deeds with approval/rejection workflows.
+- **Booking Oversight & Service Fees**:
+  - Live tracking of all bookings across states (confirmed, pending, cancelled).
+  - Automated **10% Platform Service Fee** calculation and host payout breakdown (90%).
+  - Booking dispute resolution center for managing guest/host claims.
+- **Content Control & Moderation**:
+  - Review moderation (delete inappropriate reviews, post official admin responses).
+  - Support & Disputes desk (chat history log, ticket resolution).
+  - Content moderation (suspend reported properties or user accounts, dismiss reports).
+- **User Directory**: Search, edit roles, suspend or restore guest and host accounts.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Framework**: React Native (0.76+) with TypeScript
+- **Navigation**: React Navigation (`@react-navigation/native`, `@react-navigation/stack`, `@react-navigation/bottom-tabs`)
+- **Icons & UI**: Lucide React Native (`lucide-react-native`), custom UI component design system
+- **State Management**: React Context API (`DataProvider`, `ThemeProvider`, `AuthProvider`) for global reactivity across all screens
+- **Styling**: Vanilla CSS tokenized design system supporting sleek dark modes, gold accents, and dynamic animations
+
+---
+
+## 📂 Project Structure
+
+```text
+client/
+├── App.tsx                    # Main navigation container & tab/stack routing
+├── types.ts                   # TypeScript interfaces (Rooms, Bookings, Users, Support, Reports)
+├── components/
+│   ├── ui.tsx                 # Reusable UI component library (Buttons, Chips, Cards, Badges)
+│   └── LinearGradient.tsx     # Custom gradient wrapper
+├── constants/
+│   └── colors.ts              # Theme color tokens & palettes
+├── lib/
+│   ├── auth-context.tsx       # User authentication context
+│   ├── data-context.tsx       # Central state management (Rooms, Bookings, Reviews, Support)
+│   ├── mockData.ts            # Initial seeded mock data
+│   ├── theme-context.tsx      # Dark/Light theme context provider
+│   └── format.ts              # Money, date, and string formatters
+└── screens/                   # Application Screen Modules
+    ├── Admin Screens          # VillasScreen, BookingDetailScreen, UsersScreen, FeedbackScreen, etc.
+    ├── Host Screens           # HostHomeScreen, VillaEditScreen, CalendarScreen, etc.
+    └── Customer Screens       # CHomeScreen, CBookingsScreen, PropertyDetailScreen, etc.
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Ensure you have set up your React Native development environment:
+- **Node.js**: >= 18
+- **macOS** (for iOS builds): Xcode, CocoaPods
+- **Android**: Android Studio & JDK
+
+### Installation
+
+1. Navigate to the client directory:
+   ```bash
+   cd client
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. **iOS Setup**:
+   ```bash
+   cd ios
+   pod install
+   cd ..
+   ```
+
+---
+
+## 📱 Running the Application
+
+### Start Metro Bundler
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+### Run on iOS
+```bash
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Run on Android
+```bash
+npm run android
+```
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+---
 
-## Step 3: Modify your app
+## 🧪 Demo Test Roles
 
-Now that you have successfully run the app, let's make changes!
+The application includes predefined roles in the mock context for testing:
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+| Role | Email | Description |
+| :--- | :--- | :--- |
+| **Admin** | `admin@larosa.in` | Full access to approval checklists, dispute management, reviews, and user directory |
+| **Host** | `host@larosa.in` | Access to host dashboard, property edit forms, calendar sync, and payout details |
+| **Guest** | `guest@larosa.in` | Customer browsing experience, booking flows, and personal trip history |
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+---
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## 📄 License
 
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Copyright © 2026 Larosa. All rights reserved.
