@@ -3,11 +3,11 @@ import { ArrowLeft, Plus, MoreVertical, Megaphone, Image as ImageIcon } from 'lu
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, Chip, EmptyState } from '../components/ui';
-import { campaigns as seedCampaigns } from '../lib/mockData';
-import type { Campaign, CampaignStatus } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, Chip, EmptyState } from '../../components/ui';
+import { campaigns as seedCampaigns } from '../../lib/mockData';
+import type { Campaign, CampaignStatus } from '../../types';
 
 const accentColor = (theme: ThemeTokens): Record<string, string> => ({
   gold: theme.gold,

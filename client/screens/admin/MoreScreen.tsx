@@ -14,12 +14,12 @@ import {
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from '../components/LinearGradient';
-import { useTheme } from '../lib/theme-context';
-import { Card } from '../components/ui';
-import { useAuth } from '../lib/auth-context';
-import { useData } from '../lib/data-context';
-import { notifications } from '../lib/mockData';
+import { LinearGradient } from '../../components/LinearGradient';
+import { useTheme } from '../../lib/theme-context';
+import { Card } from '../../components/ui';
+import { useAuth } from '../../lib/auth-context';
+import { useData } from '../../lib/data-context';
+import { notifications } from '../../lib/mockData';
 
 const unreadCount = notifications.filter((n) => !n.read).length;
 

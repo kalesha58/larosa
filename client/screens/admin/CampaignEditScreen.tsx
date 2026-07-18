@@ -11,11 +11,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, Chip, FieldLabel, PrimaryButton, Toggle } from '../components/ui';
-import { campaigns as seedCampaigns } from '../lib/mockData';
-import type { CampaignAccent, CampaignStatus, CampaignType } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, Chip, FieldLabel, PrimaryButton, Toggle } from '../../components/ui';
+import { campaigns as seedCampaigns } from '../../lib/mockData';
+import type { CampaignAccent, CampaignStatus, CampaignType } from '../../types';
 
 export default function CampaignEditScreen() {
   const { theme } = useTheme();

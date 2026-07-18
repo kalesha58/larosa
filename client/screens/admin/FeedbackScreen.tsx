@@ -9,12 +9,12 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState, ScreenHeader, Stars, PrimaryButton, SecondaryButton, FieldLabel } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatDate } from '../lib/format';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState, ScreenHeader, Stars, PrimaryButton, SecondaryButton, FieldLabel } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatDate } from '../../lib/format';
 import { MessageSquare, Trash2, Reply, Star } from 'lucide-react-native';
-import type { Review } from '../types';
+import type { Review } from '../../types';
 
 type RatingFilter = 'all' | '5' | '4' | '3' | 'lower';
 

@@ -13,11 +13,11 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState, SyncDot, PrimaryButton, SecondaryButton, FieldLabel } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatMoney, getHostLabel, UNASSIGNED_HOST_ID } from '../lib/format';
-import type { Room } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState, SyncDot, PrimaryButton, SecondaryButton, FieldLabel } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatMoney, getHostLabel, UNASSIGNED_HOST_ID } from '../../lib/format';
+import type { Room } from '../../types';
 
 type Filter = 'all' | 'active' | 'hidden' | 'featured' | 'pending';
 

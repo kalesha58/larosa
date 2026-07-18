@@ -1,15 +1,15 @@
-import { LinearGradient } from '../components/LinearGradient';
+import { LinearGradient } from '../../components/LinearGradient';
 import { useNavigation } from '@react-navigation/native';
 import { CalendarClock, CheckCircle2, IndianRupee, TrendingUp, XCircle, RefreshCw } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, EmptyState, SectionHeader, StatusBadge } from '../components/ui';
-import { bookings, dashboardStats, revenueByMonth } from '../lib/mockData';
-import { formatMoney, formatDateRange, getGreeting, formatRelativeTime } from '../lib/format';
-import { useAuth } from '../lib/auth-context';
-import { currentAdmin } from '../lib/mockData';
+import { useTheme } from '../../lib/theme-context';
+import { Card, EmptyState, SectionHeader, StatusBadge } from '../../components/ui';
+import { bookings, dashboardStats, revenueByMonth } from '../../lib/mockData';
+import { formatMoney, formatDateRange, getGreeting, formatRelativeTime } from '../../lib/format';
+import { useAuth } from '../../lib/auth-context';
+import { currentAdmin } from '../../lib/mockData';
 
 const recentBookings = [...bookings]
   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

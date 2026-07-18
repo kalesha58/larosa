@@ -22,23 +22,23 @@ import HostVerificationScreen from './screens/host/HostVerificationScreen';
 
 // ─── Admin Screens ────────────────────────────────────────
 import LoginScreen from './screens/LoginScreen';
-import HomeScreen from './screens/HomeScreen';
-import BookingsScreen from './screens/BookingsScreen';
-import VillasScreen from './screens/VillasScreen';
-import MoreScreen from './screens/MoreScreen';
-import BookingDetailScreen from './screens/BookingDetailScreen';
-import CalendarScreen from './screens/CalendarScreen';
-import CampaignEditScreen from './screens/CampaignEditScreen';
-import CampaignsScreen from './screens/CampaignsScreen';
-import FeedbackScreen from './screens/FeedbackScreen';
-import NotificationsScreen from './screens/NotificationsScreen';
-import PricingScreen from './screens/PricingScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import SyncLogsScreen from './screens/SyncLogsScreen';
-import UsersScreen from './screens/UsersScreen';
-import VillaEditScreen from './screens/VillaEditScreen';
-import SupportDisputesScreen from './screens/SupportDisputesScreen';
-import PaymentsScreen from './screens/PaymentsScreen';
+import HomeScreen from './screens/admin/HomeScreen';
+import BookingsScreen from './screens/admin/BookingsScreen';
+import VillasScreen from './screens/admin/VillasScreen';
+import MoreScreen from './screens/admin/MoreScreen';
+import BookingDetailScreen from './screens/admin/BookingDetailScreen';
+import CalendarScreen from './screens/admin/CalendarScreen';
+import CampaignEditScreen from './screens/admin/CampaignEditScreen';
+import CampaignsScreen from './screens/admin/CampaignsScreen';
+import FeedbackScreen from './screens/admin/FeedbackScreen';
+import NotificationsScreen from './screens/admin/NotificationsScreen';
+import PricingScreen from './screens/admin/PricingScreen';
+import SettingsScreen from './screens/admin/SettingsScreen';
+import SyncLogsScreen from './screens/admin/SyncLogsScreen';
+import UsersScreen from './screens/admin/UsersScreen';
+import VillaEditScreen from './screens/admin/VillaEditScreen';
+import SupportDisputesScreen from './screens/admin/SupportDisputesScreen';
+import PaymentsScreen from './screens/admin/PaymentsScreen';
 
 // ─── Customer Screens ─────────────────────────────────────
 import CHomeScreen from './screens/customer/CHomeScreen';

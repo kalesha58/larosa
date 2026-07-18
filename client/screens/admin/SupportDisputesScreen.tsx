@@ -9,12 +9,12 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState, ScreenHeader, PrimaryButton, SecondaryButton, FieldLabel } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatDate } from '../lib/format';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState, ScreenHeader, PrimaryButton, SecondaryButton, FieldLabel } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatDate } from '../../lib/format';
 import { LifeBuoy, AlertTriangle, ShieldAlert, CheckCircle, MessageCircle, Send, UserX, XCircle } from 'lucide-react-native';
-import type { SupportTicket, ReportedItem } from '../types';
+import type { SupportTicket, ReportedItem } from '../../types';
 
 type Tab = 'tickets' | 'moderation';
 
