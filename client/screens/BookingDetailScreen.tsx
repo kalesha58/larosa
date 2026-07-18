@@ -11,6 +11,7 @@ import {
   CreditCard,
   RotateCcw,
   Clock,
+  AlertTriangle,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -21,11 +22,12 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../lib/theme-context';
 import { Card, PrimaryButton, SecondaryButton, SourceChip, StatusBadge, Toggle } from '../components/ui';
-import { bookings } from '../lib/mockData';
+import { useData } from '../lib/data-context';
 import {
   formatMoney,
   formatDateRange,
@@ -51,12 +53,18 @@ export default function BookingDetailScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const { bookings, respondToBooking, updateBookingDispute } = useData();
   const id = route.params?.id;
   const booking = bookings.find((b) => b.id === id);
+
   const [cancelOpen, setCancelOpen] = useState<boolean>(false);
   const [issueRefund, setIssueRefund] = useState<boolean>(true);
   const [note, setNote] = useState<string>('');
-  const [updatedStatus, setUpdatedStatus] = useState<string | null>(null);
+  
+  // Dispute Modal States
+  const [disputeOpen, setDisputeOpen] = useState<boolean>(false);
+  const [disputeAction, setDisputeAction] = useState<'raise' | 'resolve'>('raise');
+  const [disputeNotes, setDisputeNotes] = useState<string>('');
 
   if (!booking) {
     return (
@@ -68,17 +76,19 @@ export default function BookingDetailScreen() {
     );
   }
 
-  const status = (updatedStatus ?? booking.status) as typeof booking.status;
+  const status = booking.status;
   const isCancelled = status === 'cancelled';
   const isPending = status === 'pending';
 
   const handleConfirm = () => {
-    setUpdatedStatus('confirmed');
+    respondToBooking(booking.id, 'confirmed');
+    Alert.alert('Booking Confirmed', 'The booking has been successfully confirmed.');
   };
 
   const handleConfirmCancel = () => {
     setCancelOpen(false);
-    setUpdatedStatus('cancelled');
+    respondToBooking(booking.id, 'cancelled');
+    Alert.alert('Booking Cancelled', 'The booking has been cancelled.');
   };
 
   return (
@@ -174,10 +184,24 @@ export default function BookingDetailScreen() {
               <View style={{ width: 36, alignItems: 'center' }}>
                 <IndianRupee color={theme.gold} size={18} />
               </View>
-              <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Total</Text>
+              <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Total Price</Text>
             </View>
             <Text style={{ color: theme.gold, fontSize: 18, fontWeight: '800' }}>
               {formatMoney(booking.totalPrice)}
+            </Text>
+          </View>
+          <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 48, marginVertical: 4 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingLeft: 48 }}>
+            <Text style={{ color: theme.textMuted, fontSize: 12 }}>Platform Service Fee (10%)</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '500' }}>
+              {formatMoney(Math.round(booking.totalPrice * 0.1))}
+            </Text>
+          </View>
+          <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 48 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingLeft: 48 }}>
+            <Text style={{ color: theme.textMuted, fontSize: 12 }}>Host Payout (90%)</Text>
+            <Text style={{ color: theme.green, fontSize: 13, fontWeight: '600' }}>
+              {formatMoney(booking.totalPrice - Math.round(booking.totalPrice * 0.1))}
             </Text>
           </View>
           <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 48, marginVertical: 4 }} />
@@ -194,6 +218,58 @@ export default function BookingDetailScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingLeft: 48 }}>
             <Text style={{ color: theme.textMuted, fontSize: 12 }}>Source</Text>
             <SourceChip source={booking.source} />
+          </View>
+        </Card>
+
+        {/* Dispute Resolution Card */}
+        <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8, marginTop: 10 }}>
+          Dispute Resolution
+        </Text>
+        <Card style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Dispute Status</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2 }}>
+                {booking.disputeStatus === 'open' ? '⚠️ Active dispute under review' : booking.disputeStatus === 'resolved' ? '✅ Dispute resolved' : 'No active disputes'}
+              </Text>
+            </View>
+            <View style={{ backgroundColor: booking.disputeStatus === 'open' ? theme.redSoft : booking.disputeStatus === 'resolved' ? theme.greenSoft : theme.surfaceElevated, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text style={{ color: booking.disputeStatus === 'open' ? theme.red : booking.disputeStatus === 'resolved' ? theme.green : theme.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>
+                {booking.disputeStatus ?? 'none'}
+              </Text>
+            </View>
+          </View>
+          {booking.disputeNotes ? (
+            <View style={{ marginTop: 12, padding: 12, backgroundColor: theme.surfaceElevated, borderRadius: 10, borderWidth: 1, borderColor: theme.border }}>
+              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Remarks:</Text>
+              <Text style={{ color: theme.text, fontSize: 14, marginTop: 4 }}>{booking.disputeNotes}</Text>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+            {booking.disputeStatus !== 'open' ? (
+              <Pressable
+                onPress={() => {
+                  setDisputeAction('raise');
+                  setDisputeNotes(booking.disputeNotes ?? '');
+                  setDisputeOpen(true);
+                }}
+                style={{ flex: 1, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surfaceElevated, paddingVertical: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600' }}>Raise Dispute</Text>
+              </Pressable>
+            ) : null}
+            {booking.disputeStatus === 'open' ? (
+              <Pressable
+                onPress={() => {
+                  setDisputeAction('resolve');
+                  setDisputeNotes('');
+                  setDisputeOpen(true);
+                }}
+                style={{ flex: 1, backgroundColor: theme.green, paddingVertical: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Resolve Dispute</Text>
+              </Pressable>
+            ) : null}
           </View>
         </Card>
 
@@ -309,6 +385,82 @@ export default function BookingDetailScreen() {
                   destructive
                 />
                 <SecondaryButton label="Dismiss" onPress={() => setCancelOpen(false)} />
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Dispute Management Sheet */}
+      <Modal visible={disputeOpen} animationType="slide" transparent onRequestClose={() => setDisputeOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setDisputeOpen(false)}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: theme.surface,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderTopColor: theme.borderSoft,
+              paddingHorizontal: 24,
+              paddingTop: 16,
+              paddingBottom: 40,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -8 },
+              shadowOpacity: 0.15,
+              shadowRadius: 16,
+              elevation: 24,
+            }}
+          >
+            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
+              {disputeAction === 'raise' ? 'Raise Dispute' : 'Resolve Dispute'}
+            </Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 8, lineHeight: 20 }}>
+              {disputeAction === 'raise'
+                ? 'Flag this booking as disputed. Platform payouts and host adjustments will be held.'
+                : 'Mark this dispute as resolved. Enter remarks/adjustments applied.'}
+            </Text>
+
+            <View style={{ marginTop: 24, gap: 20 }}>
+              <View>
+                <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                  Dispute Details & Remarks
+                </Text>
+                <TextInput
+                  value={disputeNotes}
+                  onChangeText={setDisputeNotes}
+                  placeholder={disputeAction === 'raise' ? 'Describe the nature of the dispute…' : 'Enter resolution details…'}
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                  style={{
+                    backgroundColor: theme.bg,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    color: theme.text,
+                    fontSize: 15,
+                    minHeight: 100,
+                  }}
+                />
+              </View>
+
+              <View style={{ gap: 10 }}>
+                <PrimaryButton
+                  label={disputeAction === 'raise' ? 'Confirm Dispute' : 'Mark Resolved'}
+                  onPress={() => {
+                    setDisputeOpen(false);
+                    updateBookingDispute(booking.id, disputeAction === 'raise' ? 'open' : 'resolved', disputeNotes);
+                    Alert.alert(
+                      disputeAction === 'raise' ? 'Dispute Raised' : 'Dispute Resolved',
+                      disputeAction === 'raise' ? 'The booking has been flagged as disputed.' : 'The dispute has been resolved.'
+                    );
+                  }}
+                  destructive={disputeAction === 'raise'}
+                />
+                <SecondaryButton label="Cancel" onPress={() => setDisputeOpen(false)} />
               </View>
             </View>
           </Pressable>
