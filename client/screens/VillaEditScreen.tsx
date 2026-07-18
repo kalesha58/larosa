@@ -18,28 +18,35 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../lib/theme-context';
+import { useAuth } from '../lib/auth-context';
+import { useData } from '../lib/data-context';
 import type { ThemeTokens } from '../constants/colors';
 import { Card, Chip, FieldLabel, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
-import { rooms as seedRooms } from '../lib/mockData';
 import { amenityOptions } from '../lib/format';
 import type { Room, RoomCategory, RoomStatus } from '../types';
 
 export default function VillaEditScreen() {
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const { rooms, users, addRoom, updateRoom } = useData();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const roomId = route.params?.roomId;
   const isEdit = Boolean(roomId);
   const existing = useMemo(
-    () => seedRooms.find((r) => r.roomId === Number(roomId)),
-    [roomId]
+    () => rooms.find((r) => r.roomId === Number(roomId)),
+    [rooms, roomId]
   );
+
+  const hostUsers = useMemo(() => users.filter((u) => u.role === 'host'), [users]);
 
   const [title, setTitle] = useState<string>(existing?.title ?? '');
   const [category, setCategory] = useState<RoomCategory>(existing?.category ?? 'villa');
   const [type, setType] = useState<string>(existing?.type ?? 'Villa');
   const [description, setDescription] = useState<string>(existing?.description ?? '');
   const [price, setPrice] = useState<string>(existing ? String(existing.price) : '');
+  const [depositAmount, setDepositAmount] = useState<string>(existing?.deposit ? String(existing.deposit) : '');
+  const [bookingMode, setBookingMode] = useState<'instant' | 'request' | 'both'>(existing?.bookingType ?? 'instant');
   const [capacity, setCapacity] = useState<string>(existing ? String(existing.capacity) : '');
   const [totalRooms, setTotalRooms] = useState<string>(existing ? String(existing.totalRooms) : '');
   const [sizeSqFt, setSizeSqFt] = useState<string>(existing?.sizeSqFt ? String(existing.sizeSqFt) : '');
@@ -50,6 +57,15 @@ export default function VillaEditScreen() {
   const [airbnbCalendarUrl, setAirbnbCalendarUrl] = useState<string>(existing?.airbnbCalendarUrl ?? '');
   const [syncEnabled, setSyncEnabled] = useState<boolean>(existing?.syncEnabled ?? false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [selectedHostId, setSelectedHostId] = useState<string | undefined>(
+    existing?.hostId ?? (user?.role === 'host' ? user.id : hostUsers[0]?.id)
+  );
+
+  // Qualification State Fields
+  const [bedrooms, setBedrooms] = useState<string>(existing?.bedrooms ? String(existing.bedrooms) : '3');
+  const [hasSwimmingPool, setHasSwimmingPool] = useState<boolean>(existing?.hasSwimmingPool ?? false);
+  const [hasLawn, setHasLawn] = useState<boolean>(existing?.hasLawn ?? false);
+  const [hasOnPropertyStaff, setHasOnPropertyStaff] = useState<boolean>(existing?.hasOnPropertyStaff ?? false);
 
   const toggleAmenity = (a: string) => {
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
@@ -58,6 +74,40 @@ export default function VillaEditScreen() {
   const handleSave = () => {
     setSaving(true);
     setTimeout(() => {
+      const roomPayload = {
+        title,
+        category,
+        type,
+        description,
+        price: Number(price),
+        capacity: Number(capacity),
+        totalRooms: Number(totalRooms) || 1,
+        sizeSqFt: Number(sizeSqFt) || undefined,
+        amenities,
+        featured,
+        // If a host is saving a new listing, it is hidden by default pending approval
+        status: isEdit ? status : (user?.role === 'host' ? 'hidden' as const : 'active' as const),
+        airbnbIcalUrl,
+        airbnbCalendarUrl,
+        syncEnabled,
+        deposit: Number(depositAmount) || Number(price) * 2,
+        bookingType: bookingMode,
+        hostId: user?.role === 'host' ? user.id : selectedHostId,
+        approvedByAdmin: existing?.approvedByAdmin ?? (user?.role === 'admin' ? true : false),
+        images: existing?.images && existing.images.length > 0
+          ? existing.images
+          : ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=600&q=80'],
+        bedrooms: Number(bedrooms) || 0,
+        hasSwimmingPool,
+        hasLawn,
+        hasOnPropertyStaff,
+      };
+
+      if (isEdit) {
+        updateRoom(Number(roomId), roomPayload);
+      } else {
+        addRoom(roomPayload);
+      }
       setSaving(false);
       navigation.goBack();
     }, 1000);
@@ -124,6 +174,25 @@ export default function VillaEditScreen() {
                 style={inputStyle(theme)}
               />
             </View>
+            {user?.role === 'admin' ? (
+              <View>
+                <FieldLabel>Host</FieldLabel>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {hostUsers.length === 0 ? (
+                    <Text style={{ color: theme.textMuted, fontSize: 13 }}>No hosts available</Text>
+                  ) : (
+                    hostUsers.map((h) => (
+                      <Chip
+                        key={h.id}
+                        label={h.name}
+                        selected={selectedHostId === h.id}
+                        onPress={() => setSelectedHostId(h.id)}
+                      />
+                    ))
+                  )}
+                </View>
+              </View>
+            ) : null}
             <View>
               <FieldLabel>Category</FieldLabel>
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -187,6 +256,17 @@ export default function VillaEditScreen() {
                 />
               </View>
               <View style={{ flex: 1 }}>
+                <FieldLabel>Bedrooms</FieldLabel>
+                <TextInput
+                  value={bedrooms}
+                  onChangeText={setBedrooms}
+                  placeholder="3"
+                  placeholderTextColor={theme.textMuted}
+                  keyboardType="numeric"
+                  style={inputStyle(theme)}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
                 <FieldLabel>Total units</FieldLabel>
                 <TextInput
                   value={totalRooms}
@@ -198,7 +278,7 @@ export default function VillaEditScreen() {
                 />
               </View>
             </View>
-            <View>
+            <View style={{ marginBottom: 12 }}>
               <FieldLabel>Size (sq ft) — optional</FieldLabel>
               <TextInput
                 value={sizeSqFt}
@@ -208,6 +288,64 @@ export default function VillaEditScreen() {
                 keyboardType="numeric"
                 style={inputStyle(theme)}
               />
+            </View>
+
+            <View style={{ marginBottom: 12 }}>
+              <FieldLabel>Security Deposit Amount (₹)</FieldLabel>
+              <TextInput
+                value={depositAmount}
+                onChangeText={setDepositAmount}
+                placeholder="e.g. 50000 (Defaults to 2x price)"
+                placeholderTextColor={theme.textMuted}
+                keyboardType="numeric"
+                style={inputStyle(theme)}
+              />
+            </View>
+
+            <View>
+              <FieldLabel>Booking Mode</FieldLabel>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {([
+                  { id: 'instant', label: 'Instant Book' },
+                  { id: 'request', label: 'Request to Book' },
+                  { id: 'both', label: 'Both' },
+                ] as { id: 'instant' | 'request' | 'both'; label: string }[]).map((mode) => (
+                  <Chip
+                    key={mode.id}
+                    label={mode.label}
+                    selected={bookingMode === mode.id}
+                    onPress={() => setBookingMode(mode.id)}
+                  />
+                ))}
+              </View>
+            </View>
+          </Card>
+
+          {/* Admin Qualifications */}
+          <Text style={sectionTitleStyle(theme)}>Admin Qualifications</Text>
+          <Card style={{ marginBottom: 20, gap: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Swimming Pool</Text>
+                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Does this property have a swimming pool?</Text>
+              </View>
+              <Toggle value={hasSwimmingPool} onValueChange={setHasSwimmingPool} />
+            </View>
+            <View style={{ height: 1, backgroundColor: theme.borderSoft, marginVertical: 4 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Landscaped Lawn</Text>
+                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Does this property have a private lawn?</Text>
+              </View>
+              <Toggle value={hasLawn} onValueChange={setHasLawn} />
+            </View>
+            <View style={{ height: 1, backgroundColor: theme.borderSoft, marginVertical: 4 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>On-Property Assistance</Text>
+                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Dedicated caretaker or security guard on-property?</Text>
+              </View>
+              <Toggle value={hasOnPropertyStaff} onValueChange={setHasOnPropertyStaff} />
             </View>
           </Card>
 

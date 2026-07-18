@@ -3,20 +3,22 @@ import {
   Megaphone,
   CalendarDays,
   RefreshCw,
-  Users,
   MessageSquareText,
   Bell,
   Settings as SettingsIcon,
   LogOut,
   ChevronRight,
+  LifeBuoy,
+  IndianRupee,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from '../components/LinearGradient';
 import { useTheme } from '../lib/theme-context';
 import { Card } from '../components/ui';
 import { useAuth } from '../lib/auth-context';
+import { useData } from '../lib/data-context';
 import { notifications } from '../lib/mockData';
 
 const unreadCount = notifications.filter((n) => !n.read).length;
@@ -93,11 +95,21 @@ export default function MoreScreen() {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
+  const { supportTickets, reportedItems } = useData();
+
+  const supportBadge = useMemo(() => {
+    const openTickets = supportTickets.filter((t) => t.status === 'open').length;
+    const openReports = reportedItems.filter((r) => r.status === 'pending').length;
+    return openTickets + openReports;
+  }, [supportTickets, reportedItems]);
 
   const handleLogout = () => {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => logout() },
+      { text: 'Sign out', style: 'destructive', onPress: () => {
+        logout();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }},
     ]);
   };
 
@@ -186,15 +198,22 @@ export default function MoreScreen() {
             />
             <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 66 }} />
             <RowItem
-              icon={<Users color={theme.gold} size={18} />}
-              label="Users"
-              onPress={() => navigation.navigate('Users')}
+              icon={<IndianRupee color={theme.gold} size={18} />}
+              label="Payments"
+              onPress={() => navigation.navigate('Payments')}
             />
             <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 66 }} />
             <RowItem
               icon={<MessageSquareText color={theme.gold} size={18} />}
-              label="Feedback"
+              label="Reviews"
               onPress={() => navigation.navigate('Feedback')}
+            />
+            <View style={{ height: 1, backgroundColor: theme.borderSoft, marginLeft: 66 }} />
+            <RowItem
+              icon={<LifeBuoy color={theme.gold} size={18} />}
+              label="Support & Disputes"
+              badge={supportBadge}
+              onPress={() => navigation.navigate('SupportDisputes')}
             />
           </Card>
         </View>

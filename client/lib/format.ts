@@ -87,3 +87,14 @@ export const amenityOptions: string[] = [
   'Chef on Demand',
   'Lounge Area',
 ];
+
+export const UNASSIGNED_HOST_ID = '__unassigned__';
+
+export function getHostLabel(
+  hostId: string | undefined | null,
+  users: { id: string; name: string; role?: string }[]
+): string {
+  if (!hostId) return 'Unassigned / Platform';
+  const host = users.find((u) => u.id === hostId);
+  return host?.name ?? 'Unknown host';
+}
