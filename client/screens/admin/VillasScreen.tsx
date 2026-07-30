@@ -2,7 +2,6 @@ import { useNavigation } from '@react-navigation/native';
 import { Plus, Search, Users, IndianRupee, MoreVertical, Tag, AlertTriangle, Check, X, ShieldAlert, ChevronDown, ChevronRight } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -17,6 +16,7 @@ import { useTheme } from '../../lib/theme-context';
 import { Card, Chip, EmptyState, SyncDot, PrimaryButton, SecondaryButton, FieldLabel } from '../../components/ui';
 import { useData } from '../../lib/data-context';
 import { formatMoney, getHostLabel, UNASSIGNED_HOST_ID } from '../../lib/format';
+import { Alert } from '../../lib/alert';
 import type { Room } from '../../types';
 
 type Filter = 'all' | 'active' | 'hidden' | 'featured' | 'pending';

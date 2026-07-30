@@ -22,12 +22,12 @@ import {
   Text,
   TextInput,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { Card, PrimaryButton, SecondaryButton, SourceChip, StatusBadge, Toggle } from '../../components/ui';
 import { useData } from '../../lib/data-context';
+import { Alert } from '../../lib/alert';
 import {
   formatMoney,
   formatDateRange,

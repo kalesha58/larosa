@@ -56,8 +56,8 @@ export default function ReviewsScreen() {
                 <Star
                   key={i}
                   size={18}
-                  color="#C9A14A"
-                  fill={i <= Math.round(Number(avg)) ? '#C9A14A' : 'transparent'}
+                  color={theme.gold}
+                  fill={i <= Math.round(Number(avg)) ? theme.gold : 'transparent'}
                 />
               ))}
             </View>
@@ -69,9 +69,9 @@ export default function ReviewsScreen() {
             {dist.map(({ star, count, pct }) => (
               <View key={star} style={styles.distRow}>
                 <Text style={[styles.distStar, { color: theme.textMuted }]}>{star}</Text>
-                <Star size={11} color="#C9A14A" fill="#C9A14A" />
+                <Star size={11} color={theme.gold} fill={theme.gold} />
                 <View style={[styles.distBarBg, { backgroundColor: theme.border }]}>
-                  <View style={[styles.distBarFill, { width: `${pct}%`, backgroundColor: '#C9A14A' }]} />
+                  <View style={[styles.distBarFill, { width: `${pct}%`, backgroundColor: theme.gold }]} />
                 </View>
                 <Text style={[styles.distCount, { color: theme.textMuted }]}>{count}</Text>
               </View>
@@ -92,9 +92,9 @@ export default function ReviewsScreen() {
                 <Text style={styles.aspectEmoji}>{aspect.emoji}</Text>
                 <Text style={[styles.aspectLabel, { color: theme.textSecondary }]}>{aspect.label}</Text>
                 <View style={[styles.aspectBarBg, { backgroundColor: theme.border }]}>
-                  <View style={[styles.aspectBarFill, { width: `${(Number(aspect.value) / 5) * 100}%`, backgroundColor: '#C9A14A' }]} />
+                  <View style={[styles.aspectBarFill, { width: `${(Number(aspect.value) / 5) * 100}%`, backgroundColor: theme.gold }]} />
                 </View>
-                <Text style={[styles.aspectVal, { color: '#C9A14A' }]}>{aspect.value}</Text>
+                <Text style={[styles.aspectVal, { color: theme.gold }]}>{aspect.value}</Text>
               </View>
             ))}
           </View>

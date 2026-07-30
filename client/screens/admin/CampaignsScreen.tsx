@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Plus, MoreVertical, Megaphone, Image as ImageIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View, Image } from 'react-native';
+import { Pressable, ScrollView, Text, View, Image } from 'react-native';
+import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import type { ThemeTokens } from '../../constants/colors';

@@ -1,7 +1,8 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, CalendarDays } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import type { ThemeTokens } from '../../constants/colors';

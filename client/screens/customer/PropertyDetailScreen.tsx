@@ -62,19 +62,19 @@ export default function PropertyDetailScreen() {
         <View style={styles.content}>
           {/* Title & Location */}
           <View style={styles.titleSection}>
-            <View style={styles.categoryChip}>
-              <Text style={styles.categoryText}>{property.category.toUpperCase()}</Text>
+            <View style={[styles.categoryChip, { backgroundColor: theme.goldGlow }]}>
+              <Text style={[styles.categoryText, { color: theme.gold }]}>{property.category.toUpperCase()}</Text>
             </View>
             <Text style={[styles.title, { color: theme.text }]}>{property.title}</Text>
             <View style={styles.locationRow}>
-              <MapPin size={15} color="#C9A14A" />
+              <MapPin size={15} color={theme.gold} />
               <Text style={[styles.location, { color: theme.textSecondary }]}>{property.location}</Text>
             </View>
 
             {/* Rating row */}
             <View style={styles.ratingRow}>
               <View style={styles.ratingLeft}>
-                <Star size={16} color="#C9A14A" fill="#C9A14A" />
+                <Star size={16} color={theme.gold} fill={theme.gold} />
                 <Text style={[styles.ratingValue, { color: theme.text }]}>{avgRating}</Text>
                 <Text style={[styles.reviewCount, { color: theme.textMuted }]}>
                   ({property.reviewCount} reviews)
@@ -82,11 +82,11 @@ export default function PropertyDetailScreen() {
               </View>
               <View style={[
                 styles.bookTypeBadge,
-                { backgroundColor: property.bookingType === 'instant' ? 'rgba(46,125,50,0.12)' : 'rgba(201,161,74,0.12)' },
+                { backgroundColor: property.bookingType === 'instant' ? 'rgba(46,125,50,0.12)' : theme.goldGlow },
               ]}>
                 <Text style={[
                   styles.bookTypeBadgeText,
-                  { color: property.bookingType === 'instant' ? '#2E7D32' : '#C9A14A' },
+                  { color: property.bookingType === 'instant' ? '#2E7D32' : theme.gold },
                 ]}>
                   {property.bookingType === 'instant' ? '⚡ Instant Book' : '🕐 Request Book'}
                 </Text>
@@ -97,25 +97,25 @@ export default function PropertyDetailScreen() {
           {/* Stats row */}
           <View style={[styles.statsRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={styles.statItem}>
-              <BedDouble size={20} color="#C9A14A" />
+              <BedDouble size={20} color={theme.gold} />
               <Text style={[styles.statValue, { color: theme.text }]}>{property.bedrooms}</Text>
               <Text style={[styles.statLabel, { color: theme.textMuted }]}>Beds</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
             <View style={styles.statItem}>
-              <Bath size={20} color="#C9A14A" />
+              <Bath size={20} color={theme.gold} />
               <Text style={[styles.statValue, { color: theme.text }]}>{property.bathrooms}</Text>
               <Text style={[styles.statLabel, { color: theme.textMuted }]}>Baths</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
             <View style={styles.statItem}>
-              <Users size={20} color="#C9A14A" />
+              <Users size={20} color={theme.gold} />
               <Text style={[styles.statValue, { color: theme.text }]}>{property.capacity}</Text>
               <Text style={[styles.statLabel, { color: theme.textMuted }]}>Guests</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
             <View style={styles.statItem}>
-              <Maximize size={20} color="#C9A14A" />
+              <Maximize size={20} color={theme.gold} />
               <Text style={[styles.statValue, { color: theme.text }]}>{property.sizeSqFt.toLocaleString()}</Text>
               <Text style={[styles.statLabel, { color: theme.textMuted }]}>Sq ft</Text>
             </View>
@@ -128,8 +128,8 @@ export default function PropertyDetailScreen() {
               {property.description}
             </Text>
             <Pressable onPress={() => setDescExpanded((v) => !v)} style={styles.expandBtn}>
-              {descExpanded ? <ChevronUp size={16} color="#C9A14A" /> : <ChevronDown size={16} color="#C9A14A" />}
-              <Text style={styles.expandText}>{descExpanded ? 'Show less' : 'Read more'}</Text>
+              {descExpanded ? <ChevronUp size={16} color={theme.gold} /> : <ChevronDown size={16} color={theme.gold} />}
+              <Text style={[styles.expandText, { color: theme.gold }]}>{descExpanded ? 'Show less' : 'Read more'}</Text>
             </Pressable>
           </View>
 
@@ -150,13 +150,13 @@ export default function PropertyDetailScreen() {
             <View style={[styles.rulesCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               {(showAllRules ? property.houseRules : property.houseRules.slice(0, 3)).map((rule, i) => (
                 <View key={i} style={styles.ruleRow}>
-                  <AlertTriangle size={14} color="#C9A14A" />
+                  <AlertTriangle size={14} color={theme.gold} />
                   <Text style={[styles.ruleText, { color: theme.textSecondary }]}>{rule}</Text>
                 </View>
               ))}
               {property.houseRules.length > 3 && (
                 <Pressable onPress={() => setShowAllRules((v) => !v)}>
-                  <Text style={styles.ruleToggle}>
+                  <Text style={[styles.ruleToggle, { color: theme.gold }]}>
                     {showAllRules ? 'Show less ↑' : `Show all ${property.houseRules.length} rules ↓`}
                   </Text>
                 </Pressable>
@@ -186,8 +186,8 @@ export default function PropertyDetailScreen() {
           <View>
             <SectionHeader title="Caretaker" />
             <View style={[styles.caretakerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <View style={[styles.caretakerAvatar, { backgroundColor: 'rgba(201,161,74,0.15)' }]}>
-                <Text style={styles.caretakerInitial}>
+              <View style={[styles.caretakerAvatar, { backgroundColor: theme.goldGlow }]}>
+                <Text style={[styles.caretakerInitial, { color: theme.gold }]}>
                   {property.caretakerName.split(' ').map((n) => n[0]).join('')}
                 </Text>
               </View>
@@ -207,19 +207,19 @@ export default function PropertyDetailScreen() {
             <SectionHeader title="Security & Pricing" />
             <View style={[styles.securityCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.secRow}>
-                <ShieldCheck size={16} color="#C9A14A" />
+                <ShieldCheck size={16} color={theme.gold} />
                 <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Security Deposit</Text>
                 <Text style={[styles.secValue, { color: theme.text }]}>{formatMoney(property.securityDeposit)}</Text>
               </View>
               <View style={[styles.secDivider, { backgroundColor: theme.border }]} />
               <View style={styles.secRow}>
-                <ShieldCheck size={16} color="#C9A14A" />
+                <ShieldCheck size={16} color={theme.gold} />
                 <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Platform Fee</Text>
                 <Text style={[styles.secValue, { color: theme.text }]}>{property.platformFeePercent}%</Text>
               </View>
               <View style={[styles.secDivider, { backgroundColor: theme.border }]} />
               <View style={styles.secRow}>
-                <ShieldCheck size={16} color="#C9A14A" />
+                <ShieldCheck size={16} color={theme.gold} />
                 <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Refundable Deposit</Text>
                 <Text style={[styles.secValue, { color: theme.text }]}>{formatMoney(property.deposit)}</Text>
               </View>
@@ -233,7 +233,7 @@ export default function PropertyDetailScreen() {
               action={
                 propertyReviews.length > 2 ? (
                   <Pressable onPress={() => navigation.navigate('Reviews', { propertyId: property.id })}>
-                    <Text style={styles.seeAllReviews}>See all</Text>
+                    <Text style={[styles.seeAllReviews, { color: theme.gold }]}>See all</Text>
                   </Pressable>
                 ) : undefined
               }
@@ -251,16 +251,16 @@ export default function PropertyDetailScreen() {
       {/* ── Sticky Booking Bar ── */}
       <View style={[styles.bookingBar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <View style={styles.bookingBarLeft}>
-          <Text style={[styles.bookingPrice, { color: '#C9A14A' }]}>
+          <Text style={[styles.bookingPrice, { color: theme.gold }]}>
             {formatMoney(property.pricePerNight)}
           </Text>
           <Text style={[styles.bookingPriceLabel, { color: theme.textMuted }]}>/night</Text>
         </View>
         <Pressable
           onPress={() => navigation.navigate('BookingFlow', { propertyId: property.id })}
-          style={({ pressed }) => [styles.bookingBtn, pressed && { opacity: 0.85 }]}
+          style={({ pressed }) => [styles.bookingBtn, { backgroundColor: theme.gold }, pressed && { opacity: 0.85 }]}
         >
-          <Text style={styles.bookingBtnText}>
+          <Text style={[styles.bookingBtnText, { color: theme.textInverse }]}>
             {property.bookingType === 'instant' ? 'Book Now' : 'Request Booking'}
           </Text>
         </Pressable>
@@ -290,11 +290,10 @@ const styles = StyleSheet.create({
   titleSection: { gap: 6 },
   categoryChip: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(201,161,74,0.12)',
     paddingHorizontal: 10, paddingVertical: 4,
     borderRadius: 8,
   },
-  categoryText: { color: '#C9A14A', fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
+  categoryText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
   title: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5, lineHeight: 32 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   location: { fontSize: 14 },
@@ -314,14 +313,14 @@ const styles = StyleSheet.create({
   statDivider: { width: StyleSheet.hairlineWidth, height: '80%', alignSelf: 'center' },
   description: { fontSize: 14, lineHeight: 22 },
   expandBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  expandText: { color: '#C9A14A', fontSize: 14, fontWeight: '600' },
+  expandText: { fontSize: 14, fontWeight: '600' },
   rulesCard: {
     borderRadius: 16, borderWidth: StyleSheet.hairlineWidth,
     padding: 14, gap: 10,
   },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   ruleText: { fontSize: 13, lineHeight: 19, flex: 1 },
-  ruleToggle: { color: '#C9A14A', fontSize: 13, fontWeight: '600', marginTop: 4 },
+  ruleToggle: { fontSize: 13, fontWeight: '600', marginTop: 4 },
   checkInCard: {
     flexDirection: 'row', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 16,
   },
@@ -337,7 +336,7 @@ const styles = StyleSheet.create({
     width: 48, height: 48, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
   },
-  caretakerInitial: { color: '#C9A14A', fontSize: 16, fontWeight: '800' },
+  caretakerInitial: { fontSize: 16, fontWeight: '800' },
   caretakerInfo: { flex: 1 },
   caretakerName: { fontSize: 15, fontWeight: '700' },
   caretakerRole: { fontSize: 12, marginTop: 2 },
@@ -353,7 +352,7 @@ const styles = StyleSheet.create({
   secLabel: { flex: 1, fontSize: 13 },
   secValue: { fontSize: 14, fontWeight: '700' },
   secDivider: { height: StyleSheet.hairlineWidth },
-  seeAllReviews: { color: '#C9A14A', fontSize: 14, fontWeight: '600' },
+  seeAllReviews: { fontSize: 14, fontWeight: '600' },
   bookingBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -366,8 +365,8 @@ const styles = StyleSheet.create({
   bookingPrice: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   bookingPriceLabel: { fontSize: 14 },
   bookingBtn: {
-    backgroundColor: '#C9A14A', borderRadius: 16,
+    borderRadius: 16,
     paddingHorizontal: 28, paddingVertical: 14,
   },
-  bookingBtnText: { color: '#111111', fontSize: 16, fontWeight: '800' },
+  bookingBtnText: { fontSize: 16, fontWeight: '800' },
 });

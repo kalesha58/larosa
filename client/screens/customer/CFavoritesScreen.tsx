@@ -70,15 +70,15 @@ export default function CFavoritesScreen() {
               style={({ pressed }) => [
                 styles.sortChip,
                 {
-                  backgroundColor: sortBy === opt.key ? '#C9A14A' : theme.surface,
-                  borderColor: sortBy === opt.key ? '#C9A14A' : theme.border,
+                  backgroundColor: sortBy === opt.key ? theme.gold : theme.surface,
+                  borderColor: sortBy === opt.key ? theme.gold : theme.border,
                 },
                 pressed && { opacity: 0.7 },
               ]}
             >
               <Text style={[
                 styles.sortChipText,
-                { color: sortBy === opt.key ? '#111111' : theme.textSecondary },
+                { color: sortBy === opt.key ? theme.textInverse : theme.textSecondary },
               ]}>
                 {opt.label}
               </Text>

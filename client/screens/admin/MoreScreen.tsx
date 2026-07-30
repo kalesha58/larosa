@@ -12,12 +12,13 @@ import {
   IndianRupee,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View, Alert } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from '../../components/LinearGradient';
 import { useTheme } from '../../lib/theme-context';
 import { Card } from '../../components/ui';
 import { useAuth } from '../../lib/auth-context';
+import { Alert } from '../../lib/alert';
 import { useData } from '../../lib/data-context';
 import { notifications } from '../../lib/mockData';
 

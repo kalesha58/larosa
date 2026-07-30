@@ -36,7 +36,7 @@ const TIMELINE_COLORS: Record<string, string> = {
 function TimelineItem({ event, isLast }: { event: BookingTimelineEvent; isLast: boolean }) {
   const { theme } = useTheme();
   const Icon = TIMELINE_ICONS[event.type] ?? Clock;
-  const color = TIMELINE_COLORS[event.type] ?? '#C9A14A';
+  const color = event.type === 'created' ? theme.gold : (TIMELINE_COLORS[event.type] ?? theme.gold);
 
   return (
     <View style={styles.timelineItem}>
@@ -65,7 +65,7 @@ export default function CBookingDetailScreen() {
   const property = properties.find((p) => p.id === booking.propertyId);
 
   const statusColors = {
-    upcoming: { text: '#C9A14A', bg: 'rgba(201,161,74,0.12)' },
+    upcoming: { text: theme.gold, bg: theme.goldGlow },
     completed: { text: '#2E7D32', bg: 'rgba(46,125,50,0.12)' },
     cancelled: { text: '#E53935', bg: 'rgba(229,57,53,0.12)' },
   };
@@ -107,15 +107,15 @@ export default function CBookingDetailScreen() {
               { icon: BedDouble, label: 'Bedrooms', value: `${booking.bedrooms} beds` },
             ].map((item) => (
               <View key={item.label} style={[styles.detailItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
-                <item.icon size={16} color="#C9A14A" />
+                <item.icon size={16} color={theme.gold} />
                 <Text style={[styles.detailLabel, { color: theme.textMuted }]}>{item.label}</Text>
                 <Text style={[styles.detailValue, { color: theme.text }]}>{item.value}</Text>
               </View>
             ))}
           </View>
-          <View style={[styles.purposeRow, { backgroundColor: 'rgba(201,161,74,0.08)', borderColor: 'rgba(201,161,74,0.2)' }]}>
+          <View style={[styles.purposeRow, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '33' }]}>
             <Text style={[styles.purposeLabel, { color: theme.textMuted }]}>Purpose</Text>
-            <Text style={[styles.purposeValue, { color: '#C9A14A' }]}>{booking.purpose}</Text>
+            <Text style={[styles.purposeValue, { color: theme.gold }]}>{booking.purpose}</Text>
           </View>
         </View>
 
@@ -136,7 +136,7 @@ export default function CBookingDetailScreen() {
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <View style={styles.payRow}>
             <Text style={[styles.payLabelBold, { color: theme.text }]}>Total</Text>
-            <Text style={[styles.payValueBold, { color: '#C9A14A' }]}>{formatMoney(booking.totalPrice)}</Text>
+            <Text style={[styles.payValueBold, { color: theme.gold }]}>{formatMoney(booking.totalPrice)}</Text>
           </View>
           <View style={styles.payRow}>
             <Text style={[styles.payLabel, { color: theme.textSecondary }]}>Paid</Text>
@@ -185,9 +185,9 @@ export default function CBookingDetailScreen() {
                 <PhoneCall size={16} color="#2E7D32" />
                 <Text style={{ color: '#2E7D32', fontSize: 14, fontWeight: '700' }}>Call</Text>
               </Pressable>
-              <Pressable style={[styles.caretakerBtn, { backgroundColor: 'rgba(201,161,74,0.1)', borderColor: 'rgba(201,161,74,0.3)' }]}>
-                <MessageCircle size={16} color="#C9A14A" />
-                <Text style={{ color: '#C9A14A', fontSize: 14, fontWeight: '700' }}>Message</Text>
+              <Pressable style={[styles.caretakerBtn, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '44' }]}>
+                <MessageCircle size={16} color={theme.gold} />
+                <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '700' }}>Message</Text>
               </Pressable>
             </View>
           </View>
@@ -203,8 +203,8 @@ export default function CBookingDetailScreen() {
 
         {/* Review for completed */}
         {booking.status === 'completed' && (
-          <Pressable style={styles.reviewBtn}>
-            <Text style={styles.reviewBtnText}>⭐ Leave a Review</Text>
+          <Pressable style={[styles.reviewBtn, { backgroundColor: theme.gold }]}>
+            <Text style={[styles.reviewBtnText, { color: theme.textInverse }]}>⭐ Leave a Review</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -281,8 +281,8 @@ const styles = StyleSheet.create({
   },
   cancelText: { color: '#E53935', fontSize: 15, fontWeight: '700' },
   reviewBtn: {
-    backgroundColor: '#C9A14A', borderRadius: 14, paddingVertical: 14,
+    borderRadius: 14, paddingVertical: 14,
     alignItems: 'center',
   },
-  reviewBtnText: { color: '#111111', fontSize: 15, fontWeight: '800' },
+  reviewBtnText: { fontSize: 15, fontWeight: '800' },
 });

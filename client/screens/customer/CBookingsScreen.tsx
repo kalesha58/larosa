@@ -62,16 +62,16 @@ export default function CBookingsScreen() {
               onPress={() => setActiveTab(tab.key)}
               style={({ pressed }) => [
                 styles.tab,
-                isActive && [styles.activeTab, { backgroundColor: '#C9A14A' }],
+                isActive && [styles.activeTab, { backgroundColor: theme.gold }],
                 pressed && { opacity: 0.75 },
               ]}
             >
-              <Text style={[styles.tabText, { color: isActive ? '#111111' : theme.textSecondary }]}>
+              <Text style={[styles.tabText, { color: isActive ? theme.textInverse : theme.textSecondary }]}>
                 {tab.label}
               </Text>
               {count > 0 && (
-                <View style={[styles.tabBadge, { backgroundColor: isActive ? '#111111' : theme.border }]}>
-                  <Text style={[styles.tabBadgeText, { color: isActive ? '#fff' : theme.textSecondary }]}>
+                <View style={[styles.tabBadge, { backgroundColor: isActive ? theme.textInverse : theme.border }]}>
+                  <Text style={[styles.tabBadgeText, { color: isActive ? theme.gold : theme.textSecondary }]}>
                     {count}
                   </Text>
                 </View>

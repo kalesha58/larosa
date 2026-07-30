@@ -30,5 +30,18 @@ target 'AwesomeProject' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Clang VFS overlay breaks when the project path contains an apostrophe
+    # (e.g. /Volumes/Baig's/...). RN generates single-quoted YAML paths which
+    # terminate early at the apostrophe. Re-quote those paths with double quotes.
+    vfs_path = File.join(__dir__, 'Pods', 'React-Core-prebuilt', 'React-VFS.yaml')
+    template_path = File.join(__dir__, 'Pods', 'React-Core-prebuilt', 'React.xcframework', 'React-VFS-template.yaml')
+    if File.exist?(template_path) && __dir__.include?("'")
+      root = File.join(__dir__, 'Pods', 'React-Core-prebuilt', 'React.xcframework')
+      template = File.read(template_path)
+      fixed = template.gsub(/'\$\{ROOT_PATH\}([^']*)'/) { "\"#{root}#{$1}\"" }
+      File.write(vfs_path, fixed)
+      Pod::UI.puts "Fixed React-VFS.yaml quoting for apostrophe in project path".yellow
+    end
   end
 end

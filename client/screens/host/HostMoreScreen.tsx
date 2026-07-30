@@ -15,7 +15,8 @@ import {
   Bell,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { useAuth } from '../../lib/auth-context';

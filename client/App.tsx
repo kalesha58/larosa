@@ -1,8 +1,8 @@
 import React from 'react';
-import { StatusBar } from 'react-native';
+import { Platform, StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   LayoutGrid, CalendarDays, BookUser, Menu, Users,
@@ -12,6 +12,7 @@ import {
 import { ThemeProvider, useTheme } from './lib/theme-context';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { DataProvider } from './lib/data-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // ─── Host Screens ─────────────────────────────────────────
 import HostHomeScreen from './screens/host/HostHomeScreen';
@@ -115,7 +116,7 @@ export type CustomerTabParamList = {
   CProfileTab: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 const AdminTab = createBottomTabNavigator<AdminTabParamList>();
 const CustomerTab = createBottomTabNavigator<CustomerTabParamList>();
 
@@ -318,7 +319,7 @@ function HostTabNavigator() {
 
 // ─── App content with role-based routing ─────────────────
 function AppContent() {
-  const { isDark, theme } = useTheme();
+  const { isDark } = useTheme();
   const { isAuthenticated, role, user } = useAuth();
 
   const getInitialRoute = (): keyof RootStackParamList => {
@@ -330,95 +331,87 @@ function AppContent() {
     return 'CustomerTabs';
   };
 
+  const navigation = (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName={getInitialRoute()}
+        screenOptions={{ headerShown: false }}
+      >
+        {/* Auth */}
+        <Stack.Screen name="Login" component={LoginScreen} />
+
+        {/* Host screens */}
+        <Stack.Screen name="HostTabs" component={HostTabNavigator} />
+        <Stack.Screen name="HostVerification" component={HostVerificationScreen} />
+
+        {/* Admin screens */}
+        <Stack.Screen name="MainTabs" component={AdminTabNavigator} />
+        <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
+        <Stack.Screen name="Calendar" component={CalendarScreen} />
+        <Stack.Screen name="CampaignEdit" component={CampaignEditScreen} />
+        <Stack.Screen name="Campaigns" component={CampaignsScreen} />
+        <Stack.Screen name="Feedback" component={FeedbackScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Pricing" component={PricingScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="SyncLogs" component={SyncLogsScreen} />
+        <Stack.Screen name="Users" component={UsersScreen} />
+        <Stack.Screen name="VillaEdit" component={VillaEditScreen} />
+        <Stack.Screen name="SupportDisputes" component={SupportDisputesScreen} />
+        <Stack.Screen name="Payments" component={PaymentsScreen} />
+
+        {/* Customer: tab navigator */}
+        <Stack.Screen name="CustomerTabs" component={CustomerTabNavigator} />
+
+        {/* Customer: stack screens */}
+        <Stack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+        <Stack.Screen name="BookingFlow" component={BookingFlowScreen} />
+        <Stack.Screen name="Payment" component={PaymentScreen} />
+        <Stack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} />
+        <Stack.Screen name="CBookingDetail" component={CBookingDetailScreen} />
+        <Stack.Screen name="Reviews" component={ReviewsScreen} />
+        <Stack.Screen name="CNotifications" component={CNotificationsScreen} />
+        <Stack.Screen name="CSettings" component={CSettingsScreen} />
+        <Stack.Screen name="Support" component={SupportScreen} />
+
+        {/* Placeholder screens */}
+        <Stack.Screen name="EditProfile" component={CProfileScreen} />
+        <Stack.Screen name="Verification" component={HostVerificationScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={SupportScreen} />
+        <Stack.Screen name="Terms" component={SupportScreen} />
+        <Stack.Screen name="CHomeTab" component={CustomerTabNavigator} />
+        <Stack.Screen name="CFavoritesTab" component={CustomerTabNavigator} />
+        <Stack.Screen name="CBookingsTab" component={CustomerTabNavigator} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName={getInitialRoute()}
-          screenOptions={{ headerShown: false }}
-        >
-          {/* Auth */}
-          <Stack.Screen name="Login" component={LoginScreen} />
-
-          {/* Host screens */}
-          <Stack.Screen name="HostTabs" component={HostTabNavigator} />
-          <Stack.Screen name="HostVerification" component={HostVerificationScreen} />
-
-          {/* Admin screens */}
-          <Stack.Screen name="MainTabs" component={AdminTabNavigator} />
-          <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
-          <Stack.Screen name="Calendar" component={CalendarScreen} />
-          <Stack.Screen name="CampaignEdit" component={CampaignEditScreen} />
-          <Stack.Screen name="Campaigns" component={CampaignsScreen} />
-          <Stack.Screen name="Feedback" component={FeedbackScreen} />
-          <Stack.Screen name="Notifications" component={NotificationsScreen} />
-          <Stack.Screen name="Pricing" component={PricingScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="SyncLogs" component={SyncLogsScreen} />
-          <Stack.Screen name="Users" component={UsersScreen} />
-          <Stack.Screen name="VillaEdit" component={VillaEditScreen} />
-          <Stack.Screen name="SupportDisputes" component={SupportDisputesScreen} />
-          <Stack.Screen name="Payments" component={PaymentsScreen} />
-
-          {/* Customer: tab navigator */}
-          <Stack.Screen name="CustomerTabs" component={CustomerTabNavigator} />
-
-          {/* Customer: stack screens */}
-          <Stack.Screen
-            name="PropertyDetail"
-            component={PropertyDetailScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="BookingFlow"
-            component={BookingFlowScreen}
-            options={{ animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="Payment"
-            component={PaymentScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="BookingConfirmation"
-            component={BookingConfirmationScreen}
-            options={{ animation: 'fade' }}
-          />
-          <Stack.Screen
-            name="CBookingDetail"
-            component={CBookingDetailScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen name="Reviews" component={ReviewsScreen} />
-          <Stack.Screen name="CNotifications" component={CNotificationsScreen} />
-          <Stack.Screen name="CSettings" component={CSettingsScreen} />
-          <Stack.Screen name="Support" component={SupportScreen} />
-
-          {/* Placeholder screens */}
-          <Stack.Screen name="EditProfile" component={CProfileScreen} />
-          <Stack.Screen name="Verification" component={HostVerificationScreen} />
-          <Stack.Screen name="PrivacyPolicy" component={SupportScreen} />
-          <Stack.Screen name="Terms" component={SupportScreen} />
-          <Stack.Screen name="CHomeTab" component={CustomerTabNavigator} />
-          <Stack.Screen name="CFavoritesTab" component={CustomerTabNavigator} />
-          <Stack.Screen name="CBookingsTab" component={CustomerTabNavigator} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      {Platform.OS !== 'web' && (
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      )}
+      {navigation}
     </SafeAreaProvider>
   );
 }
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <DataProvider>
-          <AppContent />
-        </DataProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <ThemeProvider>
+        <AuthProvider>
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, height: '100%', width: '100%' },
+});
 
 export default App;
