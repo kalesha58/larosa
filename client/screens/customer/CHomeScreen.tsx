@@ -82,7 +82,7 @@ export default function CHomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#C9A14A"
+            tintColor={theme.gold}
           />
         }
       >
@@ -108,12 +108,12 @@ export default function CHomeScreen() {
           onPress={() => navigation.navigate('Search')}
           style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
-          <Search size={18} color="#C9A14A" />
+          <Search size={18} color={theme.gold} />
           <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>
             Search destinations, villas…
           </Text>
-          <View style={[styles.searchFilter, { backgroundColor: '#C9A14A' }]}>
-            <Text style={styles.searchFilterText}>Search</Text>
+          <View style={[styles.searchFilter, { backgroundColor: theme.gold }]}>
+            <Text style={[styles.searchFilterText, { color: theme.textInverse }]}>Search</Text>
           </View>
         </Pressable>
 
@@ -121,10 +121,10 @@ export default function CHomeScreen() {
         {upcomingBooking && (
           <Pressable
             onPress={() => navigation.navigate('CBookingDetail', { bookingId: upcomingBooking.id })}
-            style={[styles.upcomingBanner, { backgroundColor: '#C9A14A11', borderColor: 'rgba(201,161,74,0.3)' }]}
+            style={[styles.upcomingBanner, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '33' }]}
           >
             <View style={styles.upcomingLeft}>
-              <Sparkles size={16} color="#C9A14A" />
+              <Sparkles size={16} color={theme.gold} />
               <View style={styles.upcomingText}>
                 <Text style={[styles.upcomingTitle, { color: theme.text }]}>
                   Upcoming Stay
@@ -134,7 +134,7 @@ export default function CHomeScreen() {
                 </Text>
               </View>
             </View>
-            <ArrowRight size={18} color="#C9A14A" />
+            <ArrowRight size={18} color={theme.gold} />
           </Pressable>
         )}
 
@@ -166,11 +166,11 @@ export default function CHomeScreen() {
         {/* ── Featured Properties ── */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionLeft}>
-            <Star size={16} color="#C9A14A" fill="#C9A14A" />
+            <Star size={16} color={theme.gold} fill={theme.gold} />
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Featured Stays</Text>
           </View>
           <Pressable onPress={() => navigation.navigate('Search')}>
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={[styles.seeAll, { color: theme.gold }]}>See all</Text>
           </Pressable>
         </View>
         <ScrollView
@@ -193,7 +193,7 @@ export default function CHomeScreen() {
         {/* ── Category Filter ── */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionLeft}>
-            <MapPin size={16} color="#C9A14A" />
+            <MapPin size={16} color={theme.gold} />
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Explore by Type</Text>
           </View>
         </View>
@@ -209,15 +209,15 @@ export default function CHomeScreen() {
               style={({ pressed }) => [
                 styles.categoryChip,
                 {
-                  backgroundColor: selectedCategory === cat ? '#C9A14A' : theme.surface,
-                  borderColor: selectedCategory === cat ? '#C9A14A' : theme.border,
+                  backgroundColor: selectedCategory === cat ? theme.gold : theme.surface,
+                  borderColor: selectedCategory === cat ? theme.gold : theme.border,
                 },
                 pressed && { opacity: 0.7 },
               ]}
             >
               <Text style={[
                 styles.categoryText,
-                { color: selectedCategory === cat ? '#111111' : theme.textSecondary },
+                { color: selectedCategory === cat ? theme.textInverse : theme.textSecondary },
               ]}>
                 {cat}
               </Text>
@@ -228,7 +228,7 @@ export default function CHomeScreen() {
         {/* ── All Properties ── */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionLeft}>
-            <TrendingUp size={16} color="#C9A14A" />
+            <TrendingUp size={16} color={theme.gold} />
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               {selectedCategory === 'All' ? 'All Properties' : selectedCategory + 's'}
             </Text>
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   sectionLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sectionTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
-  seeAll: { color: '#C9A14A', fontSize: 14, fontWeight: '600' },
+  seeAll: { fontSize: 14, fontWeight: '600' },
   countText: { fontSize: 13 },
   offersRow: { paddingHorizontal: 20, gap: 12, paddingBottom: 8 },
   offerCard: {

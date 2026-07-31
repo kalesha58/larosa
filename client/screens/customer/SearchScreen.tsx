@@ -92,7 +92,7 @@ export default function SearchScreen() {
           <ArrowLeft size={24} color={theme.text} />
         </Pressable>
         <View style={[styles.searchInput, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Search size={16} color="#C9A14A" />
+          <Search size={16} color={theme.gold} />
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -109,9 +109,9 @@ export default function SearchScreen() {
         </View>
         <Pressable
           onPress={() => setShowFilter(true)}
-          style={[styles.filterBtn, { backgroundColor: activeFilterCount > 0 ? '#C9A14A' : theme.surface, borderColor: activeFilterCount > 0 ? '#C9A14A' : theme.border }]}
+          style={[styles.filterBtn, { backgroundColor: activeFilterCount > 0 ? theme.gold : theme.surface, borderColor: activeFilterCount > 0 ? theme.gold : theme.border }]}
         >
-          <SlidersHorizontal size={18} color={activeFilterCount > 0 ? '#111111' : theme.text} />
+          <SlidersHorizontal size={18} color={activeFilterCount > 0 ? theme.textInverse : theme.text} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -133,14 +133,14 @@ export default function SearchScreen() {
             style={({ pressed }) => [
               styles.tab,
               {
-                backgroundColor: activeTab === tab.key ? '#C9A14A' : theme.surface,
-                borderColor: activeTab === tab.key ? '#C9A14A' : theme.border,
+                backgroundColor: activeTab === tab.key ? theme.gold : theme.surface,
+                borderColor: activeTab === tab.key ? theme.gold : theme.border,
               },
               pressed && { opacity: 0.7 },
             ]}
           >
             <Text>{tab.emoji}</Text>
-            <Text style={[styles.tabText, { color: activeTab === tab.key ? '#111111' : theme.textSecondary }]}>
+            <Text style={[styles.tabText, { color: activeTab === tab.key ? theme.textInverse : theme.textSecondary }]}>
               {tab.label}
             </Text>
             {tab.key === 'dates' && checkIn && (
@@ -193,13 +193,13 @@ export default function SearchScreen() {
                   style={({ pressed }) => [
                     styles.purposeChip,
                     {
-                      backgroundColor: purpose === p ? '#C9A14A' : theme.bg,
-                      borderColor: purpose === p ? '#C9A14A' : theme.border,
+                      backgroundColor: purpose === p ? theme.gold : theme.bg,
+                      borderColor: purpose === p ? theme.gold : theme.border,
                     },
                     pressed && { opacity: 0.7 },
                   ]}
                 >
-                  <Text style={[styles.purposeText, { color: purpose === p ? '#111111' : theme.textSecondary }]}>
+                  <Text style={[styles.purposeText, { color: purpose === p ? theme.textInverse : theme.textSecondary }]}>
                     {p}
                   </Text>
                 </Pressable>
@@ -213,15 +213,15 @@ export default function SearchScreen() {
           <View style={styles.results}>
             <View style={styles.resultsHeader}>
               <View style={styles.resultsHeaderLeft}>
-                <MapPin size={15} color="#C9A14A" />
+                <MapPin size={15} color={theme.gold} />
                 <Text style={[styles.resultsCount, { color: theme.textSecondary }]}>
                   <Text style={{ color: theme.text, fontWeight: '800' }}>{filtered.length}</Text>
                   {' '}properties found
                 </Text>
               </View>
               {(checkIn || adults > 2) && (
-                <View style={[styles.activeSearchPill, { backgroundColor: 'rgba(201,161,74,0.1)', borderColor: 'rgba(201,161,74,0.3)' }]}>
-                  <Text style={styles.activeSearchText}>
+                <View style={[styles.activeSearchPill, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '44' }]}>
+                  <Text style={[styles.activeSearchText, { color: theme.gold }]}>
                     {adults + children} guests {checkIn ? `· ${checkIn}` : ''}
                   </Text>
                 </View>
@@ -316,5 +316,5 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  activeSearchText: { color: '#C9A14A', fontSize: 12, fontWeight: '600' },
+  activeSearchText: { fontSize: 12, fontWeight: '600' },
 });

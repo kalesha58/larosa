@@ -17,13 +17,13 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { useAuth } from '../lib/auth-context';
-import { useData } from '../lib/data-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, Chip, FieldLabel, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
-import { amenityOptions } from '../lib/format';
-import type { Room, RoomCategory, RoomStatus } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import { useAuth } from '../../lib/auth-context';
+import { useData } from '../../lib/data-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, Chip, FieldLabel, PrimaryButton, SecondaryButton, Toggle } from '../../components/ui';
+import { amenityOptions } from '../../lib/format';
+import type { Room, RoomCategory, RoomStatus } from '../../types';
 
 export default function VillaEditScreen() {
   const { theme } = useTheme();

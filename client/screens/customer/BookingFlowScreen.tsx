@@ -133,7 +133,7 @@ export default function BookingFlowScreen() {
         <View
           style={[
             styles.progressFill,
-            { width: `${((currentStepIndex + 1) / STEPS.length) * 100}%`, backgroundColor: '#C9A14A' },
+            { width: `${((currentStepIndex + 1) / STEPS.length) * 100}%`, backgroundColor: theme.gold },
           ]}
         />
       </View>
@@ -145,18 +145,18 @@ export default function BookingFlowScreen() {
             <View style={[
               styles.stepCircle,
               {
-                backgroundColor: i < currentStepIndex ? '#2E7D32' : i === currentStepIndex ? '#C9A14A' : theme.surface,
+                backgroundColor: i < currentStepIndex ? '#2E7D32' : i === currentStepIndex ? theme.gold : theme.surface,
                 borderColor: i <= currentStepIndex ? 'transparent' : theme.border,
               },
             ]}>
               {i < currentStepIndex
                 ? <Check size={12} color="#fff" />
-                : <Text style={[styles.stepCircleText, { color: i === currentStepIndex ? '#111111' : theme.textMuted }]}>
+                : <Text style={[styles.stepCircleText, { color: i === currentStepIndex ? theme.textInverse : theme.textMuted }]}>
                     {i + 1}
                   </Text>
               }
             </View>
-            <Text style={[styles.stepLabel, { color: i === currentStepIndex ? '#C9A14A' : theme.textMuted }]}>
+            <Text style={[styles.stepLabel, { color: i === currentStepIndex ? theme.gold : theme.textMuted }]}>
               {STEP_LABELS[i]}
             </Text>
           </View>
@@ -246,13 +246,13 @@ export default function BookingFlowScreen() {
                     style={({ pressed }) => [
                       styles.purposeChip,
                       {
-                        backgroundColor: purpose === p ? '#C9A14A' : theme.bg,
-                        borderColor: purpose === p ? '#C9A14A' : theme.border,
+                        backgroundColor: purpose === p ? theme.gold : theme.bg,
+                        borderColor: purpose === p ? theme.gold : theme.border,
                       },
                       pressed && { opacity: 0.7 },
                     ]}
                   >
-                    <Text style={[styles.purposeChipText, { color: purpose === p ? '#111111' : theme.textSecondary }]}>
+                    <Text style={[styles.purposeChipText, { color: purpose === p ? theme.textInverse : theme.textSecondary }]}>
                       {p}
                     </Text>
                   </Pressable>
@@ -302,11 +302,11 @@ export default function BookingFlowScreen() {
                 <Pressable
                   onPress={applyCoupon}
                   disabled={couponApplied || couponCode.length === 0}
-                  style={[styles.couponBtn, { backgroundColor: couponApplied ? '#2E7D32' : '#C9A14A' }]}
+                  style={[styles.couponBtn, { backgroundColor: couponApplied ? '#2E7D32' : theme.gold }]}
                 >
                   {couponApplied
                     ? <Check size={16} color="#fff" />
-                    : <Text style={styles.couponBtnText}>Apply</Text>
+                    : <Text style={[styles.couponBtnText, { color: theme.textInverse }]}>Apply</Text>
                   }
                 </Pressable>
               </View>
@@ -324,7 +324,7 @@ export default function BookingFlowScreen() {
       <View style={[styles.ctaBar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         {step === 'summary' && (
           <View style={styles.ctaLeft}>
-            <Text style={[styles.ctaTotal, { color: '#C9A14A' }]}>{formatMoney(total)}</Text>
+            <Text style={[styles.ctaTotal, { color: theme.gold }]}>{formatMoney(total)}</Text>
             <Text style={[styles.ctaTotalLabel, { color: theme.textMuted }]}>Grand Total</Text>
           </View>
         )}
@@ -333,14 +333,15 @@ export default function BookingFlowScreen() {
           disabled={!canProceed()}
           style={({ pressed }) => [
             styles.ctaBtn,
+            { backgroundColor: theme.gold },
             !canProceed() && { opacity: 0.4 },
             pressed && { opacity: 0.85 },
           ]}
         >
-          <Text style={styles.ctaBtnText}>
+          <Text style={[styles.ctaBtnText, { color: theme.textInverse }]}>
             {step === 'summary' ? 'Proceed to Payment' : 'Continue'}
           </Text>
-          <ChevronRight size={18} color="#111111" />
+          <ChevronRight size={18} color={theme.textInverse} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     width: 80, height: 46, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
-  couponBtnText: { color: '#111111', fontSize: 14, fontWeight: '700' },
+  couponBtnText: { fontSize: 14, fontWeight: '700' },
   ctaBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20,
@@ -419,9 +420,9 @@ const styles = StyleSheet.create({
   ctaTotalLabel: { fontSize: 12 },
   ctaBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#C9A14A', borderRadius: 16,
+    borderRadius: 16,
     paddingHorizontal: 24, paddingVertical: 14, flex: 1, marginLeft: 12,
     justifyContent: 'center',
   },
-  ctaBtnText: { color: '#111111', fontSize: 16, fontWeight: '800' },
+  ctaBtnText: { fontSize: 16, fontWeight: '800' },
 });

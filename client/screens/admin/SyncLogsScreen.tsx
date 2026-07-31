@@ -3,10 +3,10 @@ import { ArrowLeft, CheckCircle2, XCircle, Download, Upload, Clock } from 'lucid
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState } from '../components/ui';
-import { syncLogs, rooms } from '../lib/mockData';
-import { formatDateTime, formatDuration } from '../lib/format';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState } from '../../components/ui';
+import { syncLogs, rooms } from '../../lib/mockData';
+import { formatDateTime, formatDuration } from '../../lib/format';
 
 export default function SyncLogsScreen() {
   const { theme } = useTheme();

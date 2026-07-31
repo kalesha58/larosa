@@ -3,11 +3,11 @@ import { Search, SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-rea
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState, SourceChip, StatusBadge } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatMoney, formatDateRange, getHostLabel, UNASSIGNED_HOST_ID } from '../lib/format';
-import type { Booking, BookingStatus, BookingSource } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState, SourceChip, StatusBadge } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatMoney, formatDateRange, getHostLabel, UNASSIGNED_HOST_ID } from '../../lib/format';
+import type { Booking, BookingStatus, BookingSource } from '../../types';
 
 type StatusFilter = 'all' | BookingStatus;
 type SourceFilter = 'all' | BookingSource;

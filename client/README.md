@@ -75,9 +75,9 @@ client/
 │   ├── theme-context.tsx      # Dark/Light theme context provider
 │   └── format.ts              # Money, date, and string formatters
 └── screens/                   # Application Screen Modules
-    ├── Admin Screens          # VillasScreen, BookingDetailScreen, UsersScreen, FeedbackScreen, etc.
-    ├── Host Screens           # HostHomeScreen, VillaEditScreen, CalendarScreen, etc.
-    └── Customer Screens       # CHomeScreen, CBookingsScreen, PropertyDetailScreen, etc.
+    ├── admin/                 # Admin Screens (VillasScreen, BookingDetailScreen, UsersScreen, FeedbackScreen, etc.)
+    ├── host/                  # Host Screens (HostHomeScreen, HostVillasScreen, HostBookingsScreen, etc.)
+    └── customer/              # Customer Screens (CHomeScreen, CBookingsScreen, PropertyDetailScreen, etc.)
 ```
 
 ---

@@ -56,13 +56,13 @@ export default function BookingConfirmationScreen() {
           <Text style={[styles.heroTitle, { color: theme.text }]}>Booking Confirmed!</Text>
           <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
             Get ready for an unforgettable stay at{'\n'}
-            <Text style={{ color: '#C9A14A', fontWeight: '700' }}>{propertyTitle}</Text>
+            <Text style={{ color: theme.gold, fontWeight: '700' }}>{propertyTitle}</Text>
           </Text>
 
           {/* Booking ID */}
-          <View style={[styles.bookingIdPill, { backgroundColor: 'rgba(201,161,74,0.12)', borderColor: 'rgba(201,161,74,0.3)' }]}>
+          <View style={[styles.bookingIdPill, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '44' }]}>
             <Text style={[styles.bookingIdLabel, { color: theme.textMuted }]}>Booking ID</Text>
-            <Text style={[styles.bookingIdValue, { color: '#C9A14A' }]}>{bookingId}</Text>
+            <Text style={[styles.bookingIdValue, { color: theme.gold }]}>{bookingId}</Text>
           </View>
         </View>
 
@@ -70,7 +70,7 @@ export default function BookingConfirmationScreen() {
         <View style={[styles.detailsCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={styles.detailRow}>
             <View style={styles.detailLeft}>
-              <Calendar size={16} color="#C9A14A" />
+              <Calendar size={16} color={theme.gold} />
               <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Check-in</Text>
             </View>
             <Text style={[styles.detailValue, { color: theme.text }]}>{formatDate(checkIn)}</Text>
@@ -78,7 +78,7 @@ export default function BookingConfirmationScreen() {
           <View style={[styles.detailDivider, { backgroundColor: theme.border }]} />
           <View style={styles.detailRow}>
             <View style={styles.detailLeft}>
-              <Calendar size={16} color="#C9A14A" />
+              <Calendar size={16} color={theme.gold} />
               <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Check-out</Text>
             </View>
             <Text style={[styles.detailValue, { color: theme.text }]}>{formatDate(checkOut)}</Text>
@@ -111,8 +111,8 @@ export default function BookingConfirmationScreen() {
             <Text style={[styles.paymentLabel, { color: theme.textSecondary }]}>Grand Total</Text>
             <Text style={[styles.paymentTotal, { color: theme.text }]}>{formatMoney(total)}</Text>
           </View>
-          <View style={[styles.methodChip, { backgroundColor: 'rgba(201,161,74,0.1)' }]}>
-            <Text style={{ color: '#C9A14A', fontSize: 13, fontWeight: '600' }}>
+          <View style={[styles.methodChip, { backgroundColor: theme.goldGlow }]}>
+            <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600' }}>
               via {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
             </Text>
           </View>
@@ -135,8 +135,8 @@ export default function BookingConfirmationScreen() {
         </View>
 
         {/* Rate & Review reminder */}
-        <View style={[styles.reviewReminder, { backgroundColor: 'rgba(201,161,74,0.06)', borderColor: 'rgba(201,161,74,0.2)' }]}>
-          <Star size={18} color="#C9A14A" fill="#C9A14A" />
+        <View style={[styles.reviewReminder, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '33' }]}>
+          <Star size={18} color={theme.gold} fill={theme.gold} />
           <Text style={[styles.reviewReminderText, { color: theme.textSecondary }]}>
             After your stay, share your experience. Your reviews help fellow travelers discover amazing places!
           </Text>
@@ -146,10 +146,10 @@ export default function BookingConfirmationScreen() {
         <View style={styles.actions}>
           <Pressable
             onPress={() => navigation.navigate('CBookingDetail', { bookingId })}
-            style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.gold }, pressed && { opacity: 0.85 }]}
           >
-            <Calendar size={18} color="#111111" />
-            <Text style={styles.primaryBtnText}>View Booking Details</Text>
+            <Calendar size={18} color={theme.textInverse} />
+            <Text style={[styles.primaryBtnText, { color: theme.textInverse }]}>View Booking Details</Text>
           </Pressable>
           <View style={styles.secondaryActions}>
             <Pressable
@@ -230,9 +230,9 @@ const styles = StyleSheet.create({
   actions: { gap: 12 },
   primaryBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#C9A14A', borderRadius: 16, paddingVertical: 16,
+    borderRadius: 16, paddingVertical: 16,
   },
-  primaryBtnText: { color: '#111111', fontSize: 16, fontWeight: '800' },
+  primaryBtnText: { fontSize: 16, fontWeight: '800' },
   secondaryActions: { flexDirection: 'row', gap: 12 },
   secondaryBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

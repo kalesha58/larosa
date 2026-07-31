@@ -177,6 +177,17 @@ export default function LoginPage() {
                 >
                   {isSubmitting ? "SIGNING IN..." : "SIGN IN"}
                 </Button>
+
+                <p className="text-[10px] text-center text-zinc-400 font-light leading-normal mt-3 px-2">
+                  By signing in, you agree to our{" "}
+                  <Link href="/terms" className="underline font-normal text-zinc-500 hover:text-[#c9a96e]">
+                    Terms & Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="underline font-normal text-zinc-500 hover:text-[#c9a96e]">
+                    Privacy Policy
+                  </Link>.
+                </p>
               </form>
           </Form>
 

@@ -1,13 +1,14 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, CalendarDays } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, EmptyState } from '../components/ui';
-import { rooms, calendarEvents as seedEvents } from '../lib/mockData';
-import type { CalendarEvent } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, EmptyState } from '../../components/ui';
+import { rooms, calendarEvents as seedEvents } from '../../lib/mockData';
+import type { CalendarEvent } from '../../types';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [

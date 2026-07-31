@@ -27,12 +27,12 @@ import {
   TextInput,
   View,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { useTheme } from '../../lib/theme-context';
 import { useAuth } from '../../lib/auth-context';
 import { useData } from '../../lib/data-context';
 import { Card, PrimaryButton, SecondaryButton } from '../../components/ui';
+import { Alert } from '../../lib/alert';
 
 type Step = 'contact' | 'govId' | 'bank' | 'property' | 'pending';
 

@@ -34,7 +34,7 @@ function MenuItem({ icon, label, subtitle, onPress, badge, danger, verified }: M
         pressed && { opacity: 0.75 },
       ]}
     >
-      <View style={[styles.menuIcon, { backgroundColor: danger ? 'rgba(229,57,53,0.1)' : 'rgba(201,161,74,0.1)' }]}>
+      <View style={[styles.menuIcon, { backgroundColor: danger ? 'rgba(229,57,53,0.1)' : theme.goldGlow }]}>
         {icon}
       </View>
       <View style={styles.menuContent}>
@@ -42,7 +42,7 @@ function MenuItem({ icon, label, subtitle, onPress, badge, danger, verified }: M
         {subtitle && <Text style={[styles.menuSubtitle, { color: theme.textMuted }]}>{subtitle}</Text>}
       </View>
       {badge !== undefined && (
-        <View style={[styles.badge, { backgroundColor: '#C9A14A' }]}>
+        <View style={[styles.badge, { backgroundColor: theme.gold }]}>
           <Text style={styles.badgeText}>{badge}</Text>
         </View>
       )}
@@ -88,16 +88,16 @@ export default function CProfileScreen() {
         <View style={[styles.profileCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           {/* Avatar */}
           <View style={styles.avatarSection}>
-            <View style={[styles.avatar, { backgroundColor: '#C9A14A22', borderColor: '#C9A14A' }]}>
-              <Text style={styles.avatarText}>
+            <View style={[styles.avatar, { backgroundColor: theme.goldGlow, borderColor: theme.gold }]}>
+              <Text style={[styles.avatarText, { color: theme.gold }]}>
                 {(user?.name ?? 'A').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
               </Text>
             </View>
             <Pressable
               onPress={() => navigation.navigate('EditProfile')}
-              style={[styles.editAvatarBtn, { backgroundColor: '#C9A14A' }]}
+              style={[styles.editAvatarBtn, { backgroundColor: theme.gold }]}
             >
-              <Edit3 size={12} color="#111111" />
+              <Edit3 size={12} color={theme.textInverse} />
             </Pressable>
           </View>
 
@@ -147,13 +147,13 @@ export default function CProfileScreen() {
         {/* Account section */}
         <MenuSection title="ACCOUNT">
           <MenuItem
-            icon={<User size={18} color="#C9A14A" />}
+            icon={<User size={18} color={theme.gold} />}
             label="Edit Profile"
             subtitle="Name, email, phone"
             onPress={() => navigation.navigate('EditProfile')}
           />
           <MenuItem
-            icon={<ShieldCheck size={18} color="#C9A14A" />}
+            icon={<ShieldCheck size={18} color={theme.gold} />}
             label="Identity Verification"
             subtitle={`${verifiedCount} of 3 complete`}
             onPress={() => navigation.navigate('Verification')}
@@ -163,14 +163,14 @@ export default function CProfileScreen() {
         {/* My activity */}
         <MenuSection title="MY ACTIVITY">
           <MenuItem
-            icon={<Heart size={18} color="#C9A14A" />}
+            icon={<Heart size={18} color={theme.gold} />}
             label="Saved Properties"
             subtitle="Your favorited properties"
             onPress={() => navigation.navigate('CFavoritesTab')}
             badge={2}
           />
           <MenuItem
-            icon={<Calendar size={18} color="#C9A14A" />}
+            icon={<Calendar size={18} color={theme.gold} />}
             label="My Bookings"
             subtitle="View all your reservations"
             onPress={() => navigation.navigate('CBookingsTab')}
@@ -181,13 +181,13 @@ export default function CProfileScreen() {
         {/* Preferences */}
         <MenuSection title="PREFERENCES">
           <MenuItem
-            icon={<Bell size={18} color="#C9A14A" />}
+            icon={<Bell size={18} color={theme.gold} />}
             label="Notifications"
             subtitle="Booking alerts, offers, reminders"
             onPress={() => navigation.navigate('CNotifications')}
           />
           <MenuItem
-            icon={<Star size={18} color="#C9A14A" />}
+            icon={<Star size={18} color={theme.gold} />}
             label="Settings"
             subtitle="Theme, language, preferences"
             onPress={() => navigation.navigate('CSettings')}
@@ -197,18 +197,18 @@ export default function CProfileScreen() {
         {/* Support */}
         <MenuSection title="SUPPORT">
           <MenuItem
-            icon={<HelpCircle size={18} color="#C9A14A" />}
+            icon={<HelpCircle size={18} color={theme.gold} />}
             label="Help & Support"
             subtitle="FAQs, contact us"
             onPress={() => navigation.navigate('Support')}
           />
           <MenuItem
-            icon={<Lock size={18} color="#C9A14A" />}
+            icon={<Lock size={18} color={theme.gold} />}
             label="Privacy Policy"
             onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <MenuItem
-            icon={<FileText size={18} color="#C9A14A" />}
+            icon={<FileText size={18} color={theme.gold} />}
             label="Terms of Service"
             onPress={() => navigation.navigate('Terms')}
           />
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2,
   },
-  avatarText: { color: '#C9A14A', fontSize: 28, fontWeight: '900' },
+  avatarText: { fontSize: 28, fontWeight: '900' },
   editAvatarBtn: {
     position: 'absolute', bottom: 0, right: 0,
     width: 26, height: 26, borderRadius: 13,

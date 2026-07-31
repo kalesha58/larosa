@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, TextInput,
+  View, Text, ScrollView, Pressable, StyleSheet, TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { ArrowLeft, Lock, Shield } from 'lucide-react-native';
+import { ArrowLeft, Lock, Shield, Check } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 import BookingSummary from '../../components/customer/BookingSummary';
 import PriceSummary from '../../components/customer/PriceSummary';
@@ -137,10 +137,10 @@ export default function PaymentScreen() {
         </View>
 
         {/* Pay now breakdown */}
-        <View style={[styles.payNowSummary, { backgroundColor: '#C9A14A11', borderColor: 'rgba(201,161,74,0.3)' }]}>
+        <View style={[styles.payNowSummary, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '33' }]}>
           <View style={styles.payNowRow}>
             <Text style={[styles.payNowLabel, { color: theme.textSecondary }]}>Paying now</Text>
-            <Text style={styles.payNowAmount}>{formatMoney(payNow)}</Text>
+            <Text style={[styles.payNowAmount, { color: theme.gold }]}>{formatMoney(payNow)}</Text>
           </View>
           <View style={styles.payNowRow}>
             <Text style={[styles.payLaterLabel, { color: theme.textMuted }]}>Due at check-in</Text>
@@ -154,7 +154,7 @@ export default function PaymentScreen() {
       {/* Pay button */}
       <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <View>
-          <Text style={[styles.footerTotal, { color: '#C9A14A' }]}>{formatMoney(payNow)}</Text>
+          <Text style={[styles.footerTotal, { color: theme.gold }]}>{formatMoney(payNow)}</Text>
           <Text style={[styles.footerLabel, { color: theme.textMuted }]}>Pay now · advance</Text>
         </View>
         <Pressable
@@ -162,14 +162,21 @@ export default function PaymentScreen() {
           disabled={!selectedMethod || isProcessing}
           style={({ pressed }) => [
             styles.payBtn,
+            { backgroundColor: theme.gold },
             (!selectedMethod || isProcessing) && { opacity: 0.5 },
             pressed && { opacity: 0.85 },
           ]}
         >
-          <Lock size={16} color="#111111" />
-          <Text style={styles.payBtnText}>
-            {isProcessing ? 'Processing…' : 'Pay Securely'}
-          </Text>
+          {isProcessing ? (
+            <ActivityIndicator color={theme.textInverse} size="small" />
+          ) : (
+            <>
+              <Check size={18} color={theme.textInverse} />
+              <Text style={[styles.payBtnText, { color: theme.textInverse }]}>
+                Pay {formatMoney(payNow)}
+              </Text>
+            </>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
@@ -209,7 +216,7 @@ const styles = StyleSheet.create({
   },
   payNowRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   payNowLabel: { fontSize: 14, fontWeight: '600' },
-  payNowAmount: { fontSize: 22, fontWeight: '900', color: '#C9A14A', letterSpacing: -0.5 },
+  payNowAmount: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
   payLaterLabel: { fontSize: 13 },
   payLaterAmount: { fontSize: 14, fontWeight: '600' },
   footer: {
@@ -221,7 +228,7 @@ const styles = StyleSheet.create({
   footerLabel: { fontSize: 12, marginTop: 1 },
   payBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: '#C9A14A', borderRadius: 16, paddingVertical: 14,
+    gap: 8, borderRadius: 16, paddingVertical: 14,
   },
-  payBtnText: { color: '#111111', fontSize: 16, fontWeight: '800' },
+  payBtnText: { fontSize: 16, fontWeight: '800' },
 });

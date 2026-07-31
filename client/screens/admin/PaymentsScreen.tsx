@@ -3,11 +3,11 @@ import { ArrowLeft, Search, IndianRupee } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, Chip, EmptyState } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatMoney, formatDateRange } from '../lib/format';
-import type { Booking } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import { Card, Chip, EmptyState } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatMoney, formatDateRange } from '../../lib/format';
+import type { Booking } from '../../types';
 
 type PaymentFilter = 'all' | 'paid' | 'refunded' | 'disputed';
 

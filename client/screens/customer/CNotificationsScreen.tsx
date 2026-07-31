@@ -36,14 +36,14 @@ export default function CNotificationsScreen() {
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
           {unreadCount > 0 && (
-            <View style={[styles.unreadBadge, { backgroundColor: '#C9A14A' }]}>
+            <View style={[styles.unreadBadge, { backgroundColor: theme.gold }]}>
               <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
             </View>
           )}
         </View>
         {unreadCount > 0 && (
           <Pressable onPress={markAllRead} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-            <CheckCheck size={20} color="#C9A14A" />
+            <CheckCheck size={20} color={theme.gold} />
           </Pressable>
         )}
       </View>
@@ -58,7 +58,8 @@ export default function CNotificationsScreen() {
         ) : (
           <View style={styles.list}>
             {notifs.map((notif) => {
-              const cfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.system;
+              const baseCfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.system;
+              const cfg = notif.type === 'booking' ? { ...baseCfg, color: theme.gold, bg: theme.goldGlow } : baseCfg;
               return (
                 <Pressable
                   key={notif.id}

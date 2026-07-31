@@ -22,17 +22,17 @@ import {
   Text,
   TextInput,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import { Card, PrimaryButton, SecondaryButton, SourceChip, StatusBadge, Toggle } from '../components/ui';
-import { useData } from '../lib/data-context';
+import { useTheme } from '../../lib/theme-context';
+import { Card, PrimaryButton, SecondaryButton, SourceChip, StatusBadge, Toggle } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { Alert } from '../../lib/alert';
 import {
   formatMoney,
   formatDateRange,
   formatDateTime,
-} from '../lib/format';
+} from '../../lib/format';
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
   const { theme } = useTheme();

@@ -1,14 +1,15 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, Plus, Search, MoreVertical, Shield, User as UserIcon, Check, X, AlertTriangle } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View, Switch } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TextInput, View, Switch } from 'react-native';
+import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, Chip, EmptyState, FieldLabel, PrimaryButton, SecondaryButton } from '../components/ui';
-import { useData } from '../lib/data-context';
-import { formatDate } from '../lib/format';
-import type { AdminUser, UserRole } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, Chip, EmptyState, FieldLabel, PrimaryButton, SecondaryButton } from '../../components/ui';
+import { useData } from '../../lib/data-context';
+import { formatDate } from '../../lib/format';
+import type { AdminUser, UserRole } from '../../types';
 
 export default function UsersScreen() {
   const { theme } = useTheme();

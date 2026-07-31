@@ -21,11 +21,16 @@ import Link from "next/link";
 import { BRAND_NAME } from "@/lib/brand";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the Terms & Conditions and Privacy Policy",
+  }),
+  marketingOptIn: z.boolean().optional(),
 });
 
 export default function RegisterPage() {
@@ -46,6 +51,8 @@ export default function RegisterPage() {
       name: "",
       email: "",
       password: "",
+      termsAccepted: false,
+      marketingOptIn: false,
     },
   });
 
@@ -60,6 +67,7 @@ export default function RegisterPage() {
           name: data.name,
           email: data.email,
           password: data.password,
+          marketingOptIn: !!data.marketingOptIn,
         }),
       });
       const payload: unknown = await res.json().catch(() => ({}));
@@ -244,6 +252,56 @@ export default function RegisterPage() {
                         />
                       </FormControl>
                       <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="termsAccepted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-2.5 space-y-0 rounded-md py-1">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-0.5 border-gray-300 data-[state=checked]:bg-[#c9a96e] data-[state=checked]:border-[#c9a96e] text-white"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-[11px] font-medium text-zinc-600">
+                          I agree to the{" "}
+                          <Link href="/terms" target="_blank" className="font-semibold text-[#c9a96e] hover:underline">
+                            Terms & Conditions
+                          </Link>{" "}
+                          and{" "}
+                          <Link href="/privacy" target="_blank" className="font-semibold text-[#c9a96e] hover:underline">
+                            Privacy Policy
+                          </Link>
+                        </FormLabel>
+                        <FormMessage className="text-[10px] text-red-500" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="marketingOptIn"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-2.5 space-y-0 rounded-md py-1">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-0.5 border-gray-300 data-[state=checked]:bg-[#c9a96e] data-[state=checked]:border-[#c9a96e] text-white"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-[11px] font-normal text-zinc-500 leading-normal">
+                          I agree to receive promotional updates, exclusive collection offers, and marketing info from LaRosa.
+                        </FormLabel>
+                      </div>
                     </FormItem>
                   )}
                 />

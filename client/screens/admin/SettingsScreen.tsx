@@ -3,11 +3,11 @@ import { ArrowLeft, Building2, CreditCard, Lock, Bell, Radio, Sun, Moon } from '
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../lib/theme-context';
-import type { ThemeTokens } from '../constants/colors';
-import { Card, FieldLabel, PrimaryButton, Toggle } from '../components/ui';
-import { settings as seedSettings } from '../lib/mockData';
-import type { AppSettings } from '../types';
+import { useTheme } from '../../lib/theme-context';
+import type { ThemeTokens } from '../../constants/colors';
+import { Card, FieldLabel, PrimaryButton, Toggle } from '../../components/ui';
+import { settings as seedSettings } from '../../lib/mockData';
+import type { AppSettings } from '../../types';
 
 type Tab = 'appearance' | 'property' | 'billing' | 'security' | 'notifications' | 'channel';
 
