@@ -5,8 +5,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      // Force every react-native import onto RN-web so Platform.OS === 'web' in prod
       'react-native': 'react-native-web',
     },
+    dedupe: ['react', 'react-dom', 'react-native-web'],
     extensions: [
       '.web.tsx',
       '.web.ts',
@@ -18,6 +20,7 @@ export default defineConfig({
       '.js',
       '.json',
     ],
+    conditions: ['browser', 'module', 'import', 'default'],
   },
   define: {
     global: 'window',
@@ -25,7 +28,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     esbuildOptions: {
-      mainFields: ['module', 'main'],
+      mainFields: ['browser', 'module', 'main'],
       resolveExtensions: [
         '.web.tsx',
         '.web.ts',
