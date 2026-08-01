@@ -12,7 +12,7 @@ import {
   IndianRupee,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from '../../components/LinearGradient';
 import { useTheme } from '../../lib/theme-context';
@@ -21,6 +21,7 @@ import { useAuth } from '../../lib/auth-context';
 import { Alert } from '../../lib/alert';
 import { useData } from '../../lib/data-context';
 import { notifications } from '../../lib/mockData';
+import AdminWebHeader from '../../components/AdminWebHeader';
 
 const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -97,6 +98,9 @@ export default function MoreScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const { supportTickets, reportedItems } = useData();
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isWide = isWeb && width >= 768;
 
   const supportBadge = useMemo(() => {
     const openTickets = supportTickets.filter((t) => t.status === 'open').length;
@@ -115,8 +119,13 @@ export default function MoreScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+      {isWeb && <AdminWebHeader />}
+      <ScrollView
+        showsVerticalScrollIndicator={isWeb}
+        contentContainerStyle={{ paddingBottom: isWeb ? 100 : 40 }}
+      >
+        <View style={isWide ? { maxWidth: 680, width: '100%', alignSelf: 'center' } : undefined}>
         {/* Header */}
         <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
           <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600', letterSpacing: 3, textTransform: 'uppercase' }}>
@@ -260,6 +269,7 @@ export default function MoreScreen() {
           <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}>
             Admin · Version 1.0.0
           </Text>
+        </View>
         </View>
       </ScrollView>
     </SafeAreaView>

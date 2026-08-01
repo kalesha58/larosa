@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, Pressable, RefreshControl,
-  StyleSheet, Image, TextInput,
+  StyleSheet, Image, TextInput, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import { useTheme } from '../../lib/theme-context';
 import { useAuth } from '../../lib/auth-context';
 import { useData } from '../../lib/data-context';
 import PropertyCard from '../../components/customer/PropertyCard';
+import WebHeader from '../../components/WebHeader';
 import { formatMoney } from '../../lib/format';
 
 const CATEGORIES = ['All', 'Villa', 'Farmhouse', 'Cottage', 'Resort'];
@@ -42,9 +43,27 @@ export default function CHomeScreen() {
   const { user } = useAuth();
   const { properties, customerBookings } = useData();
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(['prop_1', 'prop_4']);
+
+  const isWeb = Platform.OS === 'web';
+
+  const getWebCardStyle = () => {
+    if (!isWeb) return undefined;
+    const padding = width < 640 ? 32 : 48;
+    const containerWidth = Math.min(width, 1280) - padding;
+    if (width < 640) {
+      return { width: '100%' };
+    } else if (width < 960) {
+      return { width: Math.floor((containerWidth - 20) / 2) };
+    } else if (width < 1280) {
+      return { width: Math.floor((containerWidth - 40) / 3) };
+    } else {
+      return { width: Math.floor((containerWidth - 60) / 4) };
+    }
+  };
 
   const firstName = user?.name?.split(' ')[0] ?? 'Explorer';
 
@@ -75,6 +94,7 @@ export default function CHomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+      {Platform.OS === 'web' && <WebHeader />}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -87,35 +107,39 @@ export default function CHomeScreen() {
         }
       >
         {/* ── Header ── */}
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { color: theme.textMuted }]}>
-              {getGreeting()} 👋
-            </Text>
-            <Text style={[styles.userName, { color: theme.text }]}>{firstName}</Text>
-          </View>
-          <Pressable
-            onPress={() => navigation.navigate('CNotifications')}
-            style={({ pressed }) => [styles.notifBtn, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && { opacity: 0.6 }]}
-          >
-            <Bell size={20} color={theme.text} />
-            <View style={styles.notifDot} />
-          </Pressable>
-        </View>
+        {/* ── Header & Search Bar (Mobile only) ── */}
+        {Platform.OS !== 'web' && (
+          <>
+            <View style={styles.header}>
+              <View>
+                <Text style={[styles.greeting, { color: theme.textMuted }]}>
+                  {getGreeting()} 👋
+                </Text>
+                <Text style={[styles.userName, { color: theme.text }]}>{firstName}</Text>
+              </View>
+              <Pressable
+                onPress={() => navigation.navigate('CNotifications')}
+                style={({ pressed }) => [styles.notifBtn, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && { opacity: 0.6 }]}
+              >
+                <Bell size={20} color={theme.text} />
+                <View style={styles.notifDot} />
+              </Pressable>
+            </View>
 
-        {/* ── Search Bar ── */}
-        <Pressable
-          onPress={() => navigation.navigate('Search')}
-          style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}
-        >
-          <Search size={18} color={theme.gold} />
-          <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>
-            Search destinations, villas…
-          </Text>
-          <View style={[styles.searchFilter, { backgroundColor: theme.gold }]}>
-            <Text style={[styles.searchFilterText, { color: theme.textInverse }]}>Search</Text>
-          </View>
-        </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate('Search')}
+              style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            >
+              <Search size={18} color={theme.gold} />
+              <Text style={[styles.searchPlaceholder, { color: theme.textMuted }]}>
+                Search destinations, villas…
+              </Text>
+              <View style={[styles.searchFilter, { backgroundColor: theme.gold }]}>
+                <Text style={[styles.searchFilterText, { color: theme.textInverse }]}>Search</Text>
+              </View>
+            </Pressable>
+          </>
+        )}
 
         {/* ── Upcoming Stay Banner ── */}
         {upcomingBooking && (
@@ -243,6 +267,7 @@ export default function CHomeScreen() {
             <PropertyCard
               key={property.id}
               property={property}
+              style={getWebCardStyle()}
               onPress={() => navigation.navigate('PropertyDetail', { propertyId: property.id })}
               isFavorited={favorites.includes(property.id)}
               onFavoriteToggle={() => toggleFavorite(property.id)}
@@ -256,7 +281,13 @@ export default function CHomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  scroll: { paddingBottom: 100 },
+  scroll: {
+    paddingTop: Platform.OS === 'web' ? 16 : 0,
+    paddingBottom: 100,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 1280 : undefined,
+    alignSelf: Platform.OS === 'web' ? 'center' : undefined,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -277,6 +308,47 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 10, right: 10,
     width: 8, height: 8, borderRadius: 4,
     backgroundColor: '#E53935', borderWidth: 1.5, borderColor: '#fff',
+  },
+  webSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    borderRadius: 32,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    justifyContent: 'space-between',
+  },
+  webSearchSegment: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  webSearchLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  webSearchSub: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  webSearchDivider: {
+    width: 1,
+    height: 28,
+  },
+  webSearchBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -333,5 +405,10 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1,
   },
   categoryText: { fontSize: 13, fontWeight: '600' },
-  propertiesList: { paddingHorizontal: 20 },
+  propertiesList: {
+    paddingHorizontal: 20,
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    flexWrap: Platform.OS === 'web' ? 'wrap' : 'nowrap',
+    gap: Platform.OS === 'web' ? 20 : 16,
+  },
 });

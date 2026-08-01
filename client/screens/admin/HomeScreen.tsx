@@ -2,7 +2,7 @@ import { LinearGradient } from '../../components/LinearGradient';
 import { useNavigation } from '@react-navigation/native';
 import { CalendarClock, CheckCircle2, IndianRupee, TrendingUp, XCircle, RefreshCw } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { Card, EmptyState, SectionHeader, StatusBadge } from '../../components/ui';
@@ -10,6 +10,7 @@ import { bookings, dashboardStats, revenueByMonth } from '../../lib/mockData';
 import { formatMoney, formatDateRange, getGreeting, formatRelativeTime } from '../../lib/format';
 import { useAuth } from '../../lib/auth-context';
 import { currentAdmin } from '../../lib/mockData';
+import AdminWebHeader from '../../components/AdminWebHeader';
 
 const recentBookings = [...bookings]
   .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -127,6 +128,9 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isWide = isWeb && width >= 1024;
   const adminName = user?.name ?? currentAdmin.name;
   const firstName = adminName.split(' ')[0];
   const today = new Date().toLocaleDateString('en-US', {
@@ -141,14 +145,22 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+      {isWeb && <AdminWebHeader />}
       <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={isWeb}
+        contentContainerStyle={{ paddingBottom: isWeb ? 100 : 40 }}
         alwaysBounceVertical
       >
+        <View
+          style={
+            isWide
+              ? { maxWidth: 1120, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }
+              : undefined
+          }
+        >
         {/* Header */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <View style={{ paddingHorizontal: isWide ? 0 : 20, paddingTop: 12, paddingBottom: 20, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600', letterSpacing: 3, textTransform: 'uppercase' }}>
               {getGreeting()}, {firstName}
@@ -289,6 +301,7 @@ export default function HomeScreen() {
               ))}
             </View>
           )}
+        </View>
         </View>
       </ScrollView>
     </SafeAreaView>

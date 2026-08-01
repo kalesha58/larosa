@@ -1,372 +1,703 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet,
+  View, Text, ScrollView, Pressable, StyleSheet, Platform, useWindowDimensions,
+  NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import {
-  ArrowLeft, Star, Heart, Share2, MapPin, Users, BedDouble,
-  Bath, Maximize, Phone, ShieldCheck, AlertTriangle,
-  ChevronDown, ChevronUp,
+  ArrowLeft, Star, Heart, Share2,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 import { properties, reviews } from '../../lib/mockData';
 import ImageGallery from '../../components/customer/ImageGallery';
 import AmenitiesGrid from '../../components/customer/AmenitiesGrid';
 import ReviewCard from '../../components/customer/ReviewCard';
-import { SectionHeader } from '../../components/ui';
-import { formatMoney } from '../../lib/format';
+import CalendarPicker from '../../components/customer/CalendarPicker';
+import BookingWidget from '../../components/customer/BookingWidget';
+import SleepingArrangements from '../../components/customer/SleepingArrangements';
+import ReviewSummary from '../../components/customer/ReviewSummary';
+import PropertyMap from '../../components/customer/PropertyMap';
+import HostSection from '../../components/customer/HostSection';
+import ThingsToKnow from '../../components/customer/ThingsToKnow';
+import SectionNav, {
+  SECTION_NAV_HEIGHT,
+  SECTION_NAV_TABS,
+  type SectionNavId,
+} from '../../components/customer/SectionNav';
+
+function categoryLabel(category: string): string {
+  const map: Record<string, string> = {
+    villa: 'Entire villa',
+    farmhouse: 'Entire farmhouse',
+    cottage: 'Entire cottage',
+    resort: 'Entire resort unit',
+  };
+  return map[category] ?? 'Entire rental unit';
+}
 
 export default function PropertyDetailScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { propertyId } = route.params ?? {};
+
+  const isWeb = Platform.OS === 'web';
+  const isDesktopWeb = isWeb && width >= 1024;
 
   const property = properties.find((p) => p.id === propertyId) ?? properties[0];
   const propertyReviews = reviews.filter((r) => r.propertyId === property.id);
 
   const [isFav, setIsFav] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
-  const [showAllRules, setShowAllRules] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
+  const [checkIn, setCheckIn] = useState<string | null>(null);
+  const [checkOut, setCheckOut] = useState<string | null>(null);
+  const [guests, setGuests] = useState(1);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const contentRef = useRef<View>(null);
+  const sectionRefs = useRef<Partial<Record<SectionNavId, View | null>>>({});
+  const offsetsRef = useRef<Partial<Record<SectionNavId, number>>>({});
+  const galleryBottomRef = useRef(0);
+
+  const [navVisible, setNavVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState<SectionNavId>('photos');
+  const [webHeaderHeight, setWebHeaderHeight] = useState(56);
 
   const avgRating = propertyReviews.length > 0
     ? (propertyReviews.reduce((s, r) => s + r.rating, 0) / propertyReviews.length).toFixed(1)
     : property.rating.toFixed(1);
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      {/* Floating back button */}
-      <SafeAreaView edges={['top']} style={styles.floatingHeader}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ArrowLeft size={20} color="#fff" />
-        </Pressable>
-        <View style={styles.floatingRight}>
-          <Pressable style={styles.floatingActionBtn}>
-            <Share2 size={18} color="#fff" />
-          </Pressable>
-          <Pressable
-            onPress={() => setIsFav((v) => !v)}
-            style={styles.floatingActionBtn}
-          >
-            <Heart size={18} color={isFav ? '#E53935' : '#fff'} fill={isFav ? '#E53935' : 'transparent'} />
-          </Pressable>
+  const nights = useMemo(() => {
+    if (!checkIn || !checkOut) return 0;
+    return Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24),
+    );
+  }, [checkIn, checkOut]);
+
+  const cancellationHint = useMemo(() => {
+    if (!checkIn) return property.cancellationPolicy?.split('.')[0] ?? undefined;
+    const d = new Date(checkIn);
+    d.setDate(d.getDate() - 1);
+    const label = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
+    return `Free cancellation before ${label}`;
+  }, [checkIn, property.cancellationPolicy]);
+
+  const host = property.hostProfile ?? {
+    name: property.caretakerName,
+    initials: property.caretakerName.split(' ').map((n) => n[0]).join('').slice(0, 2),
+    isVerified: true,
+    responseRate: 96,
+    responseTime: 'Responds within a few hours',
+    bioLines: [`Lives in ${property.city}, ${property.state}`],
+  };
+
+  const remasureSections = useCallback(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    SECTION_NAV_TABS.forEach(({ id }) => {
+      const node = sectionRefs.current[id];
+      if (!node) return;
+      node.measureLayout(
+        content as any,
+        (_x, y) => {
+          offsetsRef.current[id] = y;
+        },
+        () => {},
+      );
+    });
+  }, []);
+
+  const setSectionRef = useCallback((id: SectionNavId) => (node: View | null) => {
+    sectionRefs.current[id] = node;
+  }, []);
+
+  const onSectionLayout = useCallback((id: SectionNavId) => () => {
+    const node = sectionRefs.current[id];
+    const content = contentRef.current;
+    if (!node || !content) return;
+    node.measureLayout(
+      content as any,
+      (_x, y) => {
+        offsetsRef.current[id] = y;
+      },
+      () => {},
+    );
+  }, []);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // Sticky section nav is web-only
+    if (Platform.OS !== 'web') return;
+
+    const y = e.nativeEvent.contentOffset.y;
+    // Show once user scrolls past the photo gallery (fallback threshold 200)
+    const threshold = galleryBottomRef.current > 0
+      ? Math.max(120, galleryBottomRef.current - 40)
+      : 200;
+    const show = y > threshold;
+    setNavVisible(show);
+
+    if (!show) return;
+
+    const probe = y + SECTION_NAV_HEIGHT + 64;
+    let next: SectionNavId = 'photos';
+    for (const { id } of SECTION_NAV_TABS) {
+      const oy = offsetsRef.current[id];
+      if (oy != null && oy <= probe) next = id;
+    }
+    setActiveSection((prev) => (prev === next ? prev : next));
+  }, []);
+
+  const scrollToSection = useCallback((id: SectionNavId) => {
+    const y = offsetsRef.current[id];
+    // Extra offset so sticky nav never covers section titles / map
+    const pad = SECTION_NAV_HEIGHT + 24;
+    if (y == null) {
+      remasureSections();
+      setTimeout(() => {
+        const retry = offsetsRef.current[id];
+        if (retry != null) {
+          scrollRef.current?.scrollTo({ y: Math.max(0, retry - pad), animated: true });
+        }
+      }, 50);
+      return;
+    }
+    setActiveSection(id);
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - pad), animated: true });
+  }, [remasureSections]);
+
+  const onGalleryLayout = (e: LayoutChangeEvent) => {
+    const { y, height } = e.nativeEvent.layout;
+    galleryBottomRef.current = y + height;
+    remasureSections();
+  };
+
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.navigate('CustomerTabs');
+  };
+
+  const handleShare = async () => {
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title: property.title, text: property.shortDescription });
+      } catch { /* cancelled */ }
+    }
+  };
+
+  const handleReserve = () => {
+    navigation.navigate('BookingFlow', {
+      propertyId: property.id,
+      checkIn,
+      checkOut,
+      guests,
+    });
+  };
+
+  const divider = <View style={[styles.divider, { backgroundColor: theme.border }]} />;
+
+  const overviewBlock = (
+    <View style={styles.overview}>
+      <Text style={[styles.overviewTitle, { color: theme.text }]}>
+        {categoryLabel(property.category)} in {property.city}, {property.state}
+      </Text>
+      <Text style={[styles.overviewMeta, { color: theme.text }]}>
+        {property.capacity} guests · {property.bedrooms} bedrooms · {property.bedrooms} beds · {property.bathrooms} bathrooms
+      </Text>
+      <Pressable
+        onPress={() => navigation.navigate('Reviews', { propertyId: property.id })}
+        style={styles.ratingLinkRow}
+      >
+        <Star size={14} color={theme.text} fill={theme.text} />
+        <Text style={[styles.ratingLink, { color: theme.text }]}>
+          {avgRating} · <Text style={styles.reviewsUnderline}>{property.reviewCount} reviews</Text>
+        </Text>
+      </Pressable>
+
+      {divider}
+
+      <View style={styles.hostedRow}>
+        <View style={[styles.hostAvatar, { backgroundColor: theme.goldGlow }]}>
+          <Text style={[styles.hostAvatarText, { color: theme.gold }]}>{host.initials}</Text>
         </View>
-      </SafeAreaView>
+        <View>
+          <Text style={[styles.hostedBy, { color: theme.text }]}>Hosted by {host.name.split(' ')[0]}</Text>
+          <Text style={[styles.hostedSub, { color: theme.textMuted }]}>
+            {host.isVerified ? 'Verified host' : 'Host'}
+          </Text>
+        </View>
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Gallery */}
-        <ImageGallery images={property.images} />
+      {divider}
 
-        <View style={styles.content}>
-          {/* Title & Location */}
-          <View style={styles.titleSection}>
-            <View style={[styles.categoryChip, { backgroundColor: theme.goldGlow }]}>
-              <Text style={[styles.categoryText, { color: theme.gold }]}>{property.category.toUpperCase()}</Text>
-            </View>
-            <Text style={[styles.title, { color: theme.text }]}>{property.title}</Text>
-            <View style={styles.locationRow}>
-              <MapPin size={15} color={theme.gold} />
-              <Text style={[styles.location, { color: theme.textSecondary }]}>{property.location}</Text>
-            </View>
+      <Text style={[styles.description, { color: theme.textSecondary }]}>{property.description}</Text>
+    </View>
+  );
 
-            {/* Rating row */}
-            <View style={styles.ratingRow}>
-              <View style={styles.ratingLeft}>
-                <Star size={16} color={theme.gold} fill={theme.gold} />
-                <Text style={[styles.ratingValue, { color: theme.text }]}>{avgRating}</Text>
-                <Text style={[styles.reviewCount, { color: theme.textMuted }]}>
-                  ({property.reviewCount} reviews)
-                </Text>
-              </View>
-              <View style={[
-                styles.bookTypeBadge,
-                { backgroundColor: property.bookingType === 'instant' ? 'rgba(46,125,50,0.12)' : theme.goldGlow },
-              ]}>
-                <Text style={[
-                  styles.bookTypeBadgeText,
-                  { color: property.bookingType === 'instant' ? '#2E7D32' : theme.gold },
-                ]}>
-                  {property.bookingType === 'instant' ? '⚡ Instant Book' : '🕐 Request Book'}
-                </Text>
-              </View>
-            </View>
+  const mainColumn = (
+    <View style={[styles.mainColumn, isDesktopWeb && styles.mainColumnDesktop]}>
+      {overviewBlock}
+
+      {divider}
+
+      {property.sleepingArrangements && property.sleepingArrangements.length > 0 && (
+        <>
+          <View ref={setSectionRef('rooms')} collapsable={false} onLayout={onSectionLayout('rooms')}>
+            <SleepingArrangements arrangements={property.sleepingArrangements} />
           </View>
+          {divider}
+        </>
+      )}
 
-          {/* Stats row */}
-          <View style={[styles.statsRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={styles.statItem}>
-              <BedDouble size={20} color={theme.gold} />
-              <Text style={[styles.statValue, { color: theme.text }]}>{property.bedrooms}</Text>
-              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Beds</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <Bath size={20} color={theme.gold} />
-              <Text style={[styles.statValue, { color: theme.text }]}>{property.bathrooms}</Text>
-              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Baths</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <Users size={20} color={theme.gold} />
-              <Text style={[styles.statValue, { color: theme.text }]}>{property.capacity}</Text>
-              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Guests</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <Maximize size={20} color={theme.gold} />
-              <Text style={[styles.statValue, { color: theme.text }]}>{property.sizeSqFt.toLocaleString()}</Text>
-              <Text style={[styles.statLabel, { color: theme.textMuted }]}>Sq ft</Text>
-            </View>
-          </View>
+      <View ref={setSectionRef('amenities')} collapsable={false} onLayout={onSectionLayout('amenities')}>
+        <AmenitiesGrid
+          amenities={property.amenities}
+          showAll={showAllAmenities}
+          onToggleShowAll={() => setShowAllAmenities((v) => !v)}
+          maxVisible={10}
+        />
+      </View>
 
-          {/* Description */}
+      {divider}
+
+      <View style={styles.calendarSection}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          {nights > 0
+            ? `${nights} night${nights > 1 ? 's' : ''} in ${property.city}`
+            : `Select check-in date`}
+        </Text>
+        {checkIn && checkOut && (
+          <Text style={[styles.calendarSub, { color: theme.textMuted }]}>
+            {checkIn} – {checkOut}
+          </Text>
+        )}
+        <CalendarPicker
+          checkIn={checkIn}
+          checkOut={checkOut}
+          onDatesChange={(cin, cout) => {
+            setCheckIn(cin);
+            setCheckOut(cout);
+          }}
+          minNights={property.minNights}
+          dualMonth={isDesktopWeb}
+        />
+      </View>
+
+      {divider}
+
+      {propertyReviews.length > 0 && (
+        <>
           <View>
-            <SectionHeader title="About" />
-            <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={descExpanded ? undefined : 3}>
-              {property.description}
-            </Text>
-            <Pressable onPress={() => setDescExpanded((v) => !v)} style={styles.expandBtn}>
-              {descExpanded ? <ChevronUp size={16} color={theme.gold} /> : <ChevronDown size={16} color={theme.gold} />}
-              <Text style={[styles.expandText, { color: theme.gold }]}>{descExpanded ? 'Show less' : 'Read more'}</Text>
-            </Pressable>
-          </View>
-
-          {/* Amenities */}
-          <View>
-            <SectionHeader title="Amenities" />
-            <AmenitiesGrid
-              amenities={property.amenities}
-              showAll={showAllAmenities}
-              onToggleShowAll={() => setShowAllAmenities((v) => !v)}
-              maxVisible={6}
+            <ReviewSummary
+              reviews={propertyReviews}
+              avgRating={avgRating}
+              reviewCount={property.reviewCount}
             />
-          </View>
-
-          {/* House Rules */}
-          <View>
-            <SectionHeader title="House Rules" />
-            <View style={[styles.rulesCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              {(showAllRules ? property.houseRules : property.houseRules.slice(0, 3)).map((rule, i) => (
-                <View key={i} style={styles.ruleRow}>
-                  <AlertTriangle size={14} color={theme.gold} />
-                  <Text style={[styles.ruleText, { color: theme.textSecondary }]}>{rule}</Text>
+            <View style={[styles.reviewsGrid, isDesktopWeb && styles.reviewsGridDesktop]}>
+              {propertyReviews.slice(0, 6).map((review) => (
+                <View
+                  key={review.id}
+                  style={[styles.reviewCell, isDesktopWeb && styles.reviewCellDesktop]}
+                >
+                  <ReviewCard review={review} listing />
                 </View>
               ))}
-              {property.houseRules.length > 3 && (
-                <Pressable onPress={() => setShowAllRules((v) => !v)}>
-                  <Text style={[styles.ruleToggle, { color: theme.gold }]}>
-                    {showAllRules ? 'Show less ↑' : `Show all ${property.houseRules.length} rules ↓`}
-                  </Text>
-                </Pressable>
-              )}
             </View>
+            <Pressable
+              onPress={() => navigation.navigate('Reviews', { propertyId: property.id })}
+              style={({ pressed }) => [
+                styles.showAllReviewsBtn,
+                { borderColor: theme.text },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={[styles.showAllReviewsText, { color: theme.text }]}>
+                Show all {property.reviewCount} reviews
+              </Text>
+            </Pressable>
           </View>
+          {divider}
+        </>
+      )}
 
-          {/* Check-in/out info */}
-          <View style={[styles.checkInCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={styles.checkItem}>
-              <Text style={[styles.checkLabel, { color: theme.textMuted }]}>Check-in</Text>
-              <Text style={[styles.checkValue, { color: theme.text }]}>{property.checkInTime}</Text>
-            </View>
-            <View style={[styles.checkDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.checkItem}>
-              <Text style={[styles.checkLabel, { color: theme.textMuted }]}>Check-out</Text>
-              <Text style={[styles.checkValue, { color: theme.text }]}>{property.checkOutTime}</Text>
-            </View>
-            <View style={[styles.checkDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.checkItem}>
-              <Text style={[styles.checkLabel, { color: theme.textMuted }]}>Min Stay</Text>
-              <Text style={[styles.checkValue, { color: theme.text }]}>{property.minNights}N</Text>
-            </View>
-          </View>
+      <View
+        ref={setSectionRef('location')}
+        collapsable={false}
+        onLayout={onSectionLayout('location')}
+        style={styles.locationAnchor}
+      >
+        <PropertyMap
+          city={property.city}
+          state={property.state}
+          lat={property.lat}
+          lng={property.lng}
+        />
+      </View>
 
-          {/* Caretaker Info */}
-          <View>
-            <SectionHeader title="Caretaker" />
-            <View style={[styles.caretakerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <View style={[styles.caretakerAvatar, { backgroundColor: theme.goldGlow }]}>
-                <Text style={[styles.caretakerInitial, { color: theme.gold }]}>
-                  {property.caretakerName.split(' ').map((n) => n[0]).join('')}
-                </Text>
-              </View>
-              <View style={styles.caretakerInfo}>
-                <Text style={[styles.caretakerName, { color: theme.text }]}>{property.caretakerName}</Text>
-                <Text style={[styles.caretakerRole, { color: theme.textMuted }]}>On-site Caretaker</Text>
-              </View>
-              <Pressable style={[styles.callBtn, { backgroundColor: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.3)' }]}>
-                <Phone size={16} color="#2E7D32" />
-                <Text style={styles.callBtnText}>Call</Text>
-              </Pressable>
-            </View>
-          </View>
+      {divider}
 
-          {/* Security & Deposit */}
-          <View>
-            <SectionHeader title="Security & Pricing" />
-            <View style={[styles.securityCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <View style={styles.secRow}>
-                <ShieldCheck size={16} color={theme.gold} />
-                <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Security Deposit</Text>
-                <Text style={[styles.secValue, { color: theme.text }]}>{formatMoney(property.securityDeposit)}</Text>
-              </View>
-              <View style={[styles.secDivider, { backgroundColor: theme.border }]} />
-              <View style={styles.secRow}>
-                <ShieldCheck size={16} color={theme.gold} />
-                <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Platform Fee</Text>
-                <Text style={[styles.secValue, { color: theme.text }]}>{property.platformFeePercent}%</Text>
-              </View>
-              <View style={[styles.secDivider, { backgroundColor: theme.border }]} />
-              <View style={styles.secRow}>
-                <ShieldCheck size={16} color={theme.gold} />
-                <Text style={[styles.secLabel, { color: theme.textSecondary }]}>Refundable Deposit</Text>
-                <Text style={[styles.secValue, { color: theme.text }]}>{formatMoney(property.deposit)}</Text>
-              </View>
-            </View>
-          </View>
+      <View style={styles.hostAnchor}>
+        <HostSection
+          host={host}
+          reviewCount={property.reviewCount}
+          rating={parseFloat(avgRating)}
+          onMessage={() => navigation.navigate('Support')}
+        />
+      </View>
 
-          {/* Reviews */}
-          <View>
-            <SectionHeader
-              title={`Reviews (${propertyReviews.length})`}
-              action={
-                propertyReviews.length > 2 ? (
-                  <Pressable onPress={() => navigation.navigate('Reviews', { propertyId: property.id })}>
-                    <Text style={[styles.seeAllReviews, { color: theme.gold }]}>See all</Text>
-                  </Pressable>
-                ) : undefined
-              }
-            />
-            {propertyReviews.slice(0, 2).map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
+      {divider}
+
+      <View style={styles.thingsAnchor}>
+        <ThingsToKnow
+          cancellationPolicy={
+            property.cancellationPolicy
+            ?? 'Free cancellation before check-in. Review the full policy for details.'
+          }
+          checkInTime={property.checkInTime}
+          checkOutTime={property.checkOutTime}
+          maxGuests={property.capacity}
+          houseRules={property.houseRules}
+          safetyNotes={
+            property.safetyNotes
+            ?? ['Exterior security cameras on property', 'Smoke alarm not reported', 'Carbon monoxide alarm not reported']
+          }
+        />
+      </View>
+    </View>
+  );
+
+  const stickyTop = isWeb ? webHeaderHeight : insets.top;
+
+  return (
+    <View style={[styles.container, isWeb && styles.webContainer, { backgroundColor: theme.bg }]}>
+      {/* Top chrome */}
+      {isWeb ? (
+        <View
+          style={[styles.webHeaderBar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}
+          onLayout={(e) => setWebHeaderHeight(e.nativeEvent.layout.height)}
+        >
+          <View style={styles.webHeaderInner}>
+            <Pressable
+              onPress={handleGoBack}
+              style={({ pressed }) => [
+                styles.webBackBtn,
+                { backgroundColor: theme.surfaceElevated, borderColor: theme.border },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <ArrowLeft size={16} color={theme.text} />
+              <Text style={[styles.webBackText, { color: theme.text }]}>Back to Explore</Text>
+            </Pressable>
           </View>
         </View>
+      ) : (
+        <SafeAreaView edges={['top']} style={styles.floatingHeader}>
+          <Pressable onPress={handleGoBack} style={styles.backBtn}>
+            <ArrowLeft size={20} color="#fff" />
+          </Pressable>
+          <View style={styles.floatingRight}>
+            <Pressable style={styles.floatingActionBtn} onPress={handleShare}>
+              <Share2 size={18} color="#fff" />
+            </Pressable>
+            <Pressable onPress={() => setIsFav((v) => !v)} style={styles.floatingActionBtn}>
+              <Heart size={18} color={isFav ? '#E53935' : '#fff'} fill={isFav ? '#E53935' : 'transparent'} />
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      )}
 
-        {/* Bottom spacer for sticky bar */}
-        <View style={{ height: 90 }} />
+      {/* Sticky section nav — WEB ONLY (hidden on iOS / Android / mobile) */}
+      {isWeb && navVisible && (
+        <View
+          style={[
+            styles.sectionNavWrap,
+            {
+              top: stickyTop,
+              backgroundColor: theme.surface,
+              borderBottomColor: theme.border,
+            },
+          ]}
+        >
+          <SectionNav
+            visible
+            activeId={activeSection}
+            onPress={scrollToSection}
+          />
+        </View>
+      )}
+
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={isWeb}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+        onContentSizeChange={remasureSections}
+        contentContainerStyle={[
+          styles.scroll,
+          isWeb && styles.webScroll,
+          !isDesktopWeb && { paddingBottom: 100 },
+        ]}
+      >
+        <View ref={contentRef} collapsable={false} onLayout={remasureSections}>
+          {/* Title row (web) */}
+          {isWeb && (
+            <View style={styles.titleRow}>
+              <Text style={[styles.pageTitle, { color: theme.text }]}>{property.title}</Text>
+              <View style={styles.titleActions}>
+                <Pressable onPress={handleShare} style={styles.textAction}>
+                  <Share2 size={15} color={theme.text} />
+                  <Text style={[styles.textActionLabel, { color: theme.text }]}>Share</Text>
+                </Pressable>
+                <Pressable onPress={() => setIsFav((v) => !v)} style={styles.textAction}>
+                  <Heart size={15} color={isFav ? '#E53935' : theme.text} fill={isFav ? '#E53935' : 'transparent'} />
+                  <Text style={[styles.textActionLabel, { color: theme.text }]}>Save</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          <View
+            ref={setSectionRef('photos')}
+            collapsable={false}
+            onLayout={(e) => {
+              onGalleryLayout(e);
+              onSectionLayout('photos')();
+            }}
+          >
+            <ImageGallery images={property.images} />
+          </View>
+
+          {!isWeb && (
+            <View style={styles.mobileTitleBlock}>
+              <Text style={[styles.pageTitle, { color: theme.text }]}>{property.title}</Text>
+              <View style={styles.titleActions}>
+                <Pressable onPress={handleShare} style={styles.textAction}>
+                  <Share2 size={15} color={theme.text} />
+                  <Text style={[styles.textActionLabel, { color: theme.text }]}>Share</Text>
+                </Pressable>
+                <Pressable onPress={() => setIsFav((v) => !v)} style={styles.textAction}>
+                  <Heart size={15} color={isFav ? '#E53935' : theme.text} fill={isFav ? '#E53935' : 'transparent'} />
+                  <Text style={[styles.textActionLabel, { color: theme.text }]}>Save</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.content, isDesktopWeb && styles.desktopLayout]}>
+            {mainColumn}
+
+            {isDesktopWeb && (
+              <View style={[styles.sidebar, navVisible && { top: SECTION_NAV_HEIGHT + 16 }]}>
+                <BookingWidget
+                  pricePerNight={property.pricePerNight}
+                  nights={nights}
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                  guests={guests}
+                  maxGuests={property.capacity}
+                  bookingType={property.bookingType}
+                  cancellationHint={cancellationHint}
+                  onCheckInPress={() => {}}
+                  onCheckOutPress={() => {}}
+                  onGuestsChange={setGuests}
+                  onReserve={handleReserve}
+                />
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
-      {/* ── Sticky Booking Bar ── */}
-      <View style={[styles.bookingBar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-        <View style={styles.bookingBarLeft}>
-          <Text style={[styles.bookingPrice, { color: theme.gold }]}>
-            {formatMoney(property.pricePerNight)}
-          </Text>
-          <Text style={[styles.bookingPriceLabel, { color: theme.textMuted }]}>/night</Text>
-        </View>
-        <Pressable
-          onPress={() => navigation.navigate('BookingFlow', { propertyId: property.id })}
-          style={({ pressed }) => [styles.bookingBtn, { backgroundColor: theme.gold }, pressed && { opacity: 0.85 }]}
-        >
-          <Text style={[styles.bookingBtnText, { color: theme.textInverse }]}>
-            {property.bookingType === 'instant' ? 'Book Now' : 'Request Booking'}
-          </Text>
-        </Pressable>
-      </View>
+      {!isDesktopWeb && (
+        <BookingWidget
+          compact
+          pricePerNight={property.pricePerNight}
+          nights={nights}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          guests={guests}
+          maxGuests={property.capacity}
+          bookingType={property.bookingType}
+          onGuestsChange={setGuests}
+          onReserve={handleReserve}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  webContainer: { height: '100%', overflow: 'hidden' },
+  scrollView: { flex: 1, minHeight: 0 },
+  scroll: { paddingBottom: 40 },
+  webScroll: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  sectionNavWrap: {
+    // fixed on web so it stays visible while scrolling the page
+    position: Platform.OS === 'web' ? ('fixed' as any) : 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
+    width: '100%',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  webHeaderBar: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    zIndex: 50,
+  },
+  webHeaderInner: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  webBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  webBackText: { fontSize: 14, fontWeight: '700' },
   floatingHeader: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 8, zIndex: 10,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    zIndex: 50,
   },
   backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   floatingRight: { flexDirection: 'row', gap: 8 },
   floatingActionBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scroll: { paddingTop: 0 },
-  content: { paddingHorizontal: 20, paddingTop: 20, gap: 24 },
-  titleSection: { gap: 6 },
-  categoryChip: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 16,
+  },
+  mobileTitleBlock: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  pageTitle: {
+    flex: 1,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    lineHeight: 32,
+  },
+  titleActions: { flexDirection: 'row', alignItems: 'center', gap: 18, paddingTop: 4 },
+  textAction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  textActionLabel: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
+  content: {
+    paddingHorizontal: Platform.OS === 'web' ? 0 : 20,
+    paddingTop: 24,
+    gap: 0,
+  },
+  desktopLayout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 64,
+    paddingTop: 36,
+  },
+  mainColumn: { gap: 0, flex: 1 },
+  mainColumnDesktop: { flex: 1.6, minWidth: 0 },
+  sidebar: {
+    width: 372,
+    position: 'sticky' as any,
+    top: 24,
+    zIndex: 5,
+  },
+  overview: { gap: 8 },
+  overviewTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  overviewMeta: { fontSize: 15, marginTop: 2 },
+  ratingLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  ratingLink: { fontSize: 14, fontWeight: '600' },
+  reviewsUnderline: { textDecorationLine: 'underline' },
+  hostedRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 4 },
+  hostAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hostAvatarText: { fontSize: 15, fontWeight: '800' },
+  hostedBy: { fontSize: 16, fontWeight: '700' },
+  hostedSub: { fontSize: 13, marginTop: 2 },
+  description: { fontSize: 15, lineHeight: 24 },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    width: '100%',
+    marginVertical: 28,
+  },
+  calendarSection: { gap: 8 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  calendarSub: { fontSize: 14, marginBottom: 8 },
+  reviewsGrid: { gap: 28, marginTop: 28 },
+  reviewsGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 40,
+    rowGap: 36,
+  },
+  reviewCell: { width: '100%' },
+  reviewCellDesktop: { width: '47%' },
+  showAllReviewsBtn: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    marginTop: 24,
   },
-  categoryText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
-  title: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5, lineHeight: 32 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  location: { fontSize: 14 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  ratingLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  ratingValue: { fontSize: 16, fontWeight: '800' },
-  reviewCount: { fontSize: 13 },
-  bookTypeBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
-  bookTypeBadgeText: { fontSize: 12, fontWeight: '700' },
-  statsRow: {
-    flexDirection: 'row', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
+  showAllReviewsText: { fontSize: 15, fontWeight: '700' },
+  locationAnchor: {
+    paddingTop: 8,
   },
-  statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
-  statLabel: { fontSize: 11 },
-  statDivider: { width: StyleSheet.hairlineWidth, height: '80%', alignSelf: 'center' },
-  description: { fontSize: 14, lineHeight: 22 },
-  expandBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  expandText: { fontSize: 14, fontWeight: '600' },
-  rulesCard: {
-    borderRadius: 16, borderWidth: StyleSheet.hairlineWidth,
-    padding: 14, gap: 10,
+  hostAnchor: {
+    paddingTop: 4,
   },
-  ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  ruleText: { fontSize: 13, lineHeight: 19, flex: 1 },
-  ruleToggle: { fontSize: 13, fontWeight: '600', marginTop: 4 },
-  checkInCard: {
-    flexDirection: 'row', borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 16,
+  thingsAnchor: {
+    paddingTop: 4,
+    paddingBottom: 24,
   },
-  checkItem: { flex: 1, alignItems: 'center', gap: 4 },
-  checkLabel: { fontSize: 11 },
-  checkValue: { fontSize: 15, fontWeight: '700' },
-  checkDivider: { width: StyleSheet.hairlineWidth, height: '80%', alignSelf: 'center' },
-  caretakerCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 14,
-  },
-  caretakerAvatar: {
-    width: 48, height: 48, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  caretakerInitial: { fontSize: 16, fontWeight: '800' },
-  caretakerInfo: { flex: 1 },
-  caretakerName: { fontSize: 15, fontWeight: '700' },
-  caretakerRole: { fontSize: 12, marginTop: 2 },
-  callBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7,
-  },
-  callBtnText: { color: '#2E7D32', fontSize: 13, fontWeight: '700' },
-  securityCard: {
-    borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 10,
-  },
-  secRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  secLabel: { flex: 1, fontSize: 13 },
-  secValue: { fontSize: 14, fontWeight: '700' },
-  secDivider: { height: StyleSheet.hairlineWidth },
-  seeAllReviews: { fontSize: 14, fontWeight: '600' },
-  bookingBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 12, paddingBottom: 24,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1, shadowRadius: 12, elevation: 10,
-  },
-  bookingBarLeft: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
-  bookingPrice: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
-  bookingPriceLabel: { fontSize: 14 },
-  bookingBtn: {
-    borderRadius: 16,
-    paddingHorizontal: 28, paddingVertical: 14,
-  },
-  bookingBtnText: { fontSize: 16, fontWeight: '800' },
 });

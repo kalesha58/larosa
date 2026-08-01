@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import {
   Wifi, Waves, Wind, Tv, UtensilsCrossed, Car, Dumbbell, Flame,
-  Droplets, Trees, Mountain, Eye, Coffee, Star, ChefHat,
+  Droplets, Trees, Mountain, Eye, Coffee, Star, ChefHat, Laptop,
+  ShieldAlert, Camera, ArrowUpFromLine,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 
@@ -22,8 +23,10 @@ const AMENITY_ICON_MAP: Record<string, React.ElementType> = {
   'Heated Infinity Pool': Waves,
   'Air Conditioning': Wind,
   'Smart TV': Tv,
+  '75-inch TV': Tv,
   'Kitchen': UtensilsCrossed,
   'Free Parking': Car,
+  'Free parking on premises': Car,
   'Gym': Dumbbell,
   'Bonfire': Flame,
   'Bonfire Pit': Flame,
@@ -44,6 +47,12 @@ const AMENITY_ICON_MAP: Record<string, React.ElementType> = {
   'Chef on Demand': ChefHat,
   'Resident Cook': ChefHat,
   'Butler Service': Star,
+  'Dedicated workspace': Laptop,
+  'Washing machine': Droplets,
+  'Lift': ArrowUpFromLine,
+  'Exterior security cameras on property': Camera,
+  'Carbon monoxide alarm': ShieldAlert,
+  'Smoke alarm': ShieldAlert,
 };
 
 const DEFAULT_ICON = Star;
@@ -52,7 +61,7 @@ export default function AmenitiesGrid({
   amenities,
   showAll = false,
   onToggleShowAll,
-  maxVisible = 6,
+  maxVisible = 10,
 }: AmenitiesGridProps) {
   const { theme } = useTheme();
   const displayed = showAll ? amenities : amenities.slice(0, maxVisible);
@@ -60,18 +69,14 @@ export default function AmenitiesGrid({
 
   return (
     <View style={styles.container}>
+      <Text style={[styles.heading, { color: theme.text }]}>What this place offers</Text>
       <View style={styles.grid}>
         {displayed.map((amenity) => {
           const Icon = AMENITY_ICON_MAP[amenity] || DEFAULT_ICON;
           return (
-            <View
-              key={amenity}
-              style={[styles.item, { backgroundColor: theme.surface, borderColor: theme.border }]}
-            >
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(201,161,74,0.12)' }]}>
-                <Icon size={18} color="#C9A14A" />
-              </View>
-              <Text style={[styles.label, { color: theme.textSecondary }]} numberOfLines={2}>
+            <View key={amenity} style={styles.item}>
+              <Icon size={22} color={theme.text} strokeWidth={1.6} />
+              <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
                 {amenity}
               </Text>
             </View>
@@ -82,10 +87,14 @@ export default function AmenitiesGrid({
       {hasMore && onToggleShowAll && (
         <Pressable
           onPress={onToggleShowAll}
-          style={({ pressed }) => [styles.toggleBtn, { borderColor: theme.border }, pressed && { opacity: 0.6 }]}
+          style={({ pressed }) => [
+            styles.toggleBtn,
+            { backgroundColor: theme.surfaceElevated, borderColor: theme.border },
+            pressed && { opacity: 0.7 },
+          ]}
         >
-          <Text style={styles.toggleText}>
-            {showAll ? 'Show fewer amenities ↑' : `Show all ${amenities.length} amenities ↓`}
+          <Text style={[styles.toggleText, { color: theme.text }]}>
+            {showAll ? 'Show less' : `Show all ${amenities.length} amenities`}
           </Text>
         </Pressable>
       )}
@@ -94,45 +103,36 @@ export default function AmenitiesGrid({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 14,
-  },
+  container: { gap: 20 },
+  heading: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    rowGap: 18,
   },
   item: {
-    width: '47%',
+    width: '50%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 14,
-    padding: 12,
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
+    paddingRight: 12,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '400',
     flex: 1,
-    lineHeight: 17,
+    lineHeight: 20,
   },
   toggleBtn: {
-    borderWidth: StyleSheet.hairlineWidth,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    marginTop: 4,
   },
   toggleText: {
-    color: '#C9A14A',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

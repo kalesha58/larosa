@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, Pressable, ScrollView, Modal, StyleSheet,
+  View, Text, Pressable, ScrollView, Modal, StyleSheet, Platform,
 } from 'react-native';
 import { X, SlidersHorizontal, CheckCircle } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
@@ -206,16 +206,22 @@ export default function FilterSheet({ visible, onClose, filters, onApply }: Filt
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'flex-start' : 'flex-end',
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+    paddingTop: Platform.OS === 'web' ? 50 : 0,
   },
   backdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '90%',
+    borderBottomLeftRadius: Platform.OS === 'web' ? 24 : 0,
+    borderBottomRightRadius: Platform.OS === 'web' ? 24 : 0,
+    width: Platform.OS === 'web' ? '90%' : '100%',
+    maxWidth: Platform.OS === 'web' ? 620 : undefined,
+    maxHeight: Platform.OS === 'web' ? '85%' : '90%',
     paddingTop: 12,
   },
   handle: {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, TextInput,
+  View, Text, ScrollView, Pressable, StyleSheet, TextInput, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import GuestCounter from '../../components/customer/GuestCounter';
 import BedroomCounter from '../../components/customer/BedroomCounter';
 import BookingSummary from '../../components/customer/BookingSummary';
 import PriceSummary from '../../components/customer/PriceSummary';
+import WebHeader from '../../components/WebHeader';
 import { formatMoney } from '../../lib/format';
 
 type Step = 'dates' | 'guests' | 'purpose' | 'summary';
@@ -34,14 +35,15 @@ export default function BookingFlowScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { propertyId } = route.params ?? {};
+  const { propertyId, checkIn: initialCheckIn, checkOut: initialCheckOut, guests: initialGuests } = route.params ?? {};
 
+  const isWeb = Platform.OS === 'web';
   const property = properties.find((p) => p.id === propertyId) ?? properties[0];
 
   const [step, setStep] = useState<Step>('dates');
-  const [checkIn, setCheckIn] = useState<string | null>(null);
-  const [checkOut, setCheckOut] = useState<string | null>(null);
-  const [adults, setAdults] = useState(2);
+  const [checkIn, setCheckIn] = useState<string | null>(initialCheckIn ?? null);
+  const [checkOut, setCheckOut] = useState<string | null>(initialCheckOut ?? null);
+  const [adults, setAdults] = useState(typeof initialGuests === 'number' && initialGuests > 0 ? initialGuests : 2);
   const [children, setChildren] = useState(0);
   const [bedrooms, setBedrooms] = useState(property.bedrooms);
   const [purpose, setPurpose] = useState('');
@@ -112,8 +114,10 @@ export default function BookingFlowScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+      {isWeb && <WebHeader />}
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isWeb && styles.webWrap]}>
         <Pressable onPress={goBack} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
           <ArrowLeft size={24} color={theme.text} />
         </Pressable>
@@ -129,7 +133,7 @@ export default function BookingFlowScreen() {
       </View>
 
       {/* Progress bar */}
-      <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
+      <View style={[styles.progressBar, { backgroundColor: theme.border }, isWeb && styles.webWrap]}>
         <View
           style={[
             styles.progressFill,
@@ -139,7 +143,7 @@ export default function BookingFlowScreen() {
       </View>
 
       {/* Step indicator */}
-      <View style={styles.stepIndicators}>
+      <View style={[styles.stepIndicators, isWeb && styles.webWrap]}>
         {STEPS.map((s, i) => (
           <View key={s} style={styles.stepIndicatorItem}>
             <View style={[
@@ -163,7 +167,7 @@ export default function BookingFlowScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, isWeb && styles.webWrap]}>
         {/* Step: Dates */}
         {step === 'dates' && (
           <View style={styles.stepContent}>
@@ -425,4 +429,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ctaBtnText: { fontSize: 16, fontWeight: '800' },
+  webWrap: {
+    maxWidth: 1280,
+    width: '100%',
+    alignSelf: 'center',
+  },
 });
