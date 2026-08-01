@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet,
+  View, Text, ScrollView, Pressable, StyleSheet, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { Heart, SlidersHorizontal } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 import { properties } from '../../lib/mockData';
 import PropertyCard from '../../components/customer/PropertyCard';
+import WebHeader from '../../components/WebHeader';
 import { EmptyState } from '../../components/ui';
 
 const INITIAL_FAVORITES = ['prop_1', 'prop_4'];
@@ -15,8 +16,26 @@ const INITIAL_FAVORITES = ['prop_1', 'prop_4'];
 export default function CFavoritesScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
   const [favorites, setFavorites] = useState<string[]>(INITIAL_FAVORITES);
   const [sortBy, setSortBy] = useState<'recent' | 'price_low' | 'price_high' | 'rating'>('recent');
+
+  const isWeb = Platform.OS === 'web';
+
+  const getWebCardStyle = () => {
+    if (!isWeb) return undefined;
+    const padding = width < 640 ? 32 : 48;
+    const containerWidth = Math.min(width, 1280) - padding;
+    if (width < 640) {
+      return { width: '100%' };
+    } else if (width < 960) {
+      return { width: Math.floor((containerWidth - 20) / 2) };
+    } else if (width < 1280) {
+      return { width: Math.floor((containerWidth - 40) / 3) };
+    } else {
+      return { width: Math.floor((containerWidth - 60) / 4) };
+    }
+  };
 
   const favoritedProperties = properties.filter((p) => favorites.includes(p.id));
 
@@ -42,10 +61,12 @@ export default function CFavoritesScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+      {isWeb && <WebHeader />}
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isWeb && styles.webHeaderWrap]}>
         <View>
-          <Text style={[styles.title, { color: theme.text }]}>Favorites</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Saved Villas & Estates</Text>
           <Text style={[styles.subtitle, { color: theme.textMuted }]}>
             {favorites.length} {favorites.length === 1 ? 'property' : 'properties'} saved
           </Text>
@@ -57,39 +78,47 @@ export default function CFavoritesScreen() {
 
       {/* Sort chips */}
       {favorites.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.sortRow}
-        >
-          <SlidersHorizontal size={15} color={theme.textMuted} style={{ marginTop: 2 }} />
-          {SORT_OPTIONS.map((opt) => (
-            <Pressable
-              key={opt.key}
-              onPress={() => setSortBy(opt.key)}
-              style={({ pressed }) => [
-                styles.sortChip,
-                {
-                  backgroundColor: sortBy === opt.key ? theme.gold : theme.surface,
-                  borderColor: sortBy === opt.key ? theme.gold : theme.border,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={[
-                styles.sortChipText,
-                { color: sortBy === opt.key ? theme.textInverse : theme.textSecondary },
-              ]}>
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <View style={{ height: 48, flexShrink: 0, marginBottom: 8 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.sortRow, isWeb && styles.webHeaderWrap]}
+          >
+            <View style={[styles.filterIconCircle, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <SlidersHorizontal size={14} color={theme.textMuted} />
+            </View>
+            {SORT_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                onPress={() => setSortBy(opt.key)}
+                style={({ pressed }) => [
+                  styles.sortChip,
+                  {
+                    backgroundColor: sortBy === opt.key ? theme.gold : theme.surface,
+                    borderColor: sortBy === opt.key ? theme.gold : theme.border,
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={[
+                  styles.sortChipText,
+                  { color: sortBy === opt.key ? theme.textInverse : theme.textSecondary },
+                ]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
       )}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, favorites.length === 0 && styles.emptyCenterScroll]}
+        contentContainerStyle={[
+          styles.scroll,
+          isWeb && styles.webScroll,
+          favorites.length === 0 && styles.emptyCenterScroll,
+        ]}
       >
         {favorites.length === 0 ? (
           <EmptyState
@@ -98,11 +127,12 @@ export default function CFavoritesScreen() {
             subtitle="Tap the ♡ on any property to save it here for quick access."
           />
         ) : (
-          <View style={styles.list}>
+          <View style={isWeb ? styles.webListGrid : styles.list}>
             {sorted.map((property) => (
               <PropertyCard
                 key={property.id}
                 property={property}
+                style={getWebCardStyle()}
                 onPress={() => navigation.navigate('PropertyDetail', { propertyId: property.id })}
                 isFavorited={favorites.includes(property.id)}
                 onFavoriteToggle={() => toggleFavorite(property.id)}
@@ -121,6 +151,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12,
   },
+  webHeaderWrap: {
+    maxWidth: 1280,
+    width: '100%',
+    alignSelf: 'center',
+  },
   title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   subtitle: { fontSize: 14, marginTop: 2 },
   headerRight: {
@@ -128,16 +163,49 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center', justifyContent: 'center',
   },
+  filterIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 2,
+  },
   sortRow: {
-    paddingHorizontal: 20, gap: 8, paddingBottom: 12,
-    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20,
+    gap: 8,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   sortChip: {
-    paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
-  sortChipText: { fontSize: 13, fontWeight: '600' },
+  sortChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
   scroll: { paddingBottom: 100 },
+  webScroll: {
+    maxWidth: 1280,
+    width: '100%',
+    alignSelf: 'center',
+  },
   emptyCenterScroll: { flexGrow: 1 },
   list: { paddingHorizontal: 20 },
+  webListGrid: {
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+  },
 });

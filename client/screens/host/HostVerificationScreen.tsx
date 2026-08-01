@@ -1,21 +1,13 @@
-import { LinearGradient } from '../../components/LinearGradient';
 import { useNavigation } from '@react-navigation/native';
 import {
-  CheckCircle,
-  Circle,
   UploadCloud,
   ShieldCheck,
-  Building,
-  CreditCard,
   FileText,
   Check,
-  AlertCircle,
   Smartphone,
   Mail,
-  User,
-  ArrowRight,
-  ArrowLeft,
   LogOut,
+  Sparkles,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -27,7 +19,9 @@ import {
   TextInput,
   View,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { useAuth } from '../../lib/auth-context';
 import { useData } from '../../lib/data-context';
@@ -41,6 +35,9 @@ export default function HostVerificationScreen() {
   const navigation = useNavigation<any>();
   const { user, updateUser, logout } = useAuth();
   const { submitHostVerification, approveHost } = useData();
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isWide = isWeb && width >= 768;
 
   const [currentStep, setCurrentStep] = useState<Step>(
     user?.hostVerificationStatus === 'pending' ? 'pending' : 'contact'
@@ -172,64 +169,71 @@ export default function HostVerificationScreen() {
 
     if (currentStep === 'pending') return null;
 
-    return (
-      <View style={styles.progressContainer}>
-        {steps.map((s, idx) => {
-          const isActive = currentStep === s.key;
-          const isDone =
-            (currentStep === 'govId' && idx < 1) ||
-            (currentStep === 'bank' && idx < 2) ||
-            (currentStep === 'property' && idx < 3);
+    const activeIdx = steps.findIndex((s) => s.key === currentStep);
 
-          return (
-            <React.Fragment key={s.key}>
-              <View style={styles.stepItem}>
-                <View
-                  style={[
-                    styles.stepCircle,
-                    {
-                      backgroundColor: isDone
-                        ? theme.green
-                        : isActive
-                        ? theme.gold
-                        : theme.surfaceElevated,
-                      borderColor: isActive || isDone ? 'transparent' : theme.border,
-                    },
-                  ]}
-                >
-                  {isDone ? (
-                    <Check color={theme.bg} size={14} strokeWidth={3} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.stepNumber,
-                        { color: isActive ? '#111111' : theme.textMuted },
-                      ]}
-                    >
-                      {idx + 1}
-                    </Text>
-                  )}
+    return (
+      <View style={[styles.progressCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.progressContainer}>
+          {steps.map((s, idx) => {
+            const isActive = currentStep === s.key;
+            const isDone = activeIdx > idx;
+
+            return (
+              <React.Fragment key={s.key}>
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepCircle,
+                      {
+                        backgroundColor: isDone
+                          ? theme.green
+                          : isActive
+                          ? theme.gold
+                          : theme.surfaceElevated,
+                        borderColor: isActive || isDone ? 'transparent' : theme.border,
+                      },
+                    ]}
+                  >
+                    {isDone ? (
+                      <Check color={theme.textInverse} size={14} strokeWidth={3} />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.stepNumber,
+                          { color: isActive ? theme.textInverse : theme.textMuted },
+                        ]}
+                      >
+                        {idx + 1}
+                      </Text>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      {
+                        color: isActive ? theme.text : theme.textMuted,
+                        fontWeight: isActive ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {s.label}
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.stepLabel,
-                    { color: isActive ? theme.gold : theme.textSecondary },
-                  ]}
-                >
-                  {s.label}
-                </Text>
-              </View>
-              {idx < steps.length - 1 && (
-                <View
-                  style={[
-                    styles.stepLine,
-                    { backgroundColor: isDone ? theme.green : theme.border },
-                  ]}
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
+                {idx < steps.length - 1 && (
+                  <View
+                    style={[
+                      styles.stepLine,
+                      { backgroundColor: isDone ? theme.green : theme.border },
+                    ]}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </View>
+        <Text style={[styles.progressHint, { color: theme.textMuted }]}>
+          Step {activeIdx + 1} of {steps.length}
+        </Text>
       </View>
     );
   };
@@ -240,89 +244,115 @@ export default function HostVerificationScreen() {
   };
 
   return (
-    <LinearGradient colors={[theme.bg, '#15110A']} style={{ flex: 1 }}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}
+          contentContainerStyle={[
+            styles.scroll,
+            isWide && styles.scrollWide,
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
-                Onboarding
-              </Text>
-              <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', marginTop: 4 }}>
-                Host Verification
-              </Text>
+          <View style={[styles.shell, isWide && styles.shellWide]}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <View style={[styles.brandPill, { backgroundColor: theme.goldGlow }]}>
+                  <Sparkles size={12} color={theme.gold} />
+                  <Text style={[styles.brandPillText, { color: theme.gold }]}>Host onboarding</Text>
+                </View>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>
+                  Host Verification
+                </Text>
+                <Text style={[styles.headerSub, { color: theme.textSecondary }]}>
+                  A few quick steps so guests can trust your listings.
+                </Text>
+              </View>
+              <Pressable
+                onPress={handleLogout}
+                style={({ pressed }) => [
+                  styles.logoutBtn,
+                  { borderColor: theme.border, backgroundColor: theme.surface },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <LogOut size={15} color={theme.textMuted} />
+                <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: '600' }}>Exit</Text>
+              </Pressable>
             </View>
-            <Pressable
-              onPress={handleLogout}
-              style={[styles.logoutBtn, { borderColor: theme.border }]}
-            >
-              <LogOut size={16} color={theme.red} />
-              <Text style={{ color: theme.red, fontSize: 13, fontWeight: '600' }}>Exit</Text>
-            </Pressable>
-          </View>
 
-          {renderProgress()}
+            {renderProgress()}
 
           {/* ──────────────── STEP 1: CONTACT VERIFICATION ──────────────── */}
           {currentStep === 'contact' && (
             <View style={styles.stepContent}>
               <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
-                Let's secure your account by verifying your email and phone number.
+                Verify your email and phone so we can secure your host account.
               </Text>
 
               {/* Email Card */}
-              <Card style={styles.verifCard}>
+              <Card elevated style={styles.verifCard}>
                 <View style={styles.verifHeader}>
-                  <Mail color={emailVerified ? theme.green : theme.gold} size={22} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={{ color: theme.text, fontSize: 16, fontWeight: '700' }}>Email Address</Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2 }}>{user?.email}</Text>
+                  <View style={[styles.iconBubble, { backgroundColor: emailVerified ? theme.greenSoft : theme.goldGlow }]}>
+                    <Mail color={emailVerified ? theme.green : theme.gold} size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.verifTitle, { color: theme.text }]}>Email Address</Text>
+                    <Text style={[styles.verifValue, { color: theme.textSecondary }]}>{user?.email}</Text>
                   </View>
                   {emailVerified && (
                     <View style={[styles.badge, { backgroundColor: theme.greenSoft }]}>
                       <Check color={theme.green} size={12} strokeWidth={3} />
-                      <Text style={{ color: theme.green, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>VERIFIED</Text>
+                      <Text style={{ color: theme.green, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>Verified</Text>
                     </View>
                   )}
                 </View>
 
                 {!emailVerified && (
-                  <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: theme.borderSoft, paddingTop: 14 }}>
+                  <View style={[styles.verifBody, { borderTopColor: theme.borderSoft }]}>
                     {!emailCodeSent ? (
-                      <SecondaryButton
-                        label="Send Verification Code"
+                      <Pressable
                         onPress={() => setEmailCodeSent(true)}
-                      />
+                        style={({ pressed }) => [
+                          styles.sendBtn,
+                          { backgroundColor: theme.gold },
+                          pressed && { opacity: 0.88 },
+                        ]}
+                      >
+                        <Text style={[styles.sendBtnText, { color: theme.textInverse }]}>
+                          Send verification code
+                        </Text>
+                      </Pressable>
                     ) : (
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Enter the 6-digit code sent to your email:</Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                          Enter the 6-digit code we sent to your email. Use <Text style={{ fontWeight: '700', color: theme.text }}>123456</Text> in demo.
+                        </Text>
                         <View style={styles.otpRow}>
                           <TextInput
                             value={emailCode}
                             onChangeText={setEmailCode}
-                            placeholder="Enter Code (e.g. 123456)"
+                            placeholder="6-digit code"
                             placeholderTextColor={theme.textMuted}
                             keyboardType="number-pad"
                             maxLength={6}
-                            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+                            style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
                           />
                           <Pressable
                             onPress={handleVerifyEmail}
                             style={[styles.verifyCodeBtn, { backgroundColor: theme.gold }]}
                           >
-                            <Text style={{ color: '#111', fontWeight: '700' }}>Verify</Text>
+                            <Text style={{ color: theme.textInverse, fontWeight: '700' }}>Verify</Text>
                           </Pressable>
                         </View>
                         <Pressable onPress={() => setEmailCodeSent(false)}>
-                          <Text style={{ color: theme.textMuted, fontSize: 12, textAlign: 'center' }}>Cancel</Text>
+                          <Text style={{ color: theme.textMuted, fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
+                            Cancel
+                          </Text>
                         </Pressable>
                       </View>
                     )}
@@ -331,52 +361,66 @@ export default function HostVerificationScreen() {
               </Card>
 
               {/* Phone Card */}
-              <Card style={styles.verifCard}>
+              <Card elevated style={styles.verifCard}>
                 <View style={styles.verifHeader}>
-                  <Smartphone color={phoneVerified ? theme.green : theme.gold} size={22} />
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={{ color: theme.text, fontSize: 16, fontWeight: '700' }}>Phone Number</Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2 }}>
+                  <View style={[styles.iconBubble, { backgroundColor: phoneVerified ? theme.greenSoft : theme.goldGlow }]}>
+                    <Smartphone color={phoneVerified ? theme.green : theme.gold} size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.verifTitle, { color: theme.text }]}>Phone Number</Text>
+                    <Text style={[styles.verifValue, { color: theme.textSecondary }]}>
                       {user?.phone || 'Not provided'}
                     </Text>
                   </View>
                   {phoneVerified && (
                     <View style={[styles.badge, { backgroundColor: theme.greenSoft }]}>
                       <Check color={theme.green} size={12} strokeWidth={3} />
-                      <Text style={{ color: theme.green, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>VERIFIED</Text>
+                      <Text style={{ color: theme.green, fontSize: 11, fontWeight: '700', marginLeft: 4 }}>Verified</Text>
                     </View>
                   )}
                 </View>
 
                 {!phoneVerified && (
-                  <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: theme.borderSoft, paddingTop: 14 }}>
+                  <View style={[styles.verifBody, { borderTopColor: theme.borderSoft }]}>
                     {!phoneCodeSent ? (
-                      <SecondaryButton
-                        label="Send Phone OTP"
+                      <Pressable
                         onPress={() => setPhoneCodeSent(true)}
-                      />
+                        style={({ pressed }) => [
+                          styles.sendBtn,
+                          { backgroundColor: theme.gold },
+                          pressed && { opacity: 0.88 },
+                        ]}
+                      >
+                        <Text style={[styles.sendBtnText, { color: theme.textInverse }]}>
+                          Send phone OTP
+                        </Text>
+                      </Pressable>
                     ) : (
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Enter the OTP sent to your phone number:</Text>
+                        <Text style={{ color: theme.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                          Enter the OTP sent to your phone. Use <Text style={{ fontWeight: '700', color: theme.text }}>123456</Text> in demo.
+                        </Text>
                         <View style={styles.otpRow}>
                           <TextInput
                             value={phoneCode}
                             onChangeText={setPhoneCode}
-                            placeholder="Enter OTP (e.g. 123456)"
+                            placeholder="6-digit OTP"
                             placeholderTextColor={theme.textMuted}
                             keyboardType="number-pad"
                             maxLength={6}
-                            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+                            style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.bg }]}
                           />
                           <Pressable
                             onPress={handleVerifyPhone}
                             style={[styles.verifyCodeBtn, { backgroundColor: theme.gold }]}
                           >
-                            <Text style={{ color: '#111', fontWeight: '700' }}>Verify</Text>
+                            <Text style={{ color: theme.textInverse, fontWeight: '700' }}>Verify</Text>
                           </Pressable>
                         </View>
                         <Pressable onPress={() => setPhoneCodeSent(false)}>
-                          <Text style={{ color: theme.textMuted, fontSize: 12, textAlign: 'center' }}>Cancel</Text>
+                          <Text style={{ color: theme.textMuted, fontSize: 13, textAlign: 'center', fontWeight: '600' }}>
+                            Cancel
+                          </Text>
                         </Pressable>
                       </View>
                     )}
@@ -388,7 +432,7 @@ export default function HostVerificationScreen() {
                 label="Continue"
                 onPress={handleNextStep}
                 disabled={!emailVerified || !phoneVerified}
-                style={{ marginTop: 24 }}
+                style={{ marginTop: 8 }}
               />
             </View>
           )}
@@ -400,10 +444,10 @@ export default function HostVerificationScreen() {
                 Upload a government-issued photo identity proof (Aadhar, PAN, or Passport).
               </Text>
 
-              <Card style={{ gap: 16 }}>
+              <Card elevated style={{ gap: 16, padding: 18 }}>
                 <View>
                   <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Document Type</Text>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={styles.chipWrap}>
                     {['Aadhar Card', 'PAN Card', 'Passport'].map((type) => (
                       <Pressable
                         key={type}
@@ -411,7 +455,7 @@ export default function HostVerificationScreen() {
                         style={[
                           styles.chipTab,
                           {
-                            backgroundColor: idType === type ? theme.gold + '22' : theme.bg,
+                            backgroundColor: idType === type ? theme.goldGlow : theme.bg,
                             borderColor: idType === type ? theme.gold : theme.border,
                           },
                         ]}
@@ -481,7 +525,7 @@ export default function HostVerificationScreen() {
                 Provide bank account details for security deposit routing and booking payouts.
               </Text>
 
-              <Card style={{ gap: 16 }}>
+              <Card elevated style={{ gap: 16, padding: 18 }}>
                 <View>
                   <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Account Holder Name</Text>
                   <TextInput
@@ -545,7 +589,7 @@ export default function HostVerificationScreen() {
                 Provide documents demonstrating ownership or authorization to lease property.
               </Text>
 
-              <Card style={{ gap: 16 }}>
+              <Card elevated style={{ gap: 16, padding: 18 }}>
                 {/* Proof 1: Ownership */}
                 <View>
                   <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Ownership Deed or permission authorization letter</Text>
@@ -608,98 +652,157 @@ export default function HostVerificationScreen() {
 
           {/* ──────────────── STEP 5: PENDING ADMIN APPROVAL ──────────────── */}
           {currentStep === 'pending' && (
-            <View style={[styles.stepContent, { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }]}>
-              <View style={[styles.largeIconBox, { backgroundColor: theme.gold + '15', borderColor: theme.gold }]}>
-                <ShieldCheck color={theme.gold} size={48} />
+            <View style={[styles.stepContent, styles.pendingWrap]}>
+              <View style={[styles.largeIconBox, { backgroundColor: theme.goldGlow, borderColor: theme.gold }]}>
+                <ShieldCheck color={theme.gold} size={44} />
               </View>
 
-              <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', textAlign: 'center', marginTop: 24 }}>
-                Under Admin Review
-              </Text>
-              
-              <Text style={{ color: theme.textSecondary, fontSize: 15, textAlign: 'center', marginTop: 12, lineHeight: 22, maxWidth: 300 }}>
-                Your documents have been submitted successfully. Admin review and approval is required before your listings go live. This usually takes 24 hours.
+              <Text style={[styles.pendingTitle, { color: theme.text }]}>
+                Under admin review
               </Text>
 
-              {/* Details card */}
-              <Card style={{ width: '100%', marginTop: 32, gap: 14 }}>
-                <Text style={{ color: theme.text, fontWeight: '700', fontSize: 15, borderBottomWidth: 1, borderBottomColor: theme.borderSoft, paddingBottom: 10 }}>
-                  Verification Overview
+              <Text style={[styles.pendingBody, { color: theme.textSecondary }]}>
+                Your documents were submitted successfully. Approvals usually take about 24 hours before listings can go live.
+              </Text>
+
+              <Card elevated style={{ width: '100%', marginTop: 8, gap: 14, padding: 18 }}>
+                <Text style={{ color: theme.text, fontWeight: '700', fontSize: 15, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.borderSoft, paddingBottom: 10 }}>
+                  Verification overview
                 </Text>
-                
+
                 <View style={styles.statusRow}>
                   <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Email & Phone</Text>
-                  <Text style={{ color: theme.green, fontSize: 13, fontWeight: '700' }}>✓ Verified</Text>
+                  <Text style={{ color: theme.green, fontSize: 13, fontWeight: '700' }}>Verified</Text>
                 </View>
-                
+
                 <View style={styles.statusRow}>
                   <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Government ID</Text>
-                  <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600' }}>⌛ Pending Review</Text>
+                  <Text style={{ color: theme.amber, fontSize: 13, fontWeight: '600' }}>Pending review</Text>
                 </View>
-                
+
                 <View style={styles.statusRow}>
-                  <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Bank account linked</Text>
-                  <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600' }}>⌛ Pending Linkage</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Bank account</Text>
+                  <Text style={{ color: theme.amber, fontSize: 13, fontWeight: '600' }}>Pending</Text>
                 </View>
 
                 <View style={styles.statusRow}>
                   <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Property proofs</Text>
-                  <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600' }}>⌛ Pending Review</Text>
+                  <Text style={{ color: theme.amber, fontSize: 13, fontWeight: '600' }}>Pending review</Text>
                 </View>
               </Card>
 
-              {/* Dev Approver shortcut */}
-              <View style={{ width: '100%', marginTop: 40, gap: 12 }}>
+              <View style={{ width: '100%', marginTop: 24, gap: 12 }}>
                 <PrimaryButton
-                  label="🚀 Admin Auto-Approve (Dev Mode)"
+                  label="Admin auto-approve (dev)"
                   onPress={handleDevApprove}
-                  style={{ backgroundColor: '#2E7D32' }}
                 />
-                
                 <SecondaryButton
-                  label="Log out / Return to Sign In"
+                  label="Log out"
                   onPress={handleLogout}
                 />
               </View>
             </View>
           )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  scrollWide: {
+    paddingHorizontal: 32,
+    paddingTop: 32,
+    alignItems: 'center',
+  },
+  shell: {
+    width: '100%',
+    gap: 0,
+  },
+  shellWide: {
+    maxWidth: 560,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    gap: 16,
+    marginBottom: 20,
+  },
+  headerLeft: {
+    flex: 1,
+    gap: 6,
+  },
+  brandPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginBottom: 4,
+  },
+  brandPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  headerSub: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 2,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 20,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
+  },
+  progressCard: {
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    marginBottom: 24,
+    gap: 12,
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 32,
-    paddingHorizontal: 6,
+  },
+  progressHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   stepItem: {
     alignItems: 'center',
     gap: 6,
+    minWidth: 52,
   },
   stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -710,35 +813,66 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontSize: 11,
-    fontWeight: '600',
   },
   stepLine: {
     flex: 1,
     height: 2,
-    marginHorizontal: 8,
+    marginHorizontal: 4,
     marginTop: -16,
+    borderRadius: 1,
   },
   stepContent: {
-    gap: 16,
+    gap: 14,
   },
   stepDesc: {
     fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 8,
+    lineHeight: 21,
+    marginBottom: 4,
   },
   verifCard: {
-    padding: 14,
+    padding: 16,
+    gap: 0,
   },
   verifHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  iconBubble: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  verifValue: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  verifBody: {
+    marginTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 14,
+  },
+  sendBtn: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  sendBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   otpRow: {
     flexDirection: 'row',
@@ -746,7 +880,7 @@ const styles = StyleSheet.create({
   },
   verifyCodeBtn: {
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -754,7 +888,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 16,
     fontSize: 15,
   },
@@ -763,10 +897,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   chipTab: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -782,7 +921,7 @@ const styles = StyleSheet.create({
   btnRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 12,
   },
   largeIconBox: {
     width: 88,
@@ -791,6 +930,24 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pendingWrap: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  pendingTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginTop: 20,
+    letterSpacing: -0.3,
+  },
+  pendingBody: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 22,
+    maxWidth: 340,
   },
   statusRow: {
     flexDirection: 'row',

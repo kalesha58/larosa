@@ -183,6 +183,24 @@ export interface PropertyAmenity {
   label: string;
 }
 
+export interface SleepingArrangement {
+  id: string;
+  label: string;
+  description: string;
+  image?: string;
+}
+
+export interface HostProfile {
+  name: string;
+  initials: string;
+  isVerified: boolean;
+  responseRate: number;
+  responseTime: string;
+  bioLines: string[];
+  coHostName?: string;
+  coHostInitials?: string;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -217,6 +235,10 @@ export interface Property {
   purposes: string[];
   lat?: number;
   lng?: number;
+  sleepingArrangements?: SleepingArrangement[];
+  hostProfile?: HostProfile;
+  cancellationPolicy?: string;
+  safetyNotes?: string[];
 }
 
 export interface BookingTimelineEvent {

@@ -13,6 +13,7 @@ import { ThemeProvider, useTheme } from './lib/theme-context';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { DataProvider } from './lib/data-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import WebHeader from './components/WebHeader';
 
 // ─── Host Screens ─────────────────────────────────────────
 import HostHomeScreen from './screens/host/HostHomeScreen';
@@ -81,7 +82,7 @@ export type RootStackParamList = {
   // Customer
   CustomerTabs: undefined;
   PropertyDetail: { propertyId: string };
-  BookingFlow: { propertyId: string };
+  BookingFlow: { propertyId: string; checkIn?: string | null; checkOut?: string | null; guests?: number };
   Payment: Record<string, unknown>;
   BookingConfirmation: Record<string, unknown>;
   CBookingDetail: { bookingId: string };
@@ -131,14 +132,17 @@ function AdminTabNavigator() {
     <AdminTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.border,
-          borderTopWidth: 1,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 8,
-        },
+        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
+        tabBarStyle: Platform.OS === 'web'
+          ? { display: 'none' }
+          : {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+              borderTopWidth: 1,
+              height: 64,
+              paddingTop: 8,
+              paddingBottom: 8,
+            },
         tabBarActiveTintColor: theme.gold,
         tabBarInactiveTintColor: theme.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
@@ -195,14 +199,17 @@ function CustomerTabNavigator() {
     <CustomerTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.border,
-          borderTopWidth: 1,
-          height: 70,
-          paddingTop: 8,
-          paddingBottom: 10,
-        },
+        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
+        tabBarStyle: Platform.OS === 'web'
+          ? { display: 'none' }
+          : {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+              borderTopWidth: 1,
+              height: 70,
+              paddingTop: 8,
+              paddingBottom: 10,
+            },
         tabBarActiveTintColor: '#C9A14A',
         tabBarInactiveTintColor: theme.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
@@ -268,14 +275,17 @@ function HostTabNavigator() {
     <HostTab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.border,
-          borderTopWidth: 1,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 8,
-        },
+        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
+        tabBarStyle: Platform.OS === 'web'
+          ? { display: 'none' }
+          : {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+              borderTopWidth: 1,
+              height: 64,
+              paddingTop: 8,
+              paddingBottom: 8,
+            },
         tabBarActiveTintColor: theme.gold,
         tabBarInactiveTintColor: theme.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
@@ -335,7 +345,14 @@ function AppContent() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={getInitialRoute()}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+          // RN-web: stack cards need a bounded height so nested ScrollViews can scroll
+          // (html/body/#root use overflow:hidden in index.html).
+          ...(Platform.OS === 'web'
+            ? { cardStyle: { flex: 1, height: '100%' } }
+            : null),
+        }}
       >
         {/* Auth */}
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -411,7 +428,7 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, height: '100%', width: '100%' },
+  root: { flex: 1, height: '100%', width: '100%', ...(Platform.OS === 'web' ? { overflow: 'hidden' as const } : null) },
 });
 
 export default App;

@@ -1,6 +1,5 @@
-import React from 'react';
 import {
-  View, Text, Image, Pressable, StyleSheet,
+  View, Text, Image, Pressable, StyleSheet, Platform,
 } from 'react-native';
 import { Heart, Star, Users, BedDouble, Zap, Clock } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
@@ -13,6 +12,7 @@ interface PropertyCardProps {
   isFavorited?: boolean;
   onFavoriteToggle?: () => void;
   horizontal?: boolean;
+  style?: any;
 }
 
 export default function PropertyCard({
@@ -21,17 +21,19 @@ export default function PropertyCard({
   isFavorited = false,
   onFavoriteToggle,
   horizontal = false,
+  style,
 }: PropertyCardProps) {
   const { theme } = useTheme();
 
-  const cardWidth = horizontal ? 280 : undefined;
+  const defaultWidth = horizontal ? 280 : undefined;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: theme.surface, borderColor: theme.border, width: cardWidth },
+        { backgroundColor: theme.surface, borderColor: theme.border, width: defaultWidth },
+        style,
         pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] },
       ]}
     >

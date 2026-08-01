@@ -1,7 +1,17 @@
 import { useNavigation } from '@react-navigation/native';
-import { Plus, Search, Users, IndianRupee, MoreVertical, Tag, ShieldAlert } from 'lucide-react-native';
+import { Plus, Search, IndianRupee, MoreVertical, Tag, ShieldAlert } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View, Image, StyleSheet } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  Image,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
@@ -10,6 +20,7 @@ import { useData } from '../../lib/data-context';
 import { Card, Chip, EmptyState } from '../../components/ui';
 import { formatMoney } from '../../lib/format';
 import type { Room } from '../../types';
+import HostWebHeader from '../../components/HostWebHeader';
 
 type Filter = 'all' | 'live' | 'pending' | 'hidden';
 
@@ -18,14 +29,17 @@ export default function HostVillasScreen() {
   const { user } = useAuth();
   const { rooms, deleteRoom, updateRoom } = useData();
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isWide = isWeb && width >= 1024;
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
-  // Scope listing query to host ID or seed rooms (for testing)
+  // Show all rooms tagged for the demo host regardless of logged-in user id.
   const hostRooms = useMemo(() => {
-    return rooms.filter((r) => r.hostId === user?.id || !r.hostId);
-  }, [rooms, user]);
+    return rooms.filter((r) => r.hostId === 'host_demo' || !r.hostId);
+  }, [rooms]);
 
   const filtered = useMemo(() => {
     return hostRooms.filter((r) => {
@@ -89,58 +103,61 @@ export default function HostVillasScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
-          My Farmhouses
-        </Text>
-        <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', marginTop: 4 }}>
-          Listings
-        </Text>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+      {isWeb && <HostWebHeader />}
 
-      {/* Search Bar */}
-      <View style={{ paddingHorizontal: 20, marginBottom: 14 }}>
-        <View style={[styles.searchRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Search color={theme.textMuted} size={20} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search farmhouses…"
-            placeholderTextColor={theme.textMuted}
-            style={{ flex: 1, color: theme.text, fontSize: 15 }}
-          />
+      <View style={[styles.shell, isWide && styles.shellWide]}>
+        <View style={styles.header}>
+          <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
+            My Farmhouses
+          </Text>
+          <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', marginTop: 4 }}>
+            Listings
+          </Text>
         </View>
+
+        <View style={{ marginBottom: 14 }}>
+          <View style={[styles.searchRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Search color={theme.textMuted} size={20} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search farmhouses…"
+              placeholderTextColor={theme.textMuted}
+              style={{ flex: 1, color: theme.text, fontSize: 15 }}
+            />
+          </View>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0, height: 38, marginBottom: 16 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
+        >
+          {([
+            { id: 'all', label: 'All Listings' },
+            { id: 'live', label: 'Live' },
+            { id: 'pending', label: 'Pending Approval' },
+            { id: 'hidden', label: 'Hidden' },
+          ] as { id: Filter; label: string }[]).map((f) => (
+            <Chip
+              key={f.id}
+              label={f.label}
+              selected={filter === f.id}
+              onPress={() => setFilter(f.id)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Filter chips */}
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0, height: 38, marginBottom: 16 }}
-        contentContainerStyle={{ paddingHorizontal: 20, gap: 8, alignItems: 'center' }}
-      >
-        {([
-          { id: 'all', label: 'All Listings' },
-          { id: 'live', label: 'Live' },
-          { id: 'pending', label: 'Pending Approval' },
-          { id: 'hidden', label: 'Hidden' },
-        ] as { id: Filter; label: string }[]).map((f) => (
-          <Chip
-            key={f.id}
-            label={f.label}
-            selected={filter === f.id}
-            onPress={() => setFilter(f.id)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* List */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={isWeb}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+        contentContainerStyle={[
+          styles.listScroll,
+          isWide && styles.listScrollWide,
+        ]}
       >
         {filtered.length === 0 ? (
           <EmptyState
@@ -149,15 +166,17 @@ export default function HostVillasScreen() {
             subtitle="Add a farmhouse or adjust filters to view listings."
           />
         ) : (
-          <View style={{ gap: 14 }}>
+          <View style={[styles.list, isWide && styles.listWide]}>
             {filtered.map((room) => (
               <Pressable
                 key={room.roomId}
                 onPress={() => navigation.navigate('VillaEdit', { roomId: String(room.roomId) })}
-                style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1 }]}
+                style={({ pressed }) => [
+                  isWide && styles.cardWrapWide,
+                  { opacity: pressed ? 0.95 : 1 },
+                ]}
               >
                 <Card style={{ padding: 0, overflow: 'hidden' }}>
-                  {/* Image */}
                   <View style={{ position: 'relative' }}>
                     {room.images && room.images[0] ? (
                       <Image source={{ uri: room.images[0] }} style={{ width: '100%', height: 140 }} resizeMode="cover" />
@@ -166,22 +185,19 @@ export default function HostVillasScreen() {
                         <Tag color={theme.textMuted} size={28} />
                       </View>
                     )}
-                    
-                    {/* Live Badge */}
+
                     {room.approvedByAdmin && room.status === 'active' && (
                       <View style={[styles.badgePosition, { backgroundColor: theme.green }]}>
                         <Text style={styles.badgeText}>LIVE</Text>
                       </View>
                     )}
 
-                    {/* Pending Admin Approval Badge */}
                     {!room.approvedByAdmin && (
                       <View style={[styles.badgePosition, { backgroundColor: theme.amber }]}>
                         <Text style={[styles.badgeText, { color: '#111' }]}>PENDING APPROVAL</Text>
                       </View>
                     )}
 
-                    {/* Hidden Badge */}
                     {room.approvedByAdmin && room.status === 'hidden' && (
                       <View style={[styles.badgePosition, { backgroundColor: theme.textMuted }]}>
                         <Text style={styles.badgeText}>HIDDEN</Text>
@@ -189,7 +205,6 @@ export default function HostVillasScreen() {
                     )}
                   </View>
 
-                  {/* Body info */}
                   <View style={{ padding: 14 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <View style={{ flex: 1 }}>
@@ -210,7 +225,6 @@ export default function HostVillasScreen() {
                       </Pressable>
                     </View>
 
-                    {/* Financial details & Booking type */}
                     <View style={[styles.footerRow, { borderTopColor: theme.borderSoft }]}>
                       <View>
                         <Text style={styles.footerLabel}>Price per Night</Text>
@@ -237,7 +251,6 @@ export default function HostVillasScreen() {
                       </View>
                     </View>
 
-                    {/* Pending admin approval warning banner */}
                     {!room.approvedByAdmin && (
                       <View style={[styles.pendingWarning, { backgroundColor: theme.amberSoft + '22', borderColor: theme.amberSoft }]}>
                         <ShieldAlert color={theme.amber} size={16} />
@@ -254,21 +267,31 @@ export default function HostVillasScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Action Button (FAB) */}
-      <Pressable
-        onPress={() => navigation.navigate('VillaEdit')}
-        style={({ pressed }) => [styles.fab, { backgroundColor: theme.gold }, pressed && { opacity: 0.85 }]}
-      >
-        <Plus color={theme.textInverse} size={22} strokeWidth={2.5} />
-        <Text style={{ color: theme.textInverse, fontSize: 15, fontWeight: '700' }}>Add Farmhouse</Text>
-      </Pressable>
+      {/* FAB — native only; web uses HostWebHeader CTA */}
+      {!isWeb && (
+        <Pressable
+          onPress={() => navigation.navigate('VillaEdit')}
+          style={({ pressed }) => [styles.fab, { backgroundColor: theme.gold }, pressed && { opacity: 0.85 }]}
+        >
+          <Plus color={theme.textInverse} size={22} strokeWidth={2.5} />
+          <Text style={{ color: theme.textInverse, fontSize: 15, fontWeight: '700' }}>Add Farmhouse</Text>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  shell: {
     paddingHorizontal: 20,
+  },
+  shellWide: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+  },
+  header: {
     paddingTop: 12,
     paddingBottom: 16,
   },
@@ -280,6 +303,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 48,
     gap: 10,
+  },
+  listScroll: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  listScrollWide: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 60,
+  },
+  list: {
+    gap: 14,
+  },
+  listWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cardWrapWide: {
+    width: '48.5%',
   },
   badgePosition: {
     position: 'absolute',

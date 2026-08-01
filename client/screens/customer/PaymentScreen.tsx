@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, TextInput, ActivityIndicator,
+  View, Text, ScrollView, Pressable, StyleSheet, TextInput, ActivityIndicator, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { useTheme } from '../../lib/theme-context';
 import BookingSummary from '../../components/customer/BookingSummary';
 import PriceSummary from '../../components/customer/PriceSummary';
 import PaymentCard, { PaymentMethod } from '../../components/customer/PaymentCard';
+import WebHeader from '../../components/WebHeader';
 import { formatMoney } from '../../lib/format';
 
 export default function PaymentScreen() {
@@ -16,6 +17,7 @@ export default function PaymentScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const params = route.params ?? {};
+  const isWeb = Platform.OS === 'web';
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>('upi');
   const [upiId, setUpiId] = useState('');
@@ -63,7 +65,8 @@ export default function PaymentScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
-      <View style={styles.header}>
+      {isWeb && <WebHeader />}
+      <View style={[styles.header, isWeb && styles.webWrap]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
           <ArrowLeft size={24} color={theme.text} />
         </Pressable>
@@ -74,7 +77,7 @@ export default function PaymentScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, isWeb && styles.webWrap]}>
         {/* Booking summary */}
         <BookingSummary
           propertyTitle={params.propertyTitle || 'Aqua Retreat'}
@@ -231,4 +234,9 @@ const styles = StyleSheet.create({
     gap: 8, borderRadius: 16, paddingVertical: 14,
   },
   payBtnText: { fontSize: 16, fontWeight: '800' },
+  webWrap: {
+    maxWidth: 1280,
+    width: '100%',
+    alignSelf: 'center',
+  },
 });

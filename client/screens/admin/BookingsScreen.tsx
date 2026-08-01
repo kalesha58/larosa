@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
-import { Search, SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react-native';
+import { Search, SlidersHorizontal, ChevronDown, ChevronRight, CalendarDays, TrendingUp } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { Card, Chip, EmptyState, SourceChip, StatusBadge } from '../../components/ui';
 import { useData } from '../../lib/data-context';
 import { formatMoney, formatDateRange, getHostLabel, UNASSIGNED_HOST_ID } from '../../lib/format';
 import type { Booking, BookingStatus, BookingSource } from '../../types';
+import AdminWebHeader from '../../components/AdminWebHeader';
 
 type StatusFilter = 'all' | BookingStatus;
 type SourceFilter = 'all' | BookingSource;
@@ -24,10 +25,13 @@ type HostGroup = {
 };
 
 export default function BookingsScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const { bookings, rooms, users } = useData();
   const [query, setQuery] = useState<string>('');
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isWide = isWeb && width >= 1024;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [hostFilter, setHostFilter] = useState<string>('all');
@@ -107,6 +111,11 @@ export default function BookingsScreen() {
       });
   }, [filtered, rooms, users]);
 
+  const totalVillas = useMemo(() => {
+    const ids = new Set(filtered.map((b) => b.roomId));
+    return ids.size;
+  }, [filtered]);
+
   const toggleHost = (key: string) => {
     setCollapsedHosts((prev) => {
       const next = new Set(prev);
@@ -128,33 +137,64 @@ export default function BookingsScreen() {
     });
   };
 
+  const statusBorderColor = (status: BookingStatus) => {
+    if (status === 'confirmed') return theme.green;
+    if (status === 'cancelled') return theme.red;
+    return theme.amber;
+  };
+
+  const outerPad = { paddingHorizontal: 20 };
+  const widePad = isWide ? { maxWidth: 1120, width: '100%' as const, alignSelf: 'center' as const, paddingHorizontal: 32 } : outerPad;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-        <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600', letterSpacing: 3, textTransform: 'uppercase' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+      {isWeb && <AdminWebHeader />}
+
+      {/* ── Page Header ─────────────────────────────────── */}
+      <View style={[{ paddingTop: 20, paddingBottom: 8 }, widePad]}>
+        <Text style={{ color: theme.gold, fontSize: 11, fontWeight: '700', letterSpacing: 3.5, textTransform: 'uppercase', marginBottom: 4 }}>
           Reservations
         </Text>
-        <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 4 }}>
-          Bookings
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={{ color: theme.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.8 }}>
+            Bookings
+          </Text>
+          {/* Summary pill */}
+          {filtered.length > 0 && (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: theme.gold + '18',
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: theme.gold + '30',
+              paddingHorizontal: 14,
+              paddingVertical: 7,
+            }}>
+              <TrendingUp size={13} color={theme.gold} />
+              <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700' }}>
+                {filtered.length} · {totalVillas} villa{totalVillas !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
-      {/* Search */}
-      <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: theme.surface,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: theme.border,
-            paddingHorizontal: 16,
-            height: 48,
-            gap: 10,
-          }}
-        >
-          <Search color={theme.textMuted} size={20} />
+      {/* ── Search ──────────────────────────────────────── */}
+      <View style={[{ marginBottom: 14 }, widePad]}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: theme.surface,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: theme.border,
+          paddingHorizontal: 16,
+          height: 48,
+          gap: 10,
+        }}>
+          <Search color={theme.textMuted} size={18} />
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -165,102 +205,103 @@ export default function BookingsScreen() {
         </View>
       </View>
 
-      {/* Filters */}
-      <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-        <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 }}>Host</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, height: 38, marginBottom: 12 }}
-          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
-        >
-          <Chip label="All hosts" selected={hostFilter === 'all'} onPress={() => setHostFilter('all')} />
-          {hostOptions.map((h) => (
-            <Chip
-              key={h.id}
-              label={h.label}
-              selected={hostFilter === h.id}
-              onPress={() => setHostFilter(h.id)}
-            />
-          ))}
-        </ScrollView>
-
-        <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 }}>Status</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, height: 38, marginBottom: 12 }}
-          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
-        >
+      {/* ── Filters ─────────────────────────────────────── */}
+      <View style={[{ marginBottom: 16 }, widePad]}>
+        {/* Row 1: Status + Source combined */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+          <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginRight: 2 }}>Status</Text>
           {([
             { id: 'all', label: 'All' },
-            { id: 'confirmed', label: 'Confirmed' },
-            { id: 'pending', label: 'Pending' },
-            { id: 'cancelled', label: 'Cancelled' },
-          ] as { id: StatusFilter; label: string }[]).map((f) => (
+            { id: 'confirmed', label: 'Confirmed', color: theme.green },
+            { id: 'pending', label: 'Pending', color: theme.amber },
+            { id: 'cancelled', label: 'Cancelled', color: theme.red },
+          ] as { id: StatusFilter; label: string; color?: string }[]).map((f) => (
             <Chip
               key={f.id}
               label={f.label}
               selected={statusFilter === f.id}
               onPress={() => setStatusFilter(f.id)}
-              color={f.id === 'confirmed' ? theme.green : f.id === 'pending' ? theme.gold : f.id === 'cancelled' ? theme.red : theme.gold}
+              color={f.color ?? theme.gold}
             />
           ))}
-        </ScrollView>
-        <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 }}>Source</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, height: 38, marginBottom: 12 }}
-          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
-        >
+        </View>
+
+        {/* Row 2: Source */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+          <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginRight: 2 }}>Source</Text>
           {([
             { id: 'all', label: 'All' },
-            { id: 'website', label: 'Website' },
-            { id: 'airbnb', label: 'Airbnb' },
-            { id: 'manual', label: 'Manual' },
-          ] as { id: SourceFilter; label: string }[]).map((f) => (
+            { id: 'website', label: 'Website', color: theme.blue },
+            { id: 'airbnb', label: 'Airbnb', color: theme.red },
+            { id: 'manual', label: 'Manual', color: theme.purple },
+          ] as { id: SourceFilter; label: string; color?: string }[]).map((f) => (
             <Chip
               key={f.id}
               label={f.label}
               selected={sourceFilter === f.id}
               onPress={() => setSourceFilter(f.id)}
-              color={f.id === 'website' ? theme.blue : f.id === 'airbnb' ? theme.red : f.id === 'manual' ? theme.gold : theme.gold}
+              color={f.color ?? theme.gold}
             />
           ))}
-        </ScrollView>
+        </View>
+
+        {/* Row 3: Host (only if multiple hosts) */}
+        {hostOptions.length > 1 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginRight: 2 }}>Host</Text>
+            <Chip label="All hosts" selected={hostFilter === 'all'} onPress={() => setHostFilter('all')} />
+            {hostOptions.map((h) => (
+              <Chip
+                key={h.id}
+                label={h.label}
+                selected={hostFilter === h.id}
+                onPress={() => setHostFilter(h.id)}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
-      {/* List */}
+      {/* ── Divider ─────────────────────────────────────── */}
+      <View style={[{ height: 1, backgroundColor: theme.border, marginBottom: 16, opacity: 0.6 }, widePad]} />
+
+      {/* ── List ────────────────────────────────────────── */}
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={isWeb}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+        contentContainerStyle={[
+          { paddingBottom: isWeb ? 120 : 40 },
+          widePad,
+        ]}
       >
         {filtered.length === 0 ? (
           <EmptyState
             icon={<SlidersHorizontal color={theme.textMuted} size={36} />}
             title="No bookings match your filters"
+            subtitle="Try adjusting the status, source, or host filter above."
           />
         ) : (
           <View style={{ gap: 16 }}>
             {grouped.map((hostGroup) => {
               const hostExpanded = !collapsedHosts.has(hostGroup.hostKey);
               return (
-                <View key={hostGroup.hostKey} style={{ gap: 10 }}>
+                <View key={hostGroup.hostKey} style={{ gap: 8 }}>
+                  {/* ── Host Accordion Header ── */}
                   <Pressable
                     onPress={() => toggleHost(hostGroup.hostKey)}
                     style={({ pressed }) => [{
-                      opacity: pressed ? 0.75 : 1,
+                      opacity: pressed ? 0.8 : 1,
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 10,
-                      paddingVertical: 10,
-                      paddingHorizontal: 12,
-                      backgroundColor: theme.surface,
-                      borderRadius: 12,
+                      gap: 12,
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      backgroundColor: isDark ? theme.surface : theme.surface,
+                      borderRadius: 14,
                       borderWidth: 1,
                       borderColor: theme.border,
+                      borderLeftWidth: 3,
+                      borderLeftColor: theme.gold,
                     }]}
                   >
                     {hostExpanded ? (
@@ -268,17 +309,17 @@ export default function BookingsScreen() {
                     ) : (
                       <ChevronRight color={theme.gold} size={18} />
                     )}
-                    <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>
+                    <Text style={{ flex: 1, color: theme.text, fontSize: 16, fontWeight: '700', letterSpacing: -0.2 }}>
                       {hostGroup.hostName}
                     </Text>
-                    <View
-                      style={{
-                        backgroundColor: theme.gold + '22',
-                        borderRadius: 8,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                      }}
-                    >
+                    <View style={{
+                      backgroundColor: theme.gold + '20',
+                      borderRadius: 10,
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderWidth: 1,
+                      borderColor: theme.gold + '35',
+                    }}>
                       <Text style={{ color: theme.gold, fontSize: 12, fontWeight: '700' }}>
                         {hostGroup.bookingCount} booking{hostGroup.bookingCount === 1 ? '' : 's'}
                       </Text>
@@ -290,33 +331,44 @@ export default function BookingsScreen() {
                         const vKey = villaCollapseKey(hostGroup.hostKey, villa.roomId);
                         const villaExpanded = !collapsedVillas.has(vKey);
                         return (
-                          <View key={vKey} style={{ marginLeft: 8, gap: 8 }}>
+                          <View key={vKey} style={{ marginLeft: 12, gap: 8 }}>
+                            {/* ── Villa Sub-Header ── */}
                             <Pressable
                               onPress={() => toggleVilla(hostGroup.hostKey, villa.roomId)}
                               style={({ pressed }) => [{
-                                opacity: pressed ? 0.75 : 1,
+                                opacity: pressed ? 0.8 : 1,
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 8,
-                                paddingVertical: 8,
-                                paddingHorizontal: 10,
+                                gap: 10,
+                                paddingVertical: 10,
+                                paddingHorizontal: 14,
                                 backgroundColor: theme.surfaceElevated,
-                                borderRadius: 10,
+                                borderRadius: 12,
                                 borderWidth: 1,
                                 borderColor: theme.borderSoft,
+                                borderLeftWidth: 2,
+                                borderLeftColor: theme.goldSoft,
                               }]}
                             >
                               {villaExpanded ? (
-                                <ChevronDown color={theme.textSecondary} size={16} />
+                                <ChevronDown color={theme.textSecondary} size={15} />
                               ) : (
-                                <ChevronRight color={theme.textSecondary} size={16} />
+                                <ChevronRight color={theme.textSecondary} size={15} />
                               )}
+                              <CalendarDays color={theme.textMuted} size={14} />
                               <Text style={{ flex: 1, color: theme.text, fontSize: 14, fontWeight: '600' }}>
                                 {villa.roomTitle}
                               </Text>
-                              <Text style={{ color: theme.textMuted, fontSize: 12 }}>
-                                {villa.bookings.length}
-                              </Text>
+                              <View style={{
+                                backgroundColor: theme.borderSoft,
+                                borderRadius: 8,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                              }}>
+                                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                                  {villa.bookings.length}
+                                </Text>
+                              </View>
                             </Pressable>
 
                             {villaExpanded ? (
@@ -327,35 +379,57 @@ export default function BookingsScreen() {
                                     onPress={() => navigation.navigate('BookingDetail', { id: b.id })}
                                     style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
                                   >
-                                    <Card style={{ padding: 14 }}>
+                                    {/* Status-coloured left border on booking cards */}
+                                    <View style={{
+                                      backgroundColor: theme.surface,
+                                      borderRadius: 14,
+                                      borderWidth: 1,
+                                      borderColor: theme.border,
+                                      borderLeftWidth: 4,
+                                      borderLeftColor: statusBorderColor(b.status),
+                                      padding: 14,
+                                      marginLeft: 4,
+                                    }}>
                                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <View style={{ flex: 1 }}>
+                                        <View style={{ flex: 1, marginRight: 12 }}>
                                           <Text style={{ color: theme.text, fontSize: 15, fontWeight: '700' }}>
                                             {b.guestName}
                                           </Text>
                                           {hostFilter === 'all' ? (
-                                            <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>
+                                            <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 1 }}>
                                               Host: {hostGroup.hostName}
                                             </Text>
                                           ) : null}
-                                          <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}>
-                                            {formatDateRange(b.checkIn, b.checkOut)} · {b.nights} nights
+                                          <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 5 }}>
+                                            {formatDateRange(b.checkIn, b.checkOut)}
+                                          </Text>
+                                          <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 1 }}>
+                                            {b.nights} night{b.nights !== 1 ? 's' : ''} · {b.guests} guest{b.guests !== 1 ? 's' : ''}
                                           </Text>
                                         </View>
-                                        <View style={{ alignItems: 'flex-end', gap: 6 }}>
-                                          <Text style={{ color: theme.gold, fontSize: 15, fontWeight: '700' }}>
+                                        <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                                          <Text style={{ color: theme.gold, fontSize: 16, fontWeight: '800', letterSpacing: -0.3 }}>
                                             {formatMoney(b.totalPrice)}
                                           </Text>
                                           <StatusBadge status={b.status} />
                                         </View>
                                       </View>
-                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                                      {/* Source chip row */}
+                                      <View style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        marginTop: 12,
+                                        paddingTop: 10,
+                                        borderTopWidth: 1,
+                                        borderTopColor: theme.borderSoft,
+                                      }}>
                                         <SourceChip source={b.source} />
                                         <Text style={{ color: theme.textMuted, fontSize: 12 }}>
-                                          {b.guests} guests
+                                          #{b.id.slice(-6).toUpperCase()}
                                         </Text>
                                       </View>
-                                    </Card>
+                                    </View>
                                   </Pressable>
                                 ))}
                               </View>

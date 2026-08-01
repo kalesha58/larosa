@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
-  View, Image, Pressable, StyleSheet, Modal, Text, ScrollView, Dimensions,
+  View, Image, Pressable, StyleSheet, Modal, Text, Platform, useWindowDimensions,
 } from 'react-native';
 import { X, ChevronLeft, ChevronRight, Grid2x2 } from 'lucide-react-native';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+import { useTheme } from '../../lib/theme-context';
 
 interface ImageGalleryProps {
   images: string[];
@@ -12,8 +11,13 @@ interface ImageGalleryProps {
 }
 
 export default function ImageGallery({ images, onPress }: ImageGalleryProps) {
+  const { theme } = useTheme();
+  const { width } = useWindowDimensions();
   const [fullScreenVisible, setFullScreenVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const isDesktop = Platform.OS === 'web' && width >= 768;
+  const photos = images.length > 0 ? images : [];
 
   const openFullscreen = (index: number) => {
     setCurrentIndex(index);
@@ -22,96 +26,92 @@ export default function ImageGallery({ images, onPress }: ImageGalleryProps) {
   };
 
   const prev = () => setCurrentIndex((c) => Math.max(0, c - 1));
-  const next = () => setCurrentIndex((c) => Math.min(images.length - 1, c + 1));
+  const next = () => setCurrentIndex((c) => Math.min(photos.length - 1, c + 1));
+
+  if (photos.length === 0) return null;
 
   return (
     <>
-      {/* Grid layout */}
-      <View style={styles.grid}>
-        {/* Hero image */}
-        <Pressable
-          style={styles.heroImage}
-          onPress={() => openFullscreen(0)}
-        >
-          <Image source={{ uri: images[0] }} style={styles.heroImg} resizeMode="cover" />
-        </Pressable>
-
-        {/* Right thumbnails */}
-        {images.length > 1 && (
-          <View style={styles.thumbsColumn}>
-            {images.slice(1, 3).map((uri, i) => (
-              <Pressable
-                key={i}
-                style={styles.thumbWrapper}
-                onPress={() => openFullscreen(i + 1)}
-              >
-                <Image source={{ uri }} style={styles.thumbImg} resizeMode="cover" />
-                {i === 1 && images.length > 3 && (
-                  <View style={styles.moreOverlay}>
-                    <Grid2x2 size={18} color="#fff" />
-                    <Text style={styles.moreText}>+{images.length - 3} more</Text>
-                  </View>
-                )}
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Horizontal scroll row */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollRow}
-      >
-        {images.map((uri, i) => (
-          <Pressable key={i} onPress={() => openFullscreen(i)}>
-            <Image
-              source={{ uri }}
-              style={[styles.scrollThumb, i === 0 && { borderColor: '#C9A14A', borderWidth: 2 }]}
-              resizeMode="cover"
-            />
+      {isDesktop ? (
+        <View style={styles.mosaic}>
+          <Pressable style={styles.mosaicHero} onPress={() => openFullscreen(0)}>
+            <Image source={{ uri: photos[0] }} style={styles.fillImg} resizeMode="cover" />
           </Pressable>
-        ))}
-      </ScrollView>
+          <View style={styles.mosaicGrid}>
+            {[1, 2, 3, 4].map((i) => {
+              const uri = photos[i] ?? photos[i % photos.length];
+              const isLast = i === 4;
+              return (
+                <Pressable
+                  key={i}
+                  style={[
+                    styles.mosaicCell,
+                    i === 1 && styles.mosaicTopLeft,
+                    i === 2 && styles.mosaicTopRight,
+                    i === 3 && styles.mosaicBottomLeft,
+                    i === 4 && styles.mosaicBottomRight,
+                  ]}
+                  onPress={() => openFullscreen(Math.min(i, photos.length - 1))}
+                >
+                  <Image source={{ uri }} style={styles.fillImg} resizeMode="cover" />
+                  {isLast && (
+                    <Pressable
+                      onPress={() => openFullscreen(0)}
+                      style={[styles.showAllBtn, { backgroundColor: theme.surface }]}
+                    >
+                      <Grid2x2 size={14} color={theme.text} />
+                      <Text style={[styles.showAllText, { color: theme.text }]}>Show all photos</Text>
+                    </Pressable>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : (
+        <View style={styles.mobileHeroWrap}>
+          <Pressable style={styles.mobileHero} onPress={() => openFullscreen(0)}>
+            <Image source={{ uri: photos[0] }} style={styles.fillImg} resizeMode="cover" />
+          </Pressable>
+          <Pressable
+            onPress={() => openFullscreen(0)}
+            style={[styles.showAllBtnMobile, { backgroundColor: theme.surface }]}
+          >
+            <Grid2x2 size={14} color={theme.text} />
+            <Text style={[styles.showAllText, { color: theme.text }]}>Show all photos</Text>
+          </Pressable>
+        </View>
+      )}
 
-      {/* Full screen modal */}
       <Modal visible={fullScreenVisible} transparent animationType="fade">
         <View style={styles.fullScreenOverlay}>
-          {/* Close */}
-          <Pressable onPress={() => setFullScreenVisible(false)} style={styles.closeBtn}>
+          <Pressable style={styles.closeBtn} onPress={() => setFullScreenVisible(false)}>
             <X size={22} color="#fff" />
           </Pressable>
-
-          {/* Counter */}
           <View style={styles.counter}>
-            <Text style={styles.counterText}>{currentIndex + 1} / {images.length}</Text>
+            <Text style={styles.counterText}>
+              {currentIndex + 1} / {photos.length}
+            </Text>
           </View>
-
-          {/* Image */}
           <Image
-            source={{ uri: images[currentIndex] }}
-            style={styles.fullImage}
+            source={{ uri: photos[currentIndex] }}
+            style={[styles.fullImage, { width: Math.min(width, 1200), height: width > 768 ? 560 : width * 0.7 }]}
             resizeMode="contain"
           />
-
-          {/* Nav buttons */}
           {currentIndex > 0 && (
-            <Pressable onPress={prev} style={[styles.navBtn, styles.navLeft]}>
+            <Pressable style={[styles.navBtn, styles.navLeft]} onPress={prev}>
               <ChevronLeft size={28} color="#fff" />
             </Pressable>
           )}
-          {currentIndex < images.length - 1 && (
-            <Pressable onPress={next} style={[styles.navBtn, styles.navRight]}>
+          {currentIndex < photos.length - 1 && (
+            <Pressable style={[styles.navBtn, styles.navRight]} onPress={next}>
               <ChevronRight size={28} color="#fff" />
             </Pressable>
           )}
-
-          {/* Dots */}
           <View style={styles.dots}>
-            {images.map((_, i) => (
+            {photos.map((_, i) => (
               <Pressable key={i} onPress={() => setCurrentIndex(i)}>
-                <View style={[styles.dot, { backgroundColor: i === currentIndex ? '#C9A14A' : 'rgba(255,255,255,0.5)' }]} />
+                <View style={[styles.dot, { backgroundColor: i === currentIndex ? theme.gold : 'rgba(255,255,255,0.45)' }]} />
               </Pressable>
             ))}
           </View>
@@ -122,54 +122,81 @@ export default function ImageGallery({ images, onPress }: ImageGalleryProps) {
 }
 
 const styles = StyleSheet.create({
-  grid: {
+  mosaic: {
     flexDirection: 'row',
-    height: 260,
-    gap: 4,
-  },
-  heroImage: {
-    flex: 2,
+    height: 420,
+    gap: 8,
     borderRadius: 16,
     overflow: 'hidden',
   },
-  heroImg: {
-    width: '100%',
-    height: '100%',
-  },
-  thumbsColumn: {
-    flex: 1,
-    gap: 4,
-  },
-  thumbWrapper: {
-    flex: 1,
-    borderRadius: 12,
+  mosaicHero: {
+    flex: 2,
     overflow: 'hidden',
   },
-  thumbImg: {
+  mosaicGrid: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  mosaicCell: {
+    width: '48.5%',
+    height: '48.5%',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  mosaicTopLeft: { borderTopLeftRadius: 0 },
+  mosaicTopRight: { borderTopRightRadius: 12 },
+  mosaicBottomLeft: {},
+  mosaicBottomRight: { borderBottomRightRadius: 12 },
+  fillImg: {
     width: '100%',
     height: '100%',
   },
-  moreOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+  showAllBtn: {
+    position: 'absolute',
+    bottom: 14,
+    right: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0,0,0,0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  moreText: {
-    color: '#fff',
+  showAllText: {
     fontSize: 13,
     fontWeight: '700',
   },
-  scrollRow: {
-    paddingHorizontal: 20,
-    gap: 8,
-    paddingTop: 8,
+  mobileHeroWrap: {
+    position: 'relative',
+    height: 280,
+    borderRadius: 0,
+    overflow: 'hidden',
   },
-  scrollThumb: {
-    width: 60,
-    height: 60,
+  mobileHero: {
+    width: '100%',
+    height: '100%',
+  },
+  showAllBtnMobile: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0,0,0,0.12)',
   },
   fullScreenOverlay: {
     flex: 1,
@@ -179,7 +206,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     position: 'absolute',
-    top: 56,
+    top: 48,
     right: 20,
     width: 44,
     height: 44,
@@ -191,7 +218,7 @@ const styles = StyleSheet.create({
   },
   counter: {
     position: 'absolute',
-    top: 60,
+    top: 56,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -203,8 +230,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   fullImage: {
-    width: SCREEN_W,
-    height: SCREEN_H * 0.75,
+    maxWidth: '100%',
   },
   navBtn: {
     position: 'absolute',
@@ -215,17 +241,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -24 }],
+    marginTop: -24,
   },
-  navLeft: {
-    left: 16,
-  },
-  navRight: {
-    right: 16,
-  },
+  navLeft: { left: 16 },
+  navRight: { right: 16 },
   dots: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 48,
     flexDirection: 'row',
     gap: 8,
   },
