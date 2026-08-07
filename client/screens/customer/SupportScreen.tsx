@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, TextInput,
+  View, Text, ScrollView, Pressable, StyleSheet, TextInput, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -43,6 +43,7 @@ export default function SupportScreen() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
+  const isAndroid = Platform.OS === 'android';
 
   const handleSend = () => {
     if (message.length > 0) {
@@ -53,16 +54,17 @@ export default function SupportScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
+      <View style={[styles.header, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Help & Support</Text>
+        <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>Help & Support</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Hero */}
         <View style={[styles.hero, { backgroundColor: 'rgba(201,161,74,0.08)', borderColor: 'rgba(201,161,74,0.2)' }]}>
           <Text style={styles.heroEmoji}>🤝</Text>
@@ -158,6 +160,7 @@ export default function SupportScreen() {
           ))}
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

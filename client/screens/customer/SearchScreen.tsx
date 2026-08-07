@@ -3,10 +3,11 @@ import {
   View, Text, ScrollView, Pressable, TextInput, StyleSheet, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
-  ArrowLeft, Search, SlidersHorizontal, MapPin, X,
+  ArrowLeft, Search, SlidersHorizontal, MapPin, X, Map, List,
 } from 'lucide-react-native';
+import PropertyMap from '../../components/customer/PropertyMap';
 import { useTheme } from '../../lib/theme-context';
 import { properties } from '../../lib/mockData';
 import PropertyCard from '../../components/customer/PropertyCard';
@@ -26,6 +27,8 @@ interface FilterState {
   category: string;
   bookingType: string;
   guests: number;
+  sortBy?: string;
+  ratingMin?: number;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -36,6 +39,8 @@ const DEFAULT_FILTERS: FilterState = {
   category: 'All',
   bookingType: 'All',
   guests: 0,
+  sortBy: 'Recommended',
+  ratingMin: 0,
 };
 
 type SearchTab = 'dates' | 'guests' | 'purpose' | 'results';
@@ -43,9 +48,11 @@ type SearchTab = 'dates' | 'guests' | 'purpose' | 'results';
 export default function SearchScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { width } = useWindowDimensions();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('results');
+  const [showMap, setShowMap] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [checkIn, setCheckIn] = useState<string | null>(null);
@@ -53,9 +60,33 @@ export default function SearchScreen() {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [purpose, setPurpose] = useState('');
+
+  // Sync route params with search states
+  React.useEffect(() => {
+    if (route.params) {
+      if (route.params.query !== undefined) {
+        setQuery(route.params.query);
+      }
+      if (route.params.checkIn !== undefined) {
+        setCheckIn(route.params.checkIn);
+      }
+      if (route.params.checkOut !== undefined) {
+        setCheckOut(route.params.checkOut);
+      }
+      if (route.params.guests !== undefined) {
+        const gCount = parseInt(route.params.guests, 10) || 1;
+        setAdults(gCount);
+        setFilters((prev) => ({ ...prev, guests: gCount }));
+      }
+      if (route.params.activeTab !== undefined) {
+        setActiveTab(route.params.activeTab);
+      }
+    }
+  }, [route.params]);
   const [favorites, setFavorites] = useState<string[]>(['prop_1', 'prop_4']);
 
   const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
 
   const getWebCardStyle = () => {
     if (!isWeb) return undefined;
@@ -77,14 +108,21 @@ export default function SearchScreen() {
     (filters.amenities.length > 0 ? 1 : 0) +
     (filters.category !== 'All' ? 1 : 0) +
     (filters.bookingType !== 'All' ? 1 : 0) +
-    (filters.priceMax < 200000 ? 1 : 0);
+    (filters.priceMax < 200000 ? 1 : 0) +
+    (filters.ratingMin && filters.ratingMin > 0 ? 1 : 0) +
+    (filters.sortBy && filters.sortBy !== 'Recommended' ? 1 : 0);
 
   const filtered = properties.filter((p) => {
+    const qLower = query.toLowerCase();
     const matchesQuery =
       !query ||
-      p.title.toLowerCase().includes(query.toLowerCase()) ||
-      p.location.toLowerCase().includes(query.toLowerCase()) ||
-      p.city.toLowerCase().includes(query.toLowerCase());
+      p.title.toLowerCase().includes(qLower) ||
+      p.location.toLowerCase().includes(qLower) ||
+      p.city.toLowerCase().includes(qLower) ||
+      (p.state && p.state.toLowerCase().includes(qLower)) ||
+      (p.category && p.category.toLowerCase().includes(qLower)) ||
+      (p.description && p.description.toLowerCase().includes(qLower)) ||
+      p.amenities.some((a) => a.toLowerCase().includes(qLower));
     const matchesPrice = p.pricePerNight >= filters.priceMin && p.pricePerNight <= filters.priceMax;
     const matchesBeds = filters.bedrooms === 0 || p.bedrooms >= filters.bedrooms;
     const matchesGuests = filters.guests === 0 || p.capacity >= filters.guests;
@@ -93,8 +131,25 @@ export default function SearchScreen() {
       filters.bookingType === 'All' ||
       (filters.bookingType === 'Instant Book' && p.bookingType === 'instant') ||
       (filters.bookingType === 'Request Book' && p.bookingType === 'request');
-    return matchesQuery && matchesPrice && matchesBeds && matchesGuests && matchesCategory && matchesBookingType;
+    const matchesRating = !filters.ratingMin || p.rating >= filters.ratingMin;
+    return matchesQuery && matchesPrice && matchesBeds && matchesGuests && matchesCategory && matchesBookingType && matchesRating;
   });
+
+  const getSortedProperties = () => {
+    const list = [...filtered];
+    if (filters.sortBy === 'Top Rated') {
+      return list.sort((a, b) => b.rating - a.rating);
+    }
+    if (filters.sortBy === 'Low to High') {
+      return list.sort((a, b) => a.pricePerNight - b.pricePerNight);
+    }
+    if (filters.sortBy === 'High to Low') {
+      return list.sort((a, b) => b.pricePerNight - a.pricePerNight);
+    }
+    return list;
+  };
+
+  const displayProperties = getSortedProperties();
 
   const TAB_LABELS: { key: SearchTab; label: string; emoji: string }[] = [
     { key: 'dates', label: 'Dates', emoji: '📅' },
@@ -104,12 +159,12 @@ export default function SearchScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
       {isWeb && <WebHeader />}
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
         <View style={[styles.searchInput, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Search size={16} color={theme.gold} />
@@ -129,9 +184,20 @@ export default function SearchScreen() {
         </View>
         <Pressable
           onPress={() => setShowFilter(true)}
-          style={[styles.filterBtn, { backgroundColor: activeFilterCount > 0 ? theme.gold : theme.surface, borderColor: activeFilterCount > 0 ? theme.gold : theme.border }]}
+          style={({ pressed }) => [
+            styles.filterBtn,
+            {
+              backgroundColor: isAndroid
+                ? 'rgba(255, 255, 255, 0.15)'
+                : (activeFilterCount > 0 ? theme.gold : theme.surface),
+              borderColor: isAndroid
+                ? (activeFilterCount > 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.25)')
+                : (activeFilterCount > 0 ? theme.gold : theme.border),
+            },
+            pressed && { opacity: 0.7 }
+          ]}
         >
-          <SlidersHorizontal size={18} color={activeFilterCount > 0 ? theme.textInverse : theme.text} />
+          <SlidersHorizontal size={18} color={isAndroid ? '#FFFFFF' : (activeFilterCount > 0 ? theme.textInverse : theme.text)} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -139,6 +205,8 @@ export default function SearchScreen() {
           )}
         </Pressable>
       </View>
+
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
 
       {/* Search tabs */}
       <View style={{ height: 44, flexShrink: 0, marginBottom: 4 }}>
@@ -237,27 +305,43 @@ export default function SearchScreen() {
               <View style={styles.resultsHeaderLeft}>
                 <MapPin size={15} color={theme.gold} />
                 <Text style={[styles.resultsCount, { color: theme.textSecondary }]}>
-                  <Text style={{ color: theme.text, fontWeight: '800' }}>{filtered.length}</Text>
+                  <Text style={{ color: theme.text, fontWeight: '800' }}>{displayProperties.length}</Text>
                   {' '}properties found
                 </Text>
               </View>
-              {(checkIn || adults > 2) && (
-                <View style={[styles.activeSearchPill, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '44' }]}>
-                  <Text style={[styles.activeSearchText, { color: theme.gold }]}>
-                    {adults + children} guests {checkIn ? `· ${checkIn}` : ''}
-                  </Text>
-                </View>
-              )}
+              <Pressable
+                onPress={() => setShowMap(!showMap)}
+                style={({ pressed }) => [
+                  styles.mapToggleBtn,
+                  { backgroundColor: showMap ? theme.gold : theme.surface, borderColor: theme.border },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                {showMap ? <List size={14} color="#FFFFFF" /> : <Map size={14} color={theme.gold} />}
+                <Text style={[styles.mapToggleText, { color: showMap ? '#FFFFFF' : theme.text }]}>
+                  {showMap ? 'List View' : 'Map View'}
+                </Text>
+              </Pressable>
             </View>
-            {filtered.length === 0 ? (
+
+            {displayProperties.length === 0 ? (
               <EmptyState
                 icon={<Search size={48} color={theme.textMuted} />}
                 title="No properties found"
                 subtitle="Try adjusting your filters or search for a different location."
               />
+            ) : showMap ? (
+              <View style={styles.mapContainer}>
+                <PropertyMap
+                  city={displayProperties[0]?.city ?? 'Search'}
+                  state={displayProperties[0]?.state ?? ''}
+                  lat={displayProperties[0]?.lat}
+                  lng={displayProperties[0]?.lng}
+                />
+              </View>
             ) : (
               <View style={isWeb ? styles.webResultsGrid : undefined}>
-                {filtered.map((property) => (
+                {displayProperties.map((property) => (
                   <PropertyCard
                     key={property.id}
                     property={property}
@@ -281,6 +365,7 @@ export default function SearchScreen() {
         filters={filters}
         onApply={(f) => setFilters(f)}
       />
+      </View>
     </SafeAreaView>
   );
 }
@@ -351,5 +436,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 20,
+  },
+  mapToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  mapToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  mapContainer: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 4,
+    marginBottom: 20,
   },
 });

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View, Text, Pressable } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   LayoutGrid, CalendarDays, BookUser, Menu, Users,
-  Home, Search, Heart, BookOpen, User,
+  Home, Search, Heart, BookOpen, User, Plus, Building2,
 } from 'lucide-react-native';
 
 import { ThemeProvider, useTheme } from './lib/theme-context';
@@ -21,6 +21,8 @@ import HostVillasScreen from './screens/host/HostVillasScreen';
 import HostBookingsScreen from './screens/host/HostBookingsScreen';
 import HostMoreScreen from './screens/host/HostMoreScreen';
 import HostVerificationScreen from './screens/host/HostVerificationScreen';
+import SplashScreen from './screens/SplashScreen';
+import IntroScreen from './screens/IntroScreen';
 
 // ─── Admin Screens ────────────────────────────────────────
 import LoginScreen from './screens/LoginScreen';
@@ -57,9 +59,16 @@ import ReviewsScreen from './screens/customer/ReviewsScreen';
 import CNotificationsScreen from './screens/customer/CNotificationsScreen';
 import CSettingsScreen from './screens/customer/CSettingsScreen';
 import SupportScreen from './screens/customer/SupportScreen';
+import PrivacyPolicyScreen from './screens/customer/PrivacyPolicyScreen';
+import TermsScreen from './screens/customer/TermsScreen';
+import OpenSourceLicensesScreen from './screens/customer/OpenSourceLicensesScreen';
+import DataSafetyScreen from './screens/customer/DataSafetyScreen';
+import PrivilegeClubScreen from './screens/customer/PrivilegeClubScreen';
 
 // ─── Navigation Types ─────────────────────────────────────
 export type RootStackParamList = {
+  Splash: undefined;
+  Intro: undefined;
   Login: undefined;
   // Admin
   MainTabs: undefined;
@@ -95,6 +104,8 @@ export type RootStackParamList = {
   Verification: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
+  OpenSourceLicenses: undefined;
+  DataSafety: undefined;
   // Cross-navigation shortcuts from profile
   CFavoritesTab: undefined;
   CBookingsTab: undefined;
@@ -104,8 +115,8 @@ export type RootStackParamList = {
 export type AdminTabParamList = {
   HomeTab: undefined;
   VillasTab: undefined;
+  AdminAddVillaTab: undefined;
   BookingsTab: undefined;
-  UsersTab: undefined;
   MoreTab: undefined;
 };
 
@@ -126,34 +137,122 @@ function TabBarIcon({ Icon, color, focused }: { Icon: React.ElementType; color: 
 }
 
 // ─── Admin tab navigator ──────────────────────────────────
-function AdminTabNavigator() {
+// ─── Admin tab bar customization ─────────────────────────
+function AdminTabBar({ state, descriptors, navigation }: any) {
   const { theme } = useTheme();
+  const G = '#C9A14A';
+
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  return (
+    <View style={[styles.tabBarContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          if (route.name === 'AdminAddVillaTab') {
+            (navigation as any).navigate('VillaEdit');
+            return;
+          }
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        // Render center circular hero button for AdminAddVillaTab (+ Add Villa)
+        if (route.name === 'AdminAddVillaTab') {
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.centerTabContainer}
+            >
+              <View style={[styles.centerCircleButton, { backgroundColor: G }]}>
+                <Plus color="#FFFFFF" size={28} strokeWidth={2.5} />
+              </View>
+              <Text style={[styles.centerTabLabel, { color: G }]}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        }
+
+        // Render normal tab items
+        let Icon = LayoutGrid;
+        if (route.name === 'HomeTab') Icon = LayoutGrid;
+        else if (route.name === 'VillasTab') Icon = Building2;
+        else if (route.name === 'BookingsTab') Icon = BookUser;
+        else if (route.name === 'MoreTab') Icon = User;
+
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabItem}
+          >
+            {/* Top active indicator line */}
+            <View style={[
+              styles.tabIndicator,
+              { backgroundColor: isFocused ? G : 'transparent' }
+            ]} />
+            <View style={styles.tabItemContent}>
+              <Icon
+                color={isFocused ? G : theme.textMuted}
+                size={23}
+                strokeWidth={isFocused ? 2.2 : 1.8}
+              />
+              <Text style={[
+                styles.tabLabel,
+                { color: isFocused ? G : theme.textMuted }
+              ]}>
+                {label}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function AdminTabNavigator() {
   return (
     <AdminTab.Navigator
+      tabBar={(props) => <AdminTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
-        tabBarStyle: Platform.OS === 'web'
-          ? { display: 'none' }
-          : {
-              backgroundColor: theme.surface,
-              borderTopColor: theme.border,
-              borderTopWidth: 1,
-              height: 64,
-              paddingTop: 8,
-              paddingBottom: 8,
-            },
-        tabBarActiveTintColor: theme.gold,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
       }}
     >
       <AdminTab.Screen
         name="HomeTab"
         component={HomeScreen}
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={LayoutGrid} color={color} focused={focused} />,
+          title: 'Dashboard',
         }}
       />
       <AdminTab.Screen
@@ -161,7 +260,13 @@ function AdminTabNavigator() {
         component={VillasScreen}
         options={{
           title: 'Villas',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={CalendarDays} color={color} focused={focused} />,
+        }}
+      />
+      <AdminTab.Screen
+        name="AdminAddVillaTab"
+        component={DummyAddVilla}
+        options={{
+          title: 'Add Villa',
         }}
       />
       <AdminTab.Screen
@@ -169,50 +274,124 @@ function AdminTabNavigator() {
         component={BookingsScreen}
         options={{
           title: 'Bookings',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={BookUser} color={color} focused={focused} />,
-        }}
-      />
-      <AdminTab.Screen
-        name="UsersTab"
-        component={UsersScreen}
-        options={{
-          title: 'People',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Users} color={color} focused={focused} />,
         }}
       />
       <AdminTab.Screen
         name="MoreTab"
         component={MoreScreen}
         options={{
-          title: 'More',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Menu} color={color} focused={focused} />,
+          title: 'Account',
         }}
       />
     </AdminTab.Navigator>
   );
 }
 
+// ─── Customer tab bar customization ──────────────────────
+function CustomerTabBar({ state, descriptors, navigation }: any) {
+  const { theme } = useTheme();
+
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  return (
+    <View style={[styles.tabBarContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        // Render center circular button for CFavoritesTab (Saved)
+        if (route.name === 'CFavoritesTab') {
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.centerTabContainer}
+            >
+              <View style={[styles.centerCircleButton, { backgroundColor: '#C9A14A' }]}>
+                <Heart color="#FFFFFF" size={26} strokeWidth={2.2} fill={isFocused ? "#FFFFFF" : "none"} />
+              </View>
+              <Text style={[styles.centerTabLabel, { color: isFocused ? '#C9A14A' : theme.textMuted }]}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        }
+
+        // Render normal tab items
+        let Icon = Home;
+        if (route.name === 'CHomeTab') Icon = Home;
+        else if (route.name === 'Search') Icon = Search;
+        else if (route.name === 'CBookingsTab') Icon = BookOpen;
+        else if (route.name === 'CProfileTab') Icon = User;
+
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabItem}
+          >
+            {/* Top active indicator line */}
+            <View style={[
+              styles.tabIndicator,
+              { backgroundColor: isFocused ? '#C9A14A' : 'transparent' }
+            ]} />
+            <View style={styles.tabItemContent}>
+              <Icon
+                color={isFocused ? '#C9A14A' : theme.textMuted}
+                size={23}
+                strokeWidth={isFocused ? 2.2 : 1.8}
+              />
+              <Text style={[
+                styles.tabLabel,
+                { color: isFocused ? '#C9A14A' : theme.textMuted }
+              ]}>
+                {label}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 // ─── Customer tab navigator ───────────────────────────────
 function CustomerTabNavigator() {
-  const { theme } = useTheme();
   return (
     <CustomerTab.Navigator
+      tabBar={(props) => <CustomerTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
-        tabBarStyle: Platform.OS === 'web'
-          ? { display: 'none' }
-          : {
-              backgroundColor: theme.surface,
-              borderTopColor: theme.border,
-              borderTopWidth: 1,
-              height: 70,
-              paddingTop: 8,
-              paddingBottom: 10,
-            },
-        tabBarActiveTintColor: '#C9A14A',
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
       }}
     >
       <CustomerTab.Screen
@@ -220,7 +399,6 @@ function CustomerTabNavigator() {
         component={CHomeScreen}
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Home} color={color} focused={focused} />,
         }}
       />
       <CustomerTab.Screen
@@ -228,7 +406,6 @@ function CustomerTabNavigator() {
         component={SearchScreen}
         options={{
           title: 'Search',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Search} color={color} focused={focused} />,
         }}
       />
       <CustomerTab.Screen
@@ -236,7 +413,6 @@ function CustomerTabNavigator() {
         component={CFavoritesScreen}
         options={{
           title: 'Saved',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Heart} color={color} focused={focused} />,
         }}
       />
       <CustomerTab.Screen
@@ -244,7 +420,6 @@ function CustomerTabNavigator() {
         component={CBookingsScreen}
         options={{
           title: 'Bookings',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={BookOpen} color={color} focused={focused} />,
         }}
       />
       <CustomerTab.Screen
@@ -252,10 +427,116 @@ function CustomerTabNavigator() {
         component={CProfileScreen}
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={User} color={color} focused={focused} />,
         }}
       />
     </CustomerTab.Navigator>
+  );
+}
+
+function DummyAddVilla() {
+  return null;
+}
+
+// ─── Host tab bar customization ──────────────────────────
+function HostTabBar({ state, descriptors, navigation }: any) {
+  const { theme } = useTheme();
+  const G = '#C9A14A';
+
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  return (
+    <View style={[styles.tabBarContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+      {state.routes.map((route: any, index: number) => {
+        const { options } = descriptors[route.key];
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          if (route.name === 'HostAddVillaTab') {
+            (navigation as any).navigate('VillaEdit');
+            return;
+          }
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        // Render center circular hero button for HostAddVillaTab (+ Add Villa)
+        if (route.name === 'HostAddVillaTab') {
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.centerTabContainer}
+            >
+              <View style={[styles.centerCircleButton, { backgroundColor: G }]}>
+                <Plus color="#FFFFFF" size={28} strokeWidth={2.5} />
+              </View>
+              <Text style={[styles.centerTabLabel, { color: G }]}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        }
+
+        // Render normal tab items
+        let Icon = LayoutGrid;
+        if (route.name === 'HostHomeTab') Icon = LayoutGrid;
+        else if (route.name === 'HostVillasTab') Icon = Building2;
+        else if (route.name === 'HostBookingsTab') Icon = BookUser;
+        else if (route.name === 'HostMoreTab') Icon = User;
+
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabItem}
+          >
+            {/* Top active indicator line */}
+            <View style={[
+              styles.tabIndicator,
+              { backgroundColor: isFocused ? G : 'transparent' }
+            ]} />
+            <View style={styles.tabItemContent}>
+              <Icon
+                color={isFocused ? G : theme.textMuted}
+                size={23}
+                strokeWidth={isFocused ? 2.2 : 1.8}
+              />
+              <Text style={[
+                styles.tabLabel,
+                { color: isFocused ? G : theme.textMuted }
+              ]}>
+                {label}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -263,6 +544,7 @@ function CustomerTabNavigator() {
 export type HostTabParamList = {
   HostHomeTab: undefined;
   HostVillasTab: undefined;
+  HostAddVillaTab: undefined;
   HostBookingsTab: undefined;
   HostMoreTab: undefined;
 };
@@ -270,25 +552,11 @@ export type HostTabParamList = {
 const HostTab = createBottomTabNavigator<HostTabParamList>();
 
 function HostTabNavigator() {
-  const { theme } = useTheme();
   return (
     <HostTab.Navigator
+      tabBar={(props) => <HostTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: Platform.OS === 'web' ? 'top' : 'bottom',
-        tabBarStyle: Platform.OS === 'web'
-          ? { display: 'none' }
-          : {
-              backgroundColor: theme.surface,
-              borderTopColor: theme.border,
-              borderTopWidth: 1,
-              height: 64,
-              paddingTop: 8,
-              paddingBottom: 8,
-            },
-        tabBarActiveTintColor: theme.gold,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
       }}
     >
       <HostTab.Screen
@@ -296,7 +564,6 @@ function HostTabNavigator() {
         component={HostHomeScreen}
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={LayoutGrid} color={color} focused={focused} />,
         }}
       />
       <HostTab.Screen
@@ -304,7 +571,19 @@ function HostTabNavigator() {
         component={HostVillasScreen}
         options={{
           title: 'My Villas',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={CalendarDays} color={color} focused={focused} />,
+        }}
+      />
+      <HostTab.Screen
+        name="HostAddVillaTab"
+        component={DummyAddVilla}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            (navigation.getParent() as any)?.navigate('VillaEdit');
+          },
+        })}
+        options={{
+          title: 'Add Villa',
         }}
       />
       <HostTab.Screen
@@ -312,7 +591,6 @@ function HostTabNavigator() {
         component={HostBookingsScreen}
         options={{
           title: 'Bookings',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={BookUser} color={color} focused={focused} />,
         }}
       />
       <HostTab.Screen
@@ -320,7 +598,6 @@ function HostTabNavigator() {
         component={HostMoreScreen}
         options={{
           title: 'Account',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon Icon={Menu} color={color} focused={focused} />,
         }}
       />
     </HostTab.Navigator>
@@ -329,7 +606,7 @@ function HostTabNavigator() {
 
 // ─── App content with role-based routing ─────────────────
 function AppContent() {
-  const { isDark } = useTheme();
+  const { theme, isDark } = useTheme();
   const { isAuthenticated, role, user } = useAuth();
 
   const getInitialRoute = (): keyof RootStackParamList => {
@@ -344,7 +621,7 @@ function AppContent() {
   const navigation = (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={getInitialRoute()}
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
           // RN-web: stack cards need a bounded height so nested ScrollViews can scroll
@@ -354,6 +631,10 @@ function AppContent() {
             : null),
         }}
       >
+        {/* Entry screens */}
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Intro" component={IntroScreen} />
+
         {/* Auth */}
         <Stack.Screen name="Login" component={LoginScreen} />
 
@@ -391,11 +672,12 @@ function AppContent() {
         <Stack.Screen name="CSettings" component={CSettingsScreen} />
         <Stack.Screen name="Support" component={SupportScreen} />
 
-        {/* Placeholder screens */}
         <Stack.Screen name="EditProfile" component={CProfileScreen} />
-        <Stack.Screen name="Verification" component={HostVerificationScreen} />
-        <Stack.Screen name="PrivacyPolicy" component={SupportScreen} />
-        <Stack.Screen name="Terms" component={SupportScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="Terms" component={TermsScreen} />
+        <Stack.Screen name="OpenSourceLicenses" component={OpenSourceLicensesScreen} />
+        <Stack.Screen name="DataSafety" component={DataSafetyScreen} />
+        <Stack.Screen name="PrivilegeClub" component={PrivilegeClubScreen} />
         <Stack.Screen name="CHomeTab" component={CustomerTabNavigator} />
         <Stack.Screen name="CFavoritesTab" component={CustomerTabNavigator} />
         <Stack.Screen name="CBookingsTab" component={CustomerTabNavigator} />
@@ -406,7 +688,7 @@ function AppContent() {
   return (
     <SafeAreaProvider>
       {Platform.OS !== 'web' && (
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle="light-content" backgroundColor={theme.gold} />
       )}
       {navigation}
     </SafeAreaProvider>
@@ -429,6 +711,74 @@ function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, height: '100%', width: '100%', ...(Platform.OS === 'web' ? { overflow: 'hidden' as const } : null) },
+  tabBarContainer: {
+    flexDirection: 'row',
+    height: 72,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 15,
+    overflow: 'visible',
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    height: '100%',
+    position: 'relative',
+  },
+  tabItemContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 12,
+  },
+  tabIndicator: {
+    width: 28,
+    height: 3,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+    position: 'absolute',
+    top: 0,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  centerTabContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'visible',
+  },
+  centerCircleButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: -24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  centerTabLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 38,
+  },
 });
 
 export default App;

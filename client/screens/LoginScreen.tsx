@@ -1,16 +1,32 @@
 import { LinearGradient } from '../components/LinearGradient';
-import { Lock, Mail, Moon, Phone, Shield, Smartphone, ShieldX, Sun, User as UserIcon } from 'lucide-react-native';
+import {
+  Building2,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Moon,
+  Phone,
+  Shield,
+  ShieldX,
+  Sun,
+  User as UserIcon,
+  Sparkles,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   View,
-  StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,58 +34,112 @@ import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/auth-context';
 import { useTheme } from '../lib/theme-context';
-import loginBackground from '../assets/images/starry-night-lake.png';
 
-type LoginRole = 'admin' | 'customer' | 'host';
-type CustomerLoginMethod = 'phone' | 'email';
-type OtpStep = 'input' | 'otp';
+type AuthMode = 'login' | 'signup';
+type LoginRole = 'customer' | 'host' | 'admin';
 
 const WIDE_BREAKPOINT = 768;
-const FORM_MAX_WIDTH = 420;
 
-const imageSource =
-  typeof loginBackground === 'number' ? loginBackground : { uri: loginBackground };
-
-function LoginHero({
-  variant,
+function RoleDropdown({
+  value,
+  onChange,
+  theme,
 }: {
-  variant: 'side' | 'banner';
+  value: LoginRole;
+  onChange: (role: LoginRole) => void;
+  theme: any;
 }) {
-  const { theme } = useTheme();
-  const isSide = variant === 'side';
+  const [isOpen, setIsOpen] = useState(false);
+
+  const roleOptions: { key: LoginRole; label: string; icon: any; desc: string }[] = [
+    { key: 'customer', label: 'Guest', icon: UserIcon, desc: 'Book villas & luxury stays' },
+    { key: 'host', label: 'Host', icon: Building2, desc: 'List & manage your properties' },
+    { key: 'admin', label: 'Admin', icon: Shield, desc: 'System administration' },
+  ];
+
+  const currentOption = roleOptions.find((r) => r.key === value) || roleOptions[0];
+  const IconComponent = currentOption.icon;
 
   return (
-    <View style={[styles.hero, isSide ? styles.heroSide : styles.heroBanner]}>
-      <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
-      <View
+    <View style={{ zIndex: 30, marginBottom: 16 }}>
+      <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Role</Text>
+      <Pressable
+        onPress={() => setIsOpen(!isOpen)}
         style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: isSide ? 'rgba(15,17,26,0.42)' : 'rgba(15,17,26,0.5)' },
+          styles.dropdownHeader,
+          {
+            backgroundColor: theme.surface,
+            borderColor: isOpen ? theme.gold : theme.border,
+          },
         ]}
-      />
-      <View style={[styles.heroCopy, isSide ? styles.heroCopySide : styles.heroCopyBanner]}>
-        {isSide ? (
-          <>
-            <View style={[styles.heroLogo, { borderColor: theme.gold }]}>
-              <Text style={{ color: theme.gold, fontSize: 28, fontWeight: '800' }}>L</Text>
-            </View>
-            <Text style={styles.heroTitle}>LaRosa</Text>
-            <Text style={[styles.heroTagline, { color: theme.gold }]}>
-              Premium Farmhouse Stays
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+          <View style={[styles.roleIconContainer, { backgroundColor: 'rgba(35, 83, 71, 0.15)' }]}>
+            <IconComponent size={18} color={theme.gold} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.text, fontSize: 15, fontWeight: '700' }}>
+              {currentOption.label}
             </Text>
-            <Text style={styles.heroSubtitle}>
-              Escape to curated villas and forest retreats across India.
+            <Text style={{ color: theme.textMuted, fontSize: 12 }} numberOfLines={1}>
+              {currentOption.desc}
             </Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.heroTitleCompact}>LaRosa</Text>
-            <Text style={[styles.heroTaglineCompact, { color: theme.gold }]}>
-              Premium Farmhouse Stays
-            </Text>
-          </>
-        )}
-      </View>
+          </View>
+        </View>
+        <ChevronDown
+          size={18}
+          color={theme.textMuted}
+          style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+        />
+      </Pressable>
+
+      {isOpen && (
+        <View
+          style={[
+            styles.dropdownMenu,
+            {
+              backgroundColor: theme.surfaceElevated || theme.surface,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          {roleOptions.map((opt) => {
+            const OptIcon = opt.icon;
+            const isSelected = value === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                onPress={() => {
+                  onChange(opt.key);
+                  setIsOpen(false);
+                }}
+                style={({ pressed }) => [
+                  styles.dropdownItem,
+                  isSelected && { backgroundColor: 'rgba(35, 83, 71, 0.15)' },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <OptIcon size={16} color={isSelected ? theme.gold : theme.textMuted} />
+                  <View>
+                    <Text
+                      style={{
+                        color: isSelected ? theme.gold : theme.text,
+                        fontSize: 14,
+                        fontWeight: isSelected ? '700' : '600',
+                      }}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={{ color: theme.textMuted, fontSize: 11 }}>{opt.desc}</Text>
+                  </View>
+                </View>
+                {isSelected && <Check size={16} color={theme.gold} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -79,68 +149,99 @@ export default function LoginScreen() {
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const isWide = width >= WIDE_BREAKPOINT;
-  const { login, loginAsCustomer, signupHost, isAuthenticating, authError, isAccessDenied, dismissAccessDenied } = useAuth();
 
+  const {
+    login,
+    signupCustomer,
+    isAuthenticating,
+    authError,
+    isAccessDenied,
+    dismissAccessDenied,
+  } = useAuth();
+
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
+
+  // Input Focus States for highlight glow
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Login form state
   const [role, setRole] = useState<LoginRole>('customer');
-  const [customerMethod, setCustomerMethod] = useState<CustomerLoginMethod>('phone');
-  const [otpStep, setOtpStep] = useState<OtpStep>('input');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginPhone, setLoginPhone] = useState('');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Sign Up form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [hostAction, setHostAction] = useState<'login' | 'signup'>('login');
-  const [hostName, setHostName] = useState('');
-  const [hostPhone, setHostPhone] = useState('');
-  const [hostEmail, setHostEmail] = useState('');
-  const [hostPassword, setHostPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const [phone, setPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPassword, setCustomerPassword] = useState('');
-  const [otp, setOtp] = useState('');
-
-  const handleAdminLogin = async () => {
-    const ok = await login(email, password);
-    if (ok) {
-      navigation.replace('MainTabs');
+  const handleLoginSubmit = async () => {
+    setLocalError(null);
+    if (!loginEmail || !loginPassword) {
+      setLocalError('Please enter email and password');
+      return;
     }
-  };
 
-  const handleHostLogin = async () => {
-    const ok = await login(hostEmail, hostPassword);
+    const ok = await login(loginEmail, loginPassword);
     if (ok) {
-      if (hostEmail.toLowerCase().trim() === 'host@larosa.in') {
+      if (role === 'admin' || loginEmail.toLowerCase().includes('admin')) {
+        navigation.replace('MainTabs');
+      } else if (role === 'host' || loginEmail.toLowerCase().includes('host')) {
         navigation.replace('HostTabs');
       } else {
-        navigation.replace('HostVerification');
+        navigation.replace('CustomerTabs');
       }
     }
   };
 
-  const handleHostSignup = async () => {
-    const ok = await signupHost(hostName, hostEmail, hostPhone, hostPassword);
-    if (ok) {
-      navigation.replace('HostVerification');
+  const handleSignUpSubmit = async () => {
+    setLocalError(null);
+    if (!firstName || !lastName || !signUpPhone || !signUpEmail || !signUpPassword || !confirmPassword) {
+      setLocalError('Please fill in all fields');
+      return;
     }
-  };
 
-  const handleSendOtp = () => {
-    if (phone.length >= 10) {
-      setOtpStep('otp');
+    if (signUpPassword !== confirmPassword) {
+      setLocalError('Passwords do not match');
+      return;
     }
-  };
 
-  const handleVerifyOtp = async () => {
-    const ok = await loginAsCustomer(phone, otp);
-    if (ok) {
-      navigation.replace('CustomerTabs');
+    if (signUpPassword.length < 6) {
+      setLocalError('Password must be at least 6 characters');
+      return;
     }
-  };
 
-  const handleCustomerEmailLogin = async () => {
-    const ok = await login(customerEmail, customerPassword);
+    const ok = await signupCustomer(firstName, lastName, signUpEmail, signUpPhone, signUpPassword);
     if (ok) {
       navigation.replace('CustomerTabs');
+    }
+  };
+
+  const autofillDemo = (r: LoginRole) => {
+    setAuthMode('login');
+    setRole(r);
+    if (r === 'admin') {
+      setLoginEmail('admin@larosa.in');
+      setLoginPassword('demo1234');
+      setLoginPhone('9876500000');
+    } else if (r === 'host') {
+      setLoginEmail('host@larosa.in');
+      setLoginPassword('demo1234');
+      setLoginPhone('9876567890');
+    } else {
+      setLoginEmail('guest@larosa.in');
+      setLoginPassword('demo1234');
+      setLoginPhone('9876512345');
     }
   };
 
@@ -164,463 +265,478 @@ export default function LoginScreen() {
     );
   }
 
-  const formContent = (
-    <View style={[styles.formColumn, { alignItems: isWide ? 'flex-start' : 'center' }]}>
-      {/* Theme toggle + brand */}
-      <View style={[styles.brandHeaderRow, { alignSelf: isWide ? 'stretch' : 'center' }]}>
-        <View style={[styles.brandBlock, { alignItems: isWide ? 'flex-start' : 'center', flex: 1 }]}>
-          <View style={[styles.brandLogo, { borderColor: theme.gold }]}>
-            <Text style={{ color: theme.gold, fontSize: 22, fontWeight: '800' }}>L</Text>
-          </View>
-          <Text style={[styles.brandTitle, { color: theme.text, textAlign: isWide ? 'left' : 'center' }]}>
-            Welcome back
-          </Text>
-          <Text style={[styles.brandSubtitle, { color: theme.textSecondary, textAlign: isWide ? 'left' : 'center' }]}>
-            Sign in to continue to LaRosa
-          </Text>
-        </View>
-        <Pressable
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          style={[
-            styles.themeToggle,
-            { backgroundColor: theme.surface, borderColor: theme.border },
-          ]}
-        >
-          {isDark ? (
-            <Sun size={18} color={theme.gold} strokeWidth={2} />
-          ) : (
-            <Moon size={18} color={theme.gold} strokeWidth={2} />
-          )}
-        </Pressable>
-      </View>
-
-      {/* Role switcher */}
-      <View style={[styles.roleSwitcher, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Pressable
-          onPress={() => setRole('customer')}
-          style={[styles.roleTab, role === 'customer' && { backgroundColor: theme.gold }]}
-        >
-          <Text style={[styles.roleTabText, { color: role === 'customer' ? '#111111' : theme.textSecondary }]}>
-            Guest
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setRole('host')}
-          style={[styles.roleTab, role === 'host' && { backgroundColor: theme.gold }]}
-        >
-          <Text style={[styles.roleTabText, { color: role === 'host' ? '#111111' : theme.textSecondary }]}>
-            Host
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setRole('admin')}
-          style={[styles.roleTab, role === 'admin' && { backgroundColor: theme.gold }]}
-        >
-          <Text style={[styles.roleTabText, { color: role === 'admin' ? '#111111' : theme.textSecondary }]}>
-            Admin
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Admin */}
-      {role === 'admin' && (
-        <View style={styles.formSection}>
-          <Text style={[styles.formTitle, { color: theme.textSecondary }]}>Admin Sign In</Text>
-
-          <View>
-            <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email</Text>
-            <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <Mail color={theme.textMuted} size={20} />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="admin@larosa.in"
-                placeholderTextColor={theme.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[styles.input, { color: theme.text }]}
-              />
-            </View>
-          </View>
-
-          <View>
-            <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password</Text>
-            <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <Lock color={theme.textMuted} size={20} />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter password"
-                placeholderTextColor={theme.textMuted}
-                secureTextEntry
-                style={[styles.input, { color: theme.text }]}
-              />
-            </View>
-          </View>
-
-          {authError ? (
-            <Text style={{ color: theme.red, fontSize: 13 }}>
-              {authError === 'invalid' ? 'Invalid email or password' : authError}
-            </Text>
-          ) : null}
-
-          <PrimaryButton
-            label={isAuthenticating ? 'Signing in…' : 'Sign In as Admin'}
-            onPress={handleAdminLogin}
-            loading={isAuthenticating}
-            disabled={!email || !password}
-          />
-
-          <Pressable
-            onPress={() => { setEmail('admin@larosa.in'); setPassword('demo1234'); }}
-            style={styles.demoLink}
-          >
-            <Text style={{ color: theme.textMuted, fontSize: 13 }}>Tap to autofill demo credentials</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* Host */}
-      {role === 'host' && (
-        <View style={styles.formSection}>
-          {hostAction === 'login' ? (
-            <>
-              <Text style={[styles.formTitle, { color: theme.textSecondary }]}>Property Host Sign In</Text>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Mail color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostEmail}
-                    onChangeText={setHostEmail}
-                    placeholder="host@larosa.in"
-                    placeholderTextColor={theme.textMuted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Lock color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostPassword}
-                    onChangeText={setHostPassword}
-                    placeholder="Enter password"
-                    placeholderTextColor={theme.textMuted}
-                    secureTextEntry
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              {authError ? (
-                <Text style={{ color: theme.red, fontSize: 13 }}>
-                  {authError === 'invalid' ? 'Invalid email or password' : authError}
-                </Text>
-              ) : null}
-
-              <PrimaryButton
-                label={isAuthenticating ? 'Signing in…' : 'Sign In as Host'}
-                onPress={handleHostLogin}
-                loading={isAuthenticating}
-                disabled={!hostEmail || !hostPassword}
-              />
-
-              <View style={{ gap: 8, marginTop: 4 }}>
-                <Pressable
-                  onPress={() => { setHostEmail('host@larosa.in'); setHostPassword('demo1234'); }}
-                  style={styles.demoLink}
-                >
-                  <Text style={{ color: theme.textMuted, fontSize: 13 }}>Tap to autofill verified host (demo)</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => { setHostEmail('newhost@larosa.in'); setHostPassword('demo1234'); }}
-                  style={styles.demoLink}
-                >
-                  <Text style={{ color: theme.textMuted, fontSize: 13 }}>Tap to autofill new unverified host (demo)</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setHostAction('signup')}
-                  style={[styles.demoLink, { marginTop: 8 }]}
-                >
-                  <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '600' }}>Need an account? Sign up as Host</Text>
-                </Pressable>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.formTitle, { color: theme.textSecondary }]}>Property Host Registration</Text>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Full Name</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <UserIcon color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostName}
-                    onChangeText={setHostName}
-                    placeholder="John Doe"
-                    placeholderTextColor={theme.textMuted}
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Mail color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostEmail}
-                    onChangeText={setHostEmail}
-                    placeholder="you@example.com"
-                    placeholderTextColor={theme.textMuted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Phone Number</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Phone color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostPhone}
-                    onChangeText={setHostPhone}
-                    placeholder="98765 43210"
-                    placeholderTextColor={theme.textMuted}
-                    keyboardType="phone-pad"
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Lock color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={hostPassword}
-                    onChangeText={setHostPassword}
-                    placeholder="Min. 6 characters"
-                    placeholderTextColor={theme.textMuted}
-                    secureTextEntry
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-
-              <PrimaryButton
-                label={isAuthenticating ? 'Creating account…' : 'Register & Continue'}
-                onPress={handleHostSignup}
-                loading={isAuthenticating}
-                disabled={!hostName || !hostEmail || !hostPhone || hostPassword.length < 6}
-              />
-
-              <Pressable
-                onPress={() => setHostAction('login')}
-                style={[styles.demoLink, { marginTop: 8 }]}
-              >
-                <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '600' }}>Already have an account? Sign in</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
-      )}
-
-      {/* Customer */}
-      {role === 'customer' && (
-        <View style={styles.formSection}>
-          <Text style={[styles.formTitle, { color: theme.textSecondary }]}>Guest Sign In</Text>
-
-          <View style={[styles.methodSwitcher, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Pressable
-              onPress={() => { setCustomerMethod('phone'); setOtpStep('input'); }}
-              style={[styles.methodTab, customerMethod === 'phone' && { backgroundColor: 'rgba(201,161,74,0.15)' }]}
-            >
-              <Smartphone size={15} color={customerMethod === 'phone' ? theme.gold : theme.textMuted} />
-              <Text style={[styles.methodTabText, { color: customerMethod === 'phone' ? theme.gold : theme.textMuted }]}>
-                Phone OTP
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => { setCustomerMethod('email'); setOtpStep('input'); }}
-              style={[styles.methodTab, customerMethod === 'email' && { backgroundColor: 'rgba(201,161,74,0.15)' }]}
-            >
-              <Mail size={15} color={customerMethod === 'email' ? theme.gold : theme.textMuted} />
-              <Text style={[styles.methodTabText, { color: customerMethod === 'email' ? theme.gold : theme.textMuted }]}>
-                Email
-              </Text>
-            </Pressable>
-          </View>
-
-          {customerMethod === 'phone' && (
-            <>
-              {otpStep === 'input' && (
-                <>
-                  <View>
-                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Phone Number</Text>
-                    <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Text style={{ color: theme.textMuted, fontSize: 15, fontWeight: '600' }}>+91</Text>
-                      <TextInput
-                        value={phone}
-                        onChangeText={setPhone}
-                        placeholder="98765 43210"
-                        placeholderTextColor={theme.textMuted}
-                        keyboardType="phone-pad"
-                        maxLength={10}
-                        style={[styles.input, { color: theme.text }]}
-                      />
-                      {phone.length === 10 ? <Shield size={16} color="#2E7D32" /> : null}
-                    </View>
-                  </View>
-                  <PrimaryButton
-                    label="Send OTP"
-                    onPress={handleSendOtp}
-                    disabled={phone.length < 10}
-                  />
-                  <Pressable onPress={() => setPhone('9876543210')} style={styles.demoLink}>
-                    <Text style={{ color: theme.textMuted, fontSize: 13 }}>Use demo phone number</Text>
-                  </Pressable>
-                </>
-              )}
-              {otpStep === 'otp' && (
-                <>
-                  <View style={[styles.otpSentBanner, { backgroundColor: 'rgba(46,125,50,0.08)', borderColor: 'rgba(46,125,50,0.2)' }]}>
-                    <Text style={{ color: '#2E7D32', fontSize: 13, fontWeight: '600' }}>
-                      OTP sent to +91 {phone}
-                    </Text>
-                    <Pressable onPress={() => setOtpStep('input')}>
-                      <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '600' }}>Change</Text>
-                    </Pressable>
-                  </View>
-                  <View>
-                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Enter OTP</Text>
-                    <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                      <Smartphone color={theme.textMuted} size={20} />
-                      <TextInput
-                        value={otp}
-                        onChangeText={setOtp}
-                        placeholder="Enter 6-digit OTP"
-                        placeholderTextColor={theme.textMuted}
-                        keyboardType="number-pad"
-                        maxLength={6}
-                        style={[styles.input, { color: theme.text, letterSpacing: 4, fontSize: 18 }]}
-                      />
-                    </View>
-                  </View>
-                  {authError === 'invalid_otp' ? (
-                    <Text style={{ color: theme.red, fontSize: 13 }}>Invalid OTP. Please try again.</Text>
-                  ) : null}
-                  <PrimaryButton
-                    label={isAuthenticating ? 'Verifying…' : 'Verify & Sign In'}
-                    onPress={handleVerifyOtp}
-                    loading={isAuthenticating}
-                    disabled={otp.length < 6}
-                  />
-                  <Pressable onPress={() => setOtp('123456')} style={styles.demoLink}>
-                    <Text style={{ color: theme.textMuted, fontSize: 13 }}>Use demo OTP: 123456</Text>
-                  </Pressable>
-                </>
-              )}
-            </>
-          )}
-
-          {customerMethod === 'email' && (
-            <>
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Mail color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={customerEmail}
-                    onChangeText={setCustomerEmail}
-                    placeholder="you@example.com"
-                    placeholderTextColor={theme.textMuted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-              <View>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password</Text>
-                <View style={[styles.inputRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-                  <Lock color={theme.textMuted} size={20} />
-                  <TextInput
-                    value={customerPassword}
-                    onChangeText={setCustomerPassword}
-                    placeholder="Enter password"
-                    placeholderTextColor={theme.textMuted}
-                    secureTextEntry
-                    style={[styles.input, { color: theme.text }]}
-                  />
-                </View>
-              </View>
-              {authError ? (
-                <Text style={{ color: theme.red, fontSize: 13 }}>Invalid email or password</Text>
-              ) : null}
-              <PrimaryButton
-                label={isAuthenticating ? 'Signing in…' : 'Sign In'}
-                onPress={handleCustomerEmailLogin}
-                loading={isAuthenticating}
-                disabled={!customerEmail || !customerPassword}
-              />
-              <Pressable
-                onPress={() => { setCustomerEmail('guest@larosa.in'); setCustomerPassword('demo1234'); }}
-                style={styles.demoLink}
-              >
-                <Text style={{ color: theme.textMuted, fontSize: 13 }}>Use demo guest credentials</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
-      )}
-
-      {/* Trust badges */}
-      <View style={styles.trustRow}>
-        {['Secure', 'India', 'Verified'].map((t) => (
-          <View key={t} style={[styles.trustChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.trustText, { color: theme.textMuted }]}>{t}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+  const statusBarColor = theme.goldDim || '#16372F';
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.bg, flexDirection: isWide ? 'row' : 'column' }]}>
-      {/* Image left (wide) / banner top (narrow) */}
-      <LoginHero variant={isWide ? 'side' : 'banner'} />
+    <View style={[styles.root, { backgroundColor: theme.bg }]}>
+      {Platform.OS !== 'web' && (
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={statusBarColor}
+          animated
+        />
+      )}
 
-      <SafeAreaView
-        style={[styles.formPanel, { backgroundColor: theme.bg }, isWide && styles.formPanelWide]}
-        edges={isWide ? ['top', 'bottom', 'right'] : ['bottom']}
+      {/* Styled Top Brand Header Banner */}
+      <LinearGradient
+        colors={[theme.goldDim || '#16372F', theme.gold || '#235347']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerBanner}
       >
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerContent}>
+            {navigation.canGoBack() ? (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={styles.headerIconButton}
+              >
+                <ChevronLeft size={20} color="#FFFFFF" />
+              </Pressable>
+            ) : (
+              <View style={{ width: 38 }} />
+            )}
+
+            <View style={styles.headerBrandTitleBlock}>
+              <Text style={styles.headerBrandName}>LAROSA</Text>
+              <View style={styles.headerBrandBadge}>
+                <Sparkles size={10} color="#FFD700" />
+                <Text style={styles.headerBrandBadgeText}>LUXURY STAYS</Text>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={toggle}
+              accessibilityRole="button"
+              accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={styles.headerIconButton}
+            >
+              {isDark ? (
+                <Sun size={18} color="#FFD700" strokeWidth={2} />
+              ) : (
+                <Moon size={18} color="#FFFFFF" strokeWidth={2} />
+              )}
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+      {/* Accent Gold Stripe */}
+      <View style={[styles.goldAccentStripe, { backgroundColor: theme.gold }]} />
+
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}
         >
           <ScrollView
             contentContainerStyle={[
-              styles.scrollContent,
-              isWide && styles.scrollContentWide,
+              styles.scrollContainer,
+              isWide && styles.scrollContainerWide,
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {formContent}
+            <View style={[styles.formWrapper, isWide && styles.formWrapperWide]}>
+              {/* Brand Logo Header */}
+              <View style={styles.headerBlock}>
+                <View style={[styles.appBadge, { backgroundColor: theme.gold }]}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: '900' }}>L</Text>
+                </View>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>
+                  {authMode === 'login' ? 'Sign in' : 'Sign up'}
+                </Text>
+                <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+                  {authMode === 'login'
+                    ? 'Sign in to access your LaRosa account'
+                    : 'Create your LaRosa account'}
+                </Text>
+              </View>
+
+              {/* Error Banner */}
+              {(authError || localError) ? (
+                <View style={[styles.errorBanner, { backgroundColor: theme.redSoft, borderColor: theme.red }]}>
+                  <Text style={{ color: theme.red, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+                    {localError || (authError === 'invalid' ? 'Invalid email or password' : authError)}
+                  </Text>
+                </View>
+              ) : null}
+
+              {/* SIGN IN FORM */}
+              {authMode === 'login' && (
+                <View style={styles.formBody}>
+                  {/* Role Selector */}
+                  <RoleDropdown value={role} onChange={setRole} theme={theme} />
+
+                  {/* Email Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email*</Text>
+                    <View
+                      style={[
+                        styles.inputRow,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: focusedInput === 'loginEmail' ? theme.gold : theme.border,
+                        },
+                      ]}
+                    >
+                      <Mail color={focusedInput === 'loginEmail' ? theme.gold : theme.textMuted} size={18} />
+                      <TextInput
+                        value={loginEmail}
+                        onChangeText={setLoginEmail}
+                        onFocus={() => setFocusedInput('loginEmail')}
+                        onBlur={() => setFocusedInput(null)}
+                        placeholder="you@example.com"
+                        placeholderTextColor={theme.textMuted}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        style={[styles.input, { color: theme.text }]}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Password Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password*</Text>
+                    <View
+                      style={[
+                        styles.inputRow,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: focusedInput === 'loginPassword' ? theme.gold : theme.border,
+                        },
+                      ]}
+                    >
+                      <Lock color={focusedInput === 'loginPassword' ? theme.gold : theme.textMuted} size={18} />
+                      <TextInput
+                        value={loginPassword}
+                        onChangeText={setLoginPassword}
+                        onFocus={() => setFocusedInput('loginPassword')}
+                        onBlur={() => setFocusedInput(null)}
+                        placeholder="••••••••"
+                        placeholderTextColor={theme.textMuted}
+                        secureTextEntry={!showPassword}
+                        style={[styles.input, { color: theme.text }]}
+                      />
+                      <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
+                        {showPassword ? (
+                          <EyeOff size={18} color={theme.textMuted} />
+                        ) : (
+                          <Eye size={18} color={theme.textMuted} />
+                        )}
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  {/* Remember Me & Forgot Password Row */}
+                  <View style={styles.rememberForgotRow}>
+                    <Pressable
+                      onPress={() => setRememberMe(!rememberMe)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                    >
+                      <View
+                        style={[
+                          styles.checkbox,
+                          {
+                            borderColor: rememberMe ? theme.gold : theme.border,
+                            backgroundColor: rememberMe ? theme.gold : 'transparent',
+                          },
+                        ]}
+                      >
+                        {rememberMe && <Check size={12} color="#fff" />}
+                      </View>
+                      <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Remember me</Text>
+                    </Pressable>
+
+                    <Pressable onPress={() => {}}>
+                      <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700' }}>
+                        Forgot Password?
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Phone Number Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Phone number</Text>
+                    <View
+                      style={[
+                        styles.inputRow,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: focusedInput === 'loginPhone' ? theme.gold : theme.border,
+                        },
+                      ]}
+                    >
+                      <Phone color={focusedInput === 'loginPhone' ? theme.gold : theme.textMuted} size={18} />
+                      <TextInput
+                        value={loginPhone}
+                        onChangeText={setLoginPhone}
+                        onFocus={() => setFocusedInput('loginPhone')}
+                        onBlur={() => setFocusedInput(null)}
+                        placeholder="+91 98765 00000"
+                        placeholderTextColor={theme.textMuted}
+                        keyboardType="phone-pad"
+                        style={[styles.input, { color: theme.text }]}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Submit Button */}
+                  <View style={{ marginTop: 12 }}>
+                    <PrimaryButton
+                      label={isAuthenticating ? 'Signing in…' : `Sign in`}
+                      onPress={handleLoginSubmit}
+                      loading={isAuthenticating}
+                      disabled={!loginEmail || !loginPassword}
+                    />
+                  </View>
+
+                  {/* Bottom Link Switcher */}
+                  <View style={styles.switcherRow}>
+                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+                      Don't have an account?{' '}
+                    </Text>
+                    <Pressable onPress={() => { setAuthMode('signup'); setLocalError(null); }}>
+                      <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '800' }}>
+                        Sign up
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Demo Autofill Section */}
+                  <View style={styles.demoSection}>
+                    <Text style={{ color: theme.textMuted, fontSize: 11, textAlign: 'center', marginBottom: 8, fontWeight: '700', letterSpacing: 0.5 }}>
+                      DEMO AUTOFILL
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <Pressable
+                        onPress={() => autofillDemo('customer')}
+                        style={[styles.demoChip, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                      >
+                        <Text style={{ color: theme.gold, fontSize: 12, fontWeight: '600' }}>Guest Demo</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => autofillDemo('host')}
+                        style={[styles.demoChip, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                      >
+                        <Text style={{ color: theme.gold, fontSize: 12, fontWeight: '600' }}>Host Demo</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => autofillDemo('admin')}
+                        style={[styles.demoChip, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                      >
+                        <Text style={{ color: theme.gold, fontSize: 12, fontWeight: '600' }}>Admin Demo</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* SIGN UP FORM */}
+              {authMode === 'signup' && (
+                <View style={styles.formBody}>
+                  {/* First Name & Last Name Grid */}
+                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>First name*</Text>
+                      <View
+                        style={[
+                          styles.inputRow,
+                          {
+                            backgroundColor: theme.surface,
+                            borderColor: focusedInput === 'firstName' ? theme.gold : theme.border,
+                          },
+                        ]}
+                      >
+                        <UserIcon color={focusedInput === 'firstName' ? theme.gold : theme.textMuted} size={18} />
+                        <TextInput
+                          value={firstName}
+                          onChangeText={setFirstName}
+                          onFocus={() => setFocusedInput('firstName')}
+                          onBlur={() => setFocusedInput(null)}
+                          placeholder="First name"
+                          placeholderTextColor={theme.textMuted}
+                          style={[styles.input, { color: theme.text }]}
+                        />
+                      </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Last name*</Text>
+                      <View
+                        style={[
+                          styles.inputRow,
+                          {
+                            backgroundColor: theme.surface,
+                            borderColor: focusedInput === 'lastName' ? theme.gold : theme.border,
+                          },
+                        ]}
+                      >
+                        <UserIcon color={focusedInput === 'lastName' ? theme.gold : theme.textMuted} size={18} />
+                        <TextInput
+                          value={lastName}
+                          onChangeText={setLastName}
+                          onFocus={() => setFocusedInput('lastName')}
+                          onBlur={() => setFocusedInput(null)}
+                          placeholder="Last name"
+                          placeholderTextColor={theme.textMuted}
+                          style={[styles.input, { color: theme.text }]}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Email Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Email*</Text>
+                    <View
+                      style={[
+                        styles.inputRow,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: focusedInput === 'signUpEmail' ? theme.gold : theme.border,
+                        },
+                      ]}
+                    >
+                      <Mail color={focusedInput === 'signUpEmail' ? theme.gold : theme.textMuted} size={18} />
+                      <TextInput
+                        value={signUpEmail}
+                        onChangeText={setSignUpEmail}
+                        onFocus={() => setFocusedInput('signUpEmail')}
+                        onBlur={() => setFocusedInput(null)}
+                        placeholder="you@example.com"
+                        placeholderTextColor={theme.textMuted}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        style={[styles.input, { color: theme.text }]}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Phone Number Field */}
+                  <View style={styles.fieldGroup}>
+                    <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Phone number</Text>
+                    <View
+                      style={[
+                        styles.inputRow,
+                        {
+                          backgroundColor: theme.surface,
+                          borderColor: focusedInput === 'signUpPhone' ? theme.gold : theme.border,
+                        },
+                      ]}
+                    >
+                      <Phone color={focusedInput === 'signUpPhone' ? theme.gold : theme.textMuted} size={18} />
+                      <TextInput
+                        value={signUpPhone}
+                        onChangeText={setSignUpPhone}
+                        onFocus={() => setFocusedInput('signUpPhone')}
+                        onBlur={() => setFocusedInput(null)}
+                        placeholder="+91 98765 00000"
+                        placeholderTextColor={theme.textMuted}
+                        keyboardType="phone-pad"
+                        style={[styles.input, { color: theme.text }]}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Password & Confirm Password Grid */}
+                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 14 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Password*</Text>
+                      <View
+                        style={[
+                          styles.inputRow,
+                          {
+                            backgroundColor: theme.surface,
+                            borderColor: focusedInput === 'signUpPassword' ? theme.gold : theme.border,
+                          },
+                        ]}
+                      >
+                        <Lock color={focusedInput === 'signUpPassword' ? theme.gold : theme.textMuted} size={18} />
+                        <TextInput
+                          value={signUpPassword}
+                          onChangeText={setSignUpPassword}
+                          onFocus={() => setFocusedInput('signUpPassword')}
+                          onBlur={() => setFocusedInput(null)}
+                          placeholder="••••••••"
+                          placeholderTextColor={theme.textMuted}
+                          secureTextEntry={!showPassword}
+                          style={[styles.input, { color: theme.text }]}
+                        />
+                        <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 2 }}>
+                          {showPassword ? (
+                            <EyeOff size={16} color={theme.textMuted} />
+                          ) : (
+                            <Eye size={16} color={theme.textMuted} />
+                          )}
+                        </Pressable>
+                      </View>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>Confirm Password*</Text>
+                      <View
+                        style={[
+                          styles.inputRow,
+                          {
+                            backgroundColor: theme.surface,
+                            borderColor: focusedInput === 'confirmPassword' ? theme.gold : theme.border,
+                          },
+                        ]}
+                      >
+                        <Lock color={focusedInput === 'confirmPassword' ? theme.gold : theme.textMuted} size={18} />
+                        <TextInput
+                          value={confirmPassword}
+                          onChangeText={setConfirmPassword}
+                          onFocus={() => setFocusedInput('confirmPassword')}
+                          onBlur={() => setFocusedInput(null)}
+                          placeholder="••••••••"
+                          placeholderTextColor={theme.textMuted}
+                          secureTextEntry={!showConfirmPassword}
+                          style={[styles.input, { color: theme.text }]}
+                        />
+                        <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 2 }}>
+                          {showConfirmPassword ? (
+                            <EyeOff size={16} color={theme.textMuted} />
+                          ) : (
+                            <Eye size={16} color={theme.textMuted} />
+                          )}
+                        </Pressable>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Submit Button */}
+                  <View style={{ marginTop: 12 }}>
+                    <PrimaryButton
+                      label={isAuthenticating ? 'Creating Account…' : 'Sign up'}
+                      onPress={handleSignUpSubmit}
+                      loading={isAuthenticating}
+                      disabled={
+                        !firstName ||
+                        !lastName ||
+                        !signUpPhone ||
+                        !signUpEmail ||
+                        !signUpPassword ||
+                        !confirmPassword
+                      }
+                    />
+                  </View>
+
+                  {/* Bottom Link Switcher */}
+                  <View style={styles.switcherRow}>
+                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+                      Already have an account?{' '}
+                    </Text>
+                    <Pressable onPress={() => { setAuthMode('signup'); setLocalError(null); }}>
+                      <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '800' }}>
+                        Sign In
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -632,204 +748,198 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  formPanel: {
-    flex: 1,
+  headerBanner: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  formPanelWide: {
-    flex: 0.48,
-    minWidth: 360,
-    maxWidth: 560,
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: Platform.OS === 'android' ? 8 : 4,
   },
-  scrollContent: {
+  headerIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBrandTitleBlock: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  headerBrandName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  headerBrandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerBrandBadgeText: {
+    color: '#FFD700',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  goldAccentStripe: {
+    height: 2.5,
+    width: '100%',
+  },
+  scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 36,
+    alignItems: 'center',
   },
-  scrollContentWide: {
+  scrollContainerWide: {
     justifyContent: 'center',
-    paddingHorizontal: 40,
     paddingVertical: 48,
   },
-  formColumn: {
+  formWrapper: {
     width: '100%',
-    maxWidth: FORM_MAX_WIDTH,
-    alignSelf: 'center',
+    maxWidth: 420,
   },
-  brandHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 28,
-    width: '100%',
+  formWrapperWide: {
+    maxWidth: 460,
   },
-  brandBlock: {
-    gap: 6,
+  headerBlock: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  brandLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
+  appBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
+    shadowColor: '#235347',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  brandTitle: {
+  headerTitle: {
     fontSize: 26,
     fontWeight: '800',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  brandSubtitle: {
+  headerSubtitle: {
     fontSize: 14,
-    fontWeight: '500',
-    marginTop: 2,
+    textAlign: 'center',
   },
-  themeToggle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  roleSwitcher: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 4,
-    marginBottom: 16,
+  errorBanner: {
     width: '100%',
-  },
-  roleTab: {
-    flex: 1,
     paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    marginBottom: 16,
   },
-  roleTabText: { fontSize: 13, fontWeight: '700' },
-  formSection: {
-    gap: 14,
+  formBody: {
     width: '100%',
   },
-  formTitle: { fontSize: 14, fontWeight: '600', letterSpacing: 0.3 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 8 },
+  fieldGroup: {
+    marginBottom: 14,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    height: 52,
-    gap: 12,
-  },
-  input: { flex: 1, fontSize: 16 },
-  methodSwitcher: {
-    flexDirection: 'row',
     borderRadius: 12,
     borderWidth: 1,
-    overflow: 'hidden',
-  },
-  methodTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-  },
-  methodTabText: { fontSize: 13, fontWeight: '600' },
-  otpSentBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  demoLink: { alignItems: 'center', marginTop: 2 },
-  trustRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    paddingHorizontal: 14,
+    height: 50,
     gap: 10,
-    marginTop: 28,
-    width: '100%',
   },
-  trustChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
+  input: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+    paddingVertical: 0,
   },
-  trustText: { fontSize: 12, fontWeight: '500' },
-  hero: {
-    overflow: 'hidden',
-    backgroundColor: '#0F111A',
-  },
-  heroSide: {
-    flex: 0.52,
-    minWidth: 320,
-  },
-  heroBanner: {
-    height: 200,
-    width: '100%',
-  },
-  heroCopy: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: 'flex-end',
-  },
-  heroCopySide: {
-    padding: 40,
-    paddingBottom: 48,
-  },
-  heroCopyBanner: {
-    padding: 20,
-    paddingBottom: 18,
+  dropdownHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 52,
   },
-  heroLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  roleIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownMenu: {
+    marginTop: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 6,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  rememberForgotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    marginTop: 2,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
   },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  switcherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
   },
-  heroTagline: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginTop: 8,
+  demoSection: {
+    marginTop: 28,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150,150,150,0.15)',
+    paddingTop: 16,
+    width: '100%',
   },
-  heroSubtitle: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 14,
-    maxWidth: 320,
-  },
-  heroTitleCompact: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  heroTaglineCompact: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 2.5,
-    textTransform: 'uppercase',
-    marginTop: 4,
+  demoChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
   },
 });

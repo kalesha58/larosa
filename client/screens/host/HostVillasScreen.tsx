@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Plus, Search, IndianRupee, MoreVertical, Tag, ShieldAlert } from 'lucide-react-native';
+import { Plus, Search, IndianRupee, MoreVertical, Tag, ShieldAlert, Edit3, Eye, EyeOff, Calendar, Trash2, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Platform,
   useWindowDimensions,
+  Modal,
 } from 'react-native';
 import { Alert } from '../../lib/alert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,8 @@ export default function HostVillasScreen() {
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [showActionSheet, setShowActionSheet] = useState(false);
 
   // Show all rooms tagged for the demo host regardless of logged-in user id.
   const hostRooms = useMemo(() => {
@@ -80,20 +83,10 @@ export default function HostVillasScreen() {
 
   const showActions = useCallback(
     (room: Room) => {
-      Alert.alert(
-        room.title,
-        undefined,
-        [
-          { text: 'Edit Details', onPress: () => navigation.navigate('VillaEdit', { roomId: String(room.roomId) }) },
-          { text: room.status === 'active' ? 'Hide Listing' : 'Make Active', onPress: () => toggleVisibility(room) },
-          { text: 'Set Calendar Pricing', onPress: () => navigation.navigate('Pricing', { roomId: String(room.roomId) }) },
-          { text: 'Availability Calendar', onPress: () => navigation.navigate('Calendar', { roomId: String(room.roomId) }) },
-          { text: 'Delete Listing', style: 'destructive', onPress: () => handleDelete(room) },
-          { text: 'Cancel', style: 'cancel' },
-        ]
-      );
+      setSelectedRoom(room);
+      setShowActionSheet(true);
     },
-    [handleDelete, toggleVisibility, navigation]
+    []
   );
 
   const getBookingModeLabel = (type?: string) => {
@@ -103,18 +96,34 @@ export default function HostVillasScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Platform.OS === 'android' ? theme.gold : theme.bg }} edges={isWeb ? [] : ['top']}>
       {isWeb && <HostWebHeader />}
 
-      <View style={[styles.shell, isWide && styles.shellWide]}>
-        <View style={styles.header}>
-          <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
+      {/* Top Green Header Block (Android/Mobile) */}
+      {Platform.OS === 'android' && (
+        <View style={{ backgroundColor: theme.gold, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, marginBottom: 12 }}>
+          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
             My Farmhouses
           </Text>
-          <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', marginTop: 4 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: '900', marginTop: 2 }}>
             Listings
           </Text>
         </View>
+      )}
+
+      {/* Main Body Content in theme.bg */}
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <View style={[styles.shell, isWide && styles.shellWide]}>
+          {Platform.OS !== 'android' && (
+            <View style={styles.header}>
+              <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
+                My Farmhouses
+              </Text>
+              <Text style={{ color: theme.text, fontSize: 28, fontWeight: '800', marginTop: 4 }}>
+                Listings
+              </Text>
+            </View>
+          )}
 
         <View style={{ marginBottom: 14 }}>
           <View style={[styles.searchRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -277,6 +286,139 @@ export default function HostVillasScreen() {
           <Text style={{ color: theme.textInverse, fontSize: 15, fontWeight: '700' }}>Add Farmhouse</Text>
         </Pressable>
       )}
+      </View>
+
+      {/* ══ FARMHOUSE ACTION BOTTOM SHEET MODAL ══════════════════════════════════ */}
+      <Modal
+        visible={showActionSheet}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowActionSheet(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.backdropPressable} onPress={() => setShowActionSheet(false)} />
+          <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={[styles.handleBar, { backgroundColor: theme.textMuted + '44' }]} />
+            
+            {selectedRoom && (
+              <>
+                {/* Villa Preview Header */}
+                <View style={[styles.sheetHeader, { borderBottomColor: theme.border }]}>
+                  <Image
+                    source={{ uri: selectedRoom.images[0] ?? 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=400&q=80' }}
+                    style={styles.sheetImage}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sheetTitle, { color: theme.text }]} numberOfLines={1}>{selectedRoom.title}</Text>
+                    <Text style={[styles.sheetSub, { color: theme.textMuted }]}>
+                      ₹{selectedRoom.price.toLocaleString('en-IN')}/night · {selectedRoom.type}
+                    </Text>
+                    <View style={[styles.sheetChip, { backgroundColor: selectedRoom.approvedByAdmin ? theme.greenSoft : theme.amberSoft }]}>
+                      <Text style={[styles.sheetChipText, { color: selectedRoom.approvedByAdmin ? theme.green : theme.amber }]}>
+                        {selectedRoom.approvedByAdmin ? (selectedRoom.status === 'active' ? 'LIVE LISTING' : 'HIDDEN') : 'PENDING APPROVAL'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable onPress={() => setShowActionSheet(false)} style={[styles.closeBtn, { backgroundColor: theme.bg }]}>
+                    <X size={18} color={theme.textMuted} />
+                  </Pressable>
+                </View>
+
+                {/* Action List */}
+                <View style={styles.actionList}>
+                  <Pressable
+                    style={({ pressed }) => [styles.actionItem, { borderBottomColor: theme.border }, pressed && { backgroundColor: 'rgba(201, 161, 74, 0.08)' }]}
+                    onPress={() => {
+                      setShowActionSheet(false);
+                      navigation.navigate('VillaEdit', { roomId: String(selectedRoom.roomId) });
+                    }}
+                  >
+                    <View style={[styles.actionIconBox, { backgroundColor: 'rgba(201, 161, 74, 0.12)' }]}>
+                      <Edit3 size={18} color="#C9A14A" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.actionLabel, { color: theme.text }]}>Edit Farmhouse Details</Text>
+                      <Text style={[styles.actionSub, { color: theme.textMuted }]}>Update photos, title, pricing & description</Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [styles.actionItem, { borderBottomColor: theme.border }, pressed && { backgroundColor: theme.goldGlow }]}
+                    onPress={() => {
+                      setShowActionSheet(false);
+                      toggleVisibility(selectedRoom);
+                    }}
+                  >
+                    <View style={[styles.actionIconBox, { backgroundColor: 'rgba(33, 150, 243, 0.12)' }]}>
+                      {selectedRoom.status === 'active' ? (
+                        <EyeOff size={18} color="#2196F3" />
+                      ) : (
+                        <Eye size={18} color="#2196F3" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.actionLabel, { color: theme.text }]}>
+                        {selectedRoom.status === 'active' ? 'Hide Listing from Guests' : 'Make Listing Active'}
+                      </Text>
+                      <Text style={[styles.actionSub, { color: theme.textMuted }]}>
+                        {selectedRoom.status === 'active' ? 'Temporarily unpublish from search' : 'Show listing to guests'}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [styles.actionItem, { borderBottomColor: theme.border }, pressed && { backgroundColor: theme.goldGlow }]}
+                    onPress={() => {
+                      setShowActionSheet(false);
+                      navigation.navigate('Pricing', { roomId: String(selectedRoom.roomId) });
+                    }}
+                  >
+                    <View style={[styles.actionIconBox, { backgroundColor: 'rgba(156, 39, 176, 0.12)' }]}>
+                      <Tag size={18} color="#9C27B0" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.actionLabel, { color: theme.text }]}>Set Custom Calendar Pricing</Text>
+                      <Text style={[styles.actionSub, { color: theme.textMuted }]}>Configure weekend rates & seasonal pricing</Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [styles.actionItem, { borderBottomColor: theme.border }, pressed && { backgroundColor: theme.goldGlow }]}
+                    onPress={() => {
+                      setShowActionSheet(false);
+                      navigation.navigate('Calendar', { roomId: String(selectedRoom.roomId) });
+                    }}
+                  >
+                    <View style={[styles.actionIconBox, { backgroundColor: 'rgba(76, 175, 80, 0.12)' }]}>
+                      <Calendar size={18} color="#4CAF50" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.actionLabel, { color: theme.text }]}>Availability Calendar</Text>
+                      <Text style={[styles.actionSub, { color: theme.textMuted }]}>Block dates or manage bookings schedule</Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    style={({ pressed }) => [styles.actionItem, { borderBottomColor: 'transparent' }, pressed && { backgroundColor: 'rgba(244, 67, 54, 0.08)' }]}
+                    onPress={() => {
+                      setShowActionSheet(false);
+                      handleDelete(selectedRoom);
+                    }}
+                  >
+                    <View style={[styles.actionIconBox, { backgroundColor: 'rgba(244, 67, 54, 0.12)' }]}>
+                      <Trash2 size={18} color="#F44336" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.actionLabel, { color: '#F44336' }]}>Delete Farmhouse Listing</Text>
+                      <Text style={[styles.actionSub, { color: theme.textMuted }]}>Permanently remove from catalog</Text>
+                    </View>
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -379,5 +521,98 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  backdropPressable: {
+    ...StyleSheet.absoluteFill,
+  },
+  modalCard: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    maxHeight: '85%',
+    width: '100%',
+  },
+  handleBar: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  sheetImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  sheetSub: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sheetChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  sheetChipText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionList: {
+    paddingVertical: 8,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  actionIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  actionSub: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });

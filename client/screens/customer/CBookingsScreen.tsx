@@ -45,6 +45,7 @@ export default function CBookingsScreen() {
   const { customerBookings } = useData();
 
   const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
   const isSmallScreen = width < 640;
   const filtered = customerBookings.filter((b) => b.status === activeTab);
 
@@ -56,18 +57,18 @@ export default function CBookingsScreen() {
     .reduce((sum, b) => sum + b.totalPrice, 0);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
       {isWeb && <WebHeader />}
 
       {/* Header Row */}
-      <View style={[styles.headerRow, isWeb && styles.webWrap]}>
+      <View style={[styles.headerRow, isWeb && styles.webWrap, isAndroid && { backgroundColor: theme.gold }]}>
         <View style={styles.headerTitleGroup}>
-          <View style={[styles.headerIconBox, { backgroundColor: 'rgba(27,77,62,0.1)' }]}>
-            <Briefcase size={isSmallScreen ? 18 : 22} color="#1B4D3E" />
+          <View style={[styles.headerIconBox, { backgroundColor: isAndroid ? 'rgba(255,255,255,0.2)' : 'rgba(27,77,62,0.1)' }]}>
+            <Briefcase size={isSmallScreen ? 18 : 22} color={isAndroid ? '#FFFFFF' : '#1B4D3E'} />
           </View>
           <View style={{ flexShrink: 1 }}>
-            <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>My Bookings</Text>
-            <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+            <Text style={[styles.title, { color: isAndroid ? '#FFFFFF' : theme.text }]} numberOfLines={1}>My Bookings</Text>
+            <Text style={[styles.subtitle, { color: isAndroid ? 'rgba(255,255,255,0.75)' : theme.textMuted }]}>
               {customerBookings.length} total bookings
             </Text>
           </View>
@@ -76,83 +77,23 @@ export default function CBookingsScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.downloadBtn,
-            { backgroundColor: theme.surface, borderColor: theme.border },
+            {
+              backgroundColor: isAndroid ? 'rgba(255,255,255,0.15)' : theme.surface,
+              borderColor: isAndroid ? 'rgba(255,255,255,0.25)' : theme.border
+            },
             pressed && { opacity: 0.8 },
           ]}
         >
-          <Download size={14} color={theme.text} />
-          <Text style={[styles.downloadText, { color: theme.text }]}>
+          <Download size={14} color={isAndroid ? '#FFFFFF' : theme.text} />
+          <Text style={[styles.downloadText, { color: isAndroid ? '#FFFFFF' : theme.text }]}>
             {isSmallScreen ? 'Summary' : 'Download Summary'}
           </Text>
         </Pressable>
       </View>
 
-      {/* Tabs */}
-      <View style={[{ height: 50, flexShrink: 0, marginBottom: 16 }, isWeb && styles.webWrap]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.tabBarScroll, { backgroundColor: theme.surface, borderColor: theme.border }]}
-        >
-          {TABS.map((tab) => {
-            const count = customerBookings.filter((b) => b.status === tab.key).length;
-            const isActive = activeTab === tab.key;
-            const TabIcon = tab.Icon;
-            return (
-              <Pressable
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key)}
-                style={({ pressed }) => [
-                  styles.tab,
-                  isActive && [styles.activeTab, { backgroundColor: '#1B4D3E' }],
-                  pressed && { opacity: 0.75 },
-                ]}
-              >
-                <TabIcon size={15} color={isActive ? '#FFFFFF' : theme.textMuted} />
-                <Text style={[styles.tabText, { color: isActive ? '#FFFFFF' : theme.textSecondary }]}>
-                  {tab.label}
-                </Text>
-                {count > 0 && (
-                  <View style={[styles.tabBadge, { backgroundColor: isActive ? '#FFFFFF' : theme.border }]}>
-                    <Text style={[styles.tabBadgeText, { color: isActive ? '#1B4D3E' : theme.textSecondary }]}>
-                      {count}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Content */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scroll,
-          isWeb && styles.webWrap,
-          filtered.length === 0 && styles.emptyScroll,
-        ]}
-      >
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={<CalendarClock size={48} color={theme.textMuted} />}
-            title={EMPTY_MESSAGES[activeTab].title}
-            subtitle={EMPTY_MESSAGES[activeTab].subtitle}
-          />
-        ) : (
-          <View style={styles.list}>
-            {filtered.map((booking) => (
-              <BookingCard
-                key={booking.id}
-                booking={booking}
-                onPress={() => navigation.navigate('CBookingDetail', { bookingId: booking.id })}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Bottom Summary Stats Bar */}
+      {/* Main Content Area */}
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        {/* Summary Stats Bar (Below Header) */}
         <View style={[styles.summaryBar, { backgroundColor: theme.surface, borderColor: theme.border }, isWeb && styles.webWrap]}>
           <View style={styles.summaryCard}>
             <View style={[styles.summaryIconBox, { backgroundColor: 'rgba(27,77,62,0.1)' }]}>
@@ -200,7 +141,76 @@ export default function CBookingsScreen() {
             </View>
           </View>
         </View>
-      </ScrollView>
+
+        {/* Segmented Control Bar (Mobile & Web) */}
+        <View style={[styles.segmentedContainer, { backgroundColor: theme.surface, borderColor: theme.border }, isWeb && styles.webWrap]}>
+          {TABS.map((tab) => {
+            const count = customerBookings.filter((b) => b.status === tab.key).length;
+            const isActive = activeTab === tab.key;
+            const TabIcon = tab.Icon;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                style={({ pressed }) => [
+                  styles.segmentedTab,
+                  isActive && [
+                    styles.activeSegmentedTab,
+                    { backgroundColor: isAndroid ? theme.gold : '#1B4D3E' }
+                  ],
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <TabIcon size={14} color={isActive ? '#FFFFFF' : theme.textMuted} />
+                <Text style={[styles.segmentedTabText, { color: isActive ? '#FFFFFF' : theme.textSecondary }]}>
+                  {tab.label}
+                </Text>
+                {count > 0 && (
+                  <View style={[
+                    styles.segmentedBadge,
+                    { backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : theme.border }
+                  ]}>
+                    <Text style={[
+                      styles.segmentedBadgeText,
+                      { color: isActive ? '#FFFFFF' : theme.textSecondary }
+                    ]}>
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Content */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scroll,
+            isWeb && styles.webWrap,
+            filtered.length === 0 && styles.emptyScroll,
+          ]}
+        >
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={<CalendarClock size={48} color={theme.textMuted} />}
+              title={EMPTY_MESSAGES[activeTab].title}
+              subtitle={EMPTY_MESSAGES[activeTab].subtitle}
+            />
+          ) : (
+            <View style={styles.list}>
+              {filtered.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onPress={() => navigation.navigate('CBookingDetail', { bookingId: booking.id })}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -246,35 +256,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   downloadText: { fontSize: 12, fontWeight: '600' },
-  tabBarScroll: {
-    paddingHorizontal: 20,
-    paddingVertical: 5,
+  segmentedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginHorizontal: 20,
+    marginTop: 14,
+    marginBottom: 16,
+    padding: 4,
     borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
   },
-  tab: {
+  segmentedTab: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 10,
     borderRadius: 12,
   },
-  activeTab: {},
-  tabText: { fontSize: 13, fontWeight: '700' },
-  tabBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
+  activeSegmentedTab: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  tabBadgeText: { fontSize: 11, fontWeight: '800' },
+  segmentedTabText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  segmentedBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  segmentedBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
   scroll: { paddingBottom: 100 },
   emptyScroll: { flexGrow: 1 },
   list: { paddingHorizontal: 20, gap: 16 },
@@ -286,7 +306,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     padding: 14,
-    marginTop: 20,
+    marginTop: 12,
     marginHorizontal: 20,
     flexWrap: 'wrap',
     gap: 12,

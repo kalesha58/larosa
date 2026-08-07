@@ -1,12 +1,13 @@
 import React from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Image,
+  View, Text, ScrollView, Pressable, StyleSheet, Image, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   ArrowLeft, CheckCircle, Clock, XCircle, PhoneCall, MessageCircle,
-  AlertCircle, Calendar, Users, BedDouble,
+  AlertCircle, Calendar, Users, BedDouble, ShieldCheck, MapPin,
+  FileText, Share2, Wifi, Tv, CheckSquare, Volume2, Key,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 import { customerBookings, properties } from '../../lib/mockData';
@@ -16,7 +17,7 @@ import type { BookingTimelineEvent } from '../../types';
 const TIMELINE_ICONS: Record<string, React.ElementType> = {
   created: Clock,
   confirmed: CheckCircle,
-  paid: CheckCircle,
+  paid: ShieldCheck,
   checkin: Calendar,
   checkout: CheckCircle,
   cancelled: XCircle,
@@ -25,9 +26,9 @@ const TIMELINE_ICONS: Record<string, React.ElementType> = {
 
 const TIMELINE_COLORS: Record<string, string> = {
   created: '#C9A14A',
-  confirmed: '#2E7D32',
+  confirmed: '#1B4D3E',
   paid: '#2E7D32',
-  checkin: '#2E7D32',
+  checkin: '#C9A14A',
   checkout: '#2E7D32',
   cancelled: '#E53935',
   refunded: '#E53935',
@@ -41,8 +42,8 @@ function TimelineItem({ event, isLast }: { event: BookingTimelineEvent; isLast: 
   return (
     <View style={styles.timelineItem}>
       <View style={styles.timelineLeft}>
-        <View style={[styles.timelineDot, { backgroundColor: color, borderColor: `${color}33` }]}>
-          <Icon size={12} color="#fff" />
+        <View style={[styles.timelineDot, { backgroundColor: color + '15', borderColor: color }]}>
+          <Icon size={12} color={color} />
         </View>
         {!isLast && <View style={[styles.timelineLine, { backgroundColor: theme.border }]} />}
       </View>
@@ -59,155 +60,277 @@ export default function CBookingDetailScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { width } = useWindowDimensions();
   const { bookingId } = route.params ?? {};
+
+  const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
+  const isWebLarge = isWeb && width >= 900;
 
   const booking = customerBookings.find((b) => b.id === bookingId) ?? customerBookings[0];
   const property = properties.find((p) => p.id === booking.propertyId);
 
   const statusColors = {
-    upcoming: { text: theme.gold, bg: theme.goldGlow },
-    completed: { text: '#2E7D32', bg: 'rgba(46,125,50,0.12)' },
-    cancelled: { text: '#E53935', bg: 'rgba(229,57,53,0.12)' },
+    upcoming: { text: theme.gold, bg: theme.gold + '15', border: theme.gold + '40' },
+    completed: { text: '#2E7D32', bg: 'rgba(46,125,50,0.1)', border: 'rgba(46,125,50,0.25)' },
+    cancelled: { text: '#E53935', bg: 'rgba(229,57,53,0.1)', border: 'rgba(229,57,53,0.25)' },
   };
   const statusCfg = statusColors[booking.status];
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+      <View style={[styles.header, isWeb && styles.webHeaderWrap, isAndroid && { backgroundColor: theme.gold }]}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={({ pressed }) => [
+            styles.backCircle,
+            {
+              backgroundColor: isAndroid ? 'rgba(255, 255, 255, 0.15)' : theme.surface,
+              borderColor: isAndroid ? 'rgba(255, 255, 255, 0.25)' : theme.border
+            },
+            pressed && { opacity: 0.6 }
+          ]}
+        >
+          <ArrowLeft size={18} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Booking Details</Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}>
+        <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>Booking Details</Text>
+        <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg, borderColor: statusCfg.border }]}>
           <Text style={[styles.statusText, { color: statusCfg.text }]}>
-            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            {booking.status.toUpperCase()}
           </Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Property card */}
-        <View style={[styles.propertyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Image source={{ uri: booking.propertyImage }} style={styles.propertyImage} resizeMode="cover" />
-          <View style={styles.propertyInfo}>
-            <Text style={[styles.propertyTitle, { color: theme.text }]}>{booking.propertyTitle}</Text>
-            <Text style={[styles.propertyLocation, { color: theme.textSecondary }]}>{booking.propertyLocation}</Text>
-          </View>
-        </View>
-
-        {/* Stay details */}
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>Stay Details</Text>
-          <View style={styles.detailGrid}>
-            {[
-              { icon: Calendar, label: 'Check-in', value: formatDate(booking.checkIn) },
-              { icon: Calendar, label: 'Check-out', value: formatDate(booking.checkOut) },
-              { icon: Users, label: 'Guests', value: `${booking.guests} guests` },
-              { icon: BedDouble, label: 'Bedrooms', value: `${booking.bedrooms} beds` },
-            ].map((item) => (
-              <View key={item.label} style={[styles.detailItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
-                <item.icon size={16} color={theme.gold} />
-                <Text style={[styles.detailLabel, { color: theme.textMuted }]}>{item.label}</Text>
-                <Text style={[styles.detailValue, { color: theme.text }]}>{item.value}</Text>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scroll, isWeb && styles.webScroll]}
+      >
+        {/* Modern Hero Image Banner with text overlay */}
+        <View style={[styles.heroContainer, { borderColor: theme.border }]}>
+          <Image source={{ uri: booking.propertyImage }} style={styles.heroImage} resizeMode="cover" />
+          <View style={styles.heroGradient} />
+          <View style={styles.heroContent}>
+            <View style={styles.heroTextGroup}>
+              <Text style={styles.heroTitle}>{booking.propertyTitle}</Text>
+              <View style={styles.locationRow}>
+                <MapPin size={14} color="#C9A14A" />
+                <Text style={styles.heroLocation}>{booking.propertyLocation}</Text>
               </View>
-            ))}
-          </View>
-          <View style={[styles.purposeRow, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '33' }]}>
-            <Text style={[styles.purposeLabel, { color: theme.textMuted }]}>Purpose</Text>
-            <Text style={[styles.purposeValue, { color: theme.gold }]}>{booking.purpose}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Payment summary */}
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>Payment Summary</Text>
-          {[
-            { label: 'Subtotal', value: formatMoney(booking.subtotal) },
-            { label: 'Deposit', value: formatMoney(booking.deposit) },
-            { label: 'Platform Fee', value: formatMoney(booking.platformFee) },
-            { label: 'Taxes', value: formatMoney(booking.taxes) },
-          ].map((row) => (
-            <View key={row.label} style={styles.payRow}>
-              <Text style={[styles.payLabel, { color: theme.textSecondary }]}>{row.label}</Text>
-              <Text style={[styles.payValue, { color: theme.text }]}>{row.value}</Text>
+        {/* Responsive Content Grid */}
+        <View style={isWebLarge ? styles.gridRow : styles.gridColumn}>
+          {/* LEFT COLUMN: Stay Details & Booking Timeline */}
+          <View style={isWebLarge ? styles.leftCol : styles.fullCol}>
+            {/* Stay details */}
+            <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <View style={styles.cardHeader}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>Stay Details</Text>
+                <View style={[styles.stayBadge, { backgroundColor: theme.gold + '15' }]}>
+                  <Text style={[styles.stayBadgeText, { color: theme.gold }]}>Confirmed Stay</Text>
+                </View>
+              </View>
+              <View style={styles.detailGrid}>
+                {[
+                  { icon: Calendar, label: 'Check-in', value: formatDate(booking.checkIn) },
+                  { icon: Calendar, label: 'Check-out', value: formatDate(booking.checkOut) },
+                  { icon: Users, label: 'Guests', value: `${booking.guests} guests` },
+                  { icon: BedDouble, label: 'Bedrooms', value: `${booking.bedrooms} beds` },
+                ].map((item) => (
+                  <View key={item.label} style={[styles.detailItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.gold + '08' }]}>
+                      <item.icon size={15} color={theme.gold} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.detailLabel, { color: theme.textMuted }]}>{item.label}</Text>
+                      <Text style={[styles.detailValue, { color: theme.text }]}>{item.value}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+              <View style={[styles.purposeRow, { backgroundColor: theme.gold + '08', borderColor: theme.gold + '22' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={[styles.purposeLabel, { color: theme.textMuted }]}>Occasion</Text>
+                </View>
+                <Text style={[styles.purposeValue, { color: theme.gold }]}>{booking.purpose}</Text>
+              </View>
             </View>
-          ))}
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
-          <View style={styles.payRow}>
-            <Text style={[styles.payLabelBold, { color: theme.text }]}>Total</Text>
-            <Text style={[styles.payValueBold, { color: theme.gold }]}>{formatMoney(booking.totalPrice)}</Text>
-          </View>
-          <View style={styles.payRow}>
-            <Text style={[styles.payLabel, { color: theme.textSecondary }]}>Paid</Text>
-            <Text style={[styles.payValue, { color: '#2E7D32', fontWeight: '700' }]}>{formatMoney(booking.paidAmount)}</Text>
-          </View>
-          {booking.remainingAmount > 0 && (
-            <View style={[styles.dueRow, { backgroundColor: 'rgba(229,57,53,0.08)', borderColor: 'rgba(229,57,53,0.2)' }]}>
-              <AlertCircle size={16} color="#E53935" />
-              <Text style={styles.dueLabel}>
-                {formatMoney(booking.remainingAmount)} due at check-in
-              </Text>
-            </View>
-          )}
-          {booking.paymentStatus === 'paid' && (
-            <View style={[styles.paidFullRow, { backgroundColor: 'rgba(46,125,50,0.08)' }]}>
-              <CheckCircle size={14} color="#2E7D32" />
-              <Text style={[styles.paidFullText, { color: '#2E7D32' }]}>Fully paid</Text>
-            </View>
-          )}
-        </View>
 
-        {/* Timeline */}
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>Booking Timeline</Text>
-          <View style={styles.timeline}>
-            {booking.bookingTimeline.map((event, i) => (
-              <TimelineItem
-                key={event.id}
-                event={event}
-                isLast={i === booking.bookingTimeline.length - 1}
-              />
-            ))}
-          </View>
-        </View>
+            {/* Point 3: Digital House Manual */}
+            <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <View style={styles.cardHeader}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>Digital House Manual</Text>
+                <View style={[styles.stayBadge, { backgroundColor: 'rgba(201,161,74,0.15)' }]}>
+                  <Text style={[styles.stayBadgeText, { color: theme.gold }]}>Guest Access</Text>
+                </View>
+              </View>
+              <View style={styles.manualList}>
+                <View style={[styles.manualItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                  <Wifi size={16} color={theme.gold} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.manualLabel, { color: theme.textMuted }]}>Wi-Fi Network & Password</Text>
+                    <Text style={[styles.manualValue, { color: theme.text }]}>LaRosa_Guest_5G · <Text style={{ color: theme.gold, fontWeight: '800' }}>luxurystay2026</Text></Text>
+                  </View>
+                </View>
+                <View style={[styles.manualItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                  <Key size={16} color={theme.gold} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.manualLabel, { color: theme.textMuted }]}>Smart Door Passcode</Text>
+                    <Text style={[styles.manualValue, { color: theme.text }]}>Door Pin: <Text style={{ color: theme.gold, fontWeight: '800' }}>4892#</Text></Text>
+                  </View>
+                </View>
+                <View style={[styles.manualItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                  <Volume2 size={16} color={theme.gold} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.manualLabel, { color: theme.textMuted }]}>Quiet Hours</Text>
+                    <Text style={[styles.manualValue, { color: theme.text }]}>10:00 PM – 8:00 AM (Respect neighborhood)</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
 
-        {/* Caretaker */}
-        {property && (
-          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>Need Help?</Text>
-            <Text style={[styles.caretakerInfo, { color: theme.textSecondary }]}>
-              Your caretaker <Text style={{ color: theme.text, fontWeight: '700' }}>{property.caretakerName}</Text> is
-              available to assist you during your stay.
-            </Text>
-            <View style={styles.caretakerActions}>
-              <Pressable style={[styles.caretakerBtn, { backgroundColor: 'rgba(46,125,50,0.1)', borderColor: 'rgba(46,125,50,0.3)' }]}>
-                <PhoneCall size={16} color="#2E7D32" />
-                <Text style={{ color: '#2E7D32', fontSize: 14, fontWeight: '700' }}>Call</Text>
+            {/* Point 3: Invite Travel Companions */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.shareCompanionBtn,
+                { backgroundColor: theme.goldGlow, borderColor: theme.gold + '40' },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Share2 size={16} color={theme.gold} />
+              <Text style={[styles.shareCompanionText, { color: theme.gold }]}>Invite Travel Companions & Split Bill</Text>
+            </Pressable>
+
+            {/* Timeline */}
+            <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.cardTitle, { color: theme.text, marginBottom: 8 }]}>Booking Timeline</Text>
+              <View style={styles.timeline}>
+                {booking.bookingTimeline.map((event, i) => (
+                  <TimelineItem
+                    key={event.id}
+                    event={event}
+                    isLast={i === booking.bookingTimeline.length - 1}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* RIGHT COLUMN: Payment Summary & Support */}
+          <View style={isWebLarge ? styles.rightCol : styles.fullCol}>
+            {/* Payment summary */}
+            <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>Payment Summary</Text>
+              <View style={styles.payList}>
+                {[
+                  { label: 'Subtotal', value: formatMoney(booking.subtotal) },
+                  { label: 'Deposit (Refundable)', value: formatMoney(booking.deposit) },
+                  { label: 'Platform Fee', value: formatMoney(booking.platformFee) },
+                  { label: 'Taxes', value: formatMoney(booking.taxes) },
+                ].map((row) => (
+                  <View key={row.label} style={styles.payRow}>
+                    <Text style={[styles.payLabel, { color: theme.textSecondary }]}>{row.label}</Text>
+                    <Text style={[styles.payValue, { color: theme.text }]}>{row.value}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+              <View style={styles.payList}>
+                <View style={styles.payRow}>
+                  <Text style={[styles.payLabelBold, { color: theme.text }]}>Total Amount</Text>
+                  <Text style={[styles.payValueBold, { color: theme.gold }]}>{formatMoney(booking.totalPrice)}</Text>
+                </View>
+                <View style={styles.payRow}>
+                  <Text style={[styles.payLabel, { color: theme.textSecondary }]}>Amount Paid</Text>
+                  <Text style={[styles.payValuePaid, { color: '#2E7D32' }]}>{formatMoney(booking.paidAmount)}</Text>
+                </View>
+              </View>
+
+              {booking.remainingAmount > 0 && (
+                <View style={[styles.dueRow, { backgroundColor: 'rgba(229,57,53,0.06)', borderColor: 'rgba(229,57,53,0.15)' }]}>
+                  <AlertCircle size={15} color="#E53935" />
+                  <Text style={styles.dueLabel}>
+                    {formatMoney(booking.remainingAmount)} due at check-in
+                  </Text>
+                </View>
+              )}
+              {booking.remainingAmount === 0 && (
+                <View style={[styles.paidFullRow, { backgroundColor: 'rgba(46,125,50,0.06)', borderColor: 'rgba(46,125,50,0.15)' }]}>
+                  <CheckCircle size={15} color="#2E7D32" />
+                  <Text style={[styles.paidFullText, { color: '#2E7D32' }]}>Paid in Full</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Caretaker / Support */}
+            {property && (
+              <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>Need Help?</Text>
+                <Text style={[styles.caretakerInfo, { color: theme.textSecondary }]}>
+                  Your caretaker <Text style={{ color: theme.text, fontWeight: '700' }}>{property.caretakerName}</Text> is
+                  available to assist you during your stay.
+                </Text>
+                <View style={styles.caretakerActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.caretakerBtn,
+                      { backgroundColor: 'rgba(46,125,50,0.08)', borderColor: 'rgba(46,125,50,0.2)' },
+                      pressed && { opacity: 0.7 }
+                    ]}
+                  >
+                    <PhoneCall size={14} color="#2E7D32" />
+                    <Text style={{ color: '#2E7D32', fontSize: 13, fontWeight: '700' }}>Call Caretaker</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.caretakerBtn,
+                      { backgroundColor: theme.gold + '10', borderColor: theme.gold + '30' },
+                      pressed && { opacity: 0.7 }
+                    ]}
+                  >
+                    <MessageCircle size={14} color={theme.gold} />
+                    <Text style={{ color: theme.gold, fontSize: 13, fontWeight: '700' }}>Message Chat</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {/* Cancel booking option */}
+            {booking.status === 'upcoming' && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.cancelBtn,
+                  { borderColor: 'rgba(229,57,53,0.2)' },
+                  pressed && { opacity: 0.7 }
+                ]}
+              >
+                <XCircle size={15} color="#E53935" />
+                <Text style={styles.cancelText}>Cancel Booking</Text>
               </Pressable>
-              <Pressable style={[styles.caretakerBtn, { backgroundColor: theme.goldGlow, borderColor: theme.goldSoft + '44' }]}>
-                <MessageCircle size={16} color={theme.gold} />
-                <Text style={{ color: theme.gold, fontSize: 14, fontWeight: '700' }}>Message</Text>
+            )}
+
+            {/* Review options for completed stay */}
+            {booking.status === 'completed' && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.reviewBtn,
+                  { backgroundColor: theme.gold },
+                  pressed && { opacity: 0.85 }
+                ]}
+              >
+                <Text style={[styles.reviewBtnText, { color: theme.textInverse }]}>Leave a Review</Text>
               </Pressable>
-            </View>
+            )}
           </View>
-        )}
-
-        {/* Cancel option for upcoming */}
-        {booking.status === 'upcoming' && (
-          <Pressable style={[styles.cancelBtn, { borderColor: 'rgba(229,57,53,0.3)' }]}>
-            <XCircle size={16} color="#E53935" />
-            <Text style={styles.cancelText}>Cancel Booking</Text>
-          </Pressable>
-        )}
-
-        {/* Review for completed */}
-        {booking.status === 'completed' && (
-          <Pressable style={[styles.reviewBtn, { backgroundColor: theme.gold }]}>
-            <Text style={[styles.reviewBtnText, { color: theme.textInverse }]}>⭐ Leave a Review</Text>
-          </Pressable>
-        )}
+        </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -215,74 +338,377 @@ export default function CBookingDetailScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
-  statusBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
-  statusText: { fontSize: 12, fontWeight: '700' },
-  scroll: { paddingHorizontal: 20, gap: 14, paddingBottom: 100 },
-  propertyCard: {
-    borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden',
+  backCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  propertyImage: { width: '100%', height: 160 },
-  propertyInfo: { padding: 14 },
-  propertyTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
-  propertyLocation: { fontSize: 13, marginTop: 2 },
-  card: { borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 12 },
-  cardTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
-  detailGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  scroll: {
+    paddingHorizontal: 20,
+    gap: 16,
+    paddingBottom: 100,
+  },
+  webHeaderWrap: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  webScroll: {
+    maxWidth: 1120,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  heroContainer: {
+    height: 240,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    marginTop: 12,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  heroContent: {
+    position: 'absolute',
+    bottom: 20,
+    left: 24,
+    right: 24,
+  },
+  heroTextGroup: {
+    gap: 4,
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroLocation: {
+    fontSize: 14,
+    color: '#E0E0E0',
+    fontWeight: '500',
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  gridColumn: {
+    flexDirection: 'column',
+    gap: 16,
+  },
+  leftCol: {
+    flex: 1.5,
+    gap: 16,
+  },
+  rightCol: {
+    flex: 1,
+    gap: 16,
+  },
+  fullCol: {
+    width: '100%',
+    gap: 16,
+  },
+  card: {
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    gap: 16,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  stayBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  stayBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
   detailItem: {
-    width: '47%', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth,
-    padding: 12, gap: 4, alignItems: 'flex-start',
-  },
-  detailLabel: { fontSize: 11 },
-  detailValue: { fontSize: 14, fontWeight: '700' },
-  purposeRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-  },
-  purposeLabel: { fontSize: 13 },
-  purposeValue: { fontSize: 14, fontWeight: '700' },
-  payRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  payLabel: { fontSize: 13 },
-  payValue: { fontSize: 13 },
-  payLabelBold: { fontSize: 15, fontWeight: '800' },
-  payValueBold: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
-  divider: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
-  dueRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-  },
-  dueLabel: { color: '#E53935', fontSize: 13, fontWeight: '700' },
-  paidFullRow: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8 },
-  paidFullText: { fontSize: 13, fontWeight: '700' },
-  timeline: { gap: 0 },
-  timelineItem: { flexDirection: 'row', gap: 12 },
-  timelineLeft: { alignItems: 'center', width: 28 },
-  timelineDot: {
-    width: 28, height: 28, borderRadius: 14, borderWidth: 3,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  timelineLine: { flex: 1, width: 2, marginTop: 4, marginBottom: 4 },
-  timelineContent: { flex: 1, paddingBottom: 16, paddingTop: 2 },
-  timelineTitle: { fontSize: 14, fontWeight: '700' },
-  timelineDesc: { fontSize: 13, lineHeight: 18, marginTop: 2 },
-  timelineTime: { fontSize: 11, marginTop: 4 },
-  caretakerInfo: { fontSize: 14, lineHeight: 20 },
-  caretakerActions: { flexDirection: 'row', gap: 10 },
-  caretakerBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 10,
-  },
-  cancelBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, borderWidth: 1.5, borderRadius: 14, paddingVertical: 14,
-  },
-  cancelText: { color: '#E53935', fontSize: 15, fontWeight: '700' },
-  reviewBtn: {
-    borderRadius: 14, paddingVertical: 14,
+    width: '48%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  reviewBtnText: { fontSize: 15, fontWeight: '800' },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  purposeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  purposeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  purposeValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  payList: {
+    gap: 12,
+  },
+  payRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  payLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  payValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  payLabelBold: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  payValueBold: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  payValuePaid: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    marginVertical: 4,
+  },
+  dueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  dueLabel: {
+    color: '#E53935',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  paidFullRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  paidFullText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timeline: {
+    gap: 0,
+    marginTop: 8,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  timelineLeft: {
+    alignItems: 'center',
+    width: 32,
+  },
+  timelineDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineLine: {
+    flex: 1,
+    width: 1,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 24,
+    paddingTop: 4,
+  },
+  timelineTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  timelineDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  timelineTime: {
+    fontSize: 11,
+    marginTop: 6,
+  },
+  caretakerInfo: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  caretakerActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  caretakerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 12,
+  },
+  cancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 14,
+    width: '100%',
+  },
+  cancelText: {
+    color: '#E53935',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  reviewBtn: {
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    width: '100%',
+  },
+  reviewBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  manualList: {
+    gap: 10,
+  },
+  manualItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+  },
+  manualLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  manualValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  shareCompanionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  shareCompanionText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
 });

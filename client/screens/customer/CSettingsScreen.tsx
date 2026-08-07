@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet,
+  View, Text, ScrollView, Pressable, StyleSheet, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +21,7 @@ export default function CSettingsScreen() {
   const [twoFactor, setTwoFactor] = useState(false);
   const [biometric, setBiometric] = useState(false);
   const [savedLocation, setSavedLocation] = useState(true);
+  const isAndroid = Platform.OS === 'android';
 
   function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -67,16 +68,17 @@ export default function CSettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
+      <View style={[styles.header, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>Settings</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Appearance */}
         <Section title="APPEARANCE">
           <View style={[styles.row, { borderBottomColor: theme.border }]}>
@@ -163,6 +165,7 @@ export default function CSettingsScreen() {
           ))}
         </Section>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

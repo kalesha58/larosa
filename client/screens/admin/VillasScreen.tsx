@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import {
   Plus, Search, Users, IndianRupee, MoreVertical, Tag,
   AlertTriangle, Check, X, ShieldAlert, ChevronDown, ChevronRight,
-  Building2, Star,
+  Building2, Star, SlidersHorizontal, RotateCcw,
 } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -26,7 +26,15 @@ export default function VillasScreen() {
   const [query, setQuery] = useState<string>('');
   const [filter, setFilter] = useState<Filter>('all');
   const [hostFilter, setHostFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [filterModalOpen, setFilterModalOpen] = useState<boolean>(false);
   const [collapsedHosts, setCollapsedHosts] = useState<Set<string>>(new Set());
+
+  const activeFilterCount =
+    (filter !== 'all' ? 1 : 0) +
+    (hostFilter !== 'all' ? 1 : 0) +
+    (categoryFilter !== 'all' ? 1 : 0);
+
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
   const isWide = isWeb && width >= 1024;
@@ -62,13 +70,14 @@ export default function VillasScreen() {
         if (!r.title.toLowerCase().includes(q) && !hostName.includes(q)) return false;
       }
       if (hostFilter !== 'all' && hostKey(r.hostId) !== hostFilter) return false;
+      if (categoryFilter !== 'all' && r.category !== categoryFilter) return false;
       if (filter === 'active') return r.status === 'active' && !!r.approvedByAdmin;
       if (filter === 'hidden') return r.status === 'hidden' && !!r.approvedByAdmin;
       if (filter === 'featured') return r.featured;
       if (filter === 'pending') return !r.approvedByAdmin;
       return true;
     });
-  }, [rooms, users, query, filter, hostFilter]);
+  }, [rooms, users, query, filter, hostFilter, categoryFilter]);
 
   const groupedByHost = useMemo(() => {
     const map = new Map<string, Room[]>();
@@ -288,7 +297,7 @@ export default function VillasScreen() {
       {isWeb && <AdminWebHeader />}
 
       {/* ── Page Header ─────────────────────────────────── */}
-      <View style={[{ paddingTop: 20, paddingBottom: 8 }, widePad]}>
+      <View style={[{ paddingTop: 16, paddingBottom: 8 }, widePad]}>
         <Text style={{ color: theme.gold, fontSize: 11, fontWeight: '700', letterSpacing: 3.5, textTransform: 'uppercase', marginBottom: 4 }}>
           Inventory
         </Text>
@@ -304,7 +313,7 @@ export default function VillasScreen() {
                 borderRadius: 20,
                 borderWidth: 1,
                 borderColor: theme.amber + '44',
-                paddingHorizontal: 12,
+                paddingHorizontal: 10,
                 paddingVertical: 6,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -316,6 +325,29 @@ export default function VillasScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Filter Button Icon */}
+            <Pressable
+              onPress={() => setFilterModalOpen(true)}
+              style={({ pressed }) => [{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                height: 36,
+                paddingHorizontal: 14,
+                borderRadius: 18,
+                backgroundColor: activeFilterCount > 0 ? theme.gold : theme.surface,
+                borderWidth: 1,
+                borderColor: activeFilterCount > 0 ? theme.gold : theme.border,
+                opacity: pressed ? 0.8 : 1,
+              }]}
+            >
+              <SlidersHorizontal color={activeFilterCount > 0 ? '#FFFFFF' : theme.gold} size={16} strokeWidth={2.2} />
+              <Text style={{ color: activeFilterCount > 0 ? '#FFFFFF' : theme.text, fontSize: 13, fontWeight: '700' }}>
+                Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </Text>
+            </Pressable>
+
             {/* Total count */}
             <View style={{
               backgroundColor: theme.gold + '18',
@@ -333,64 +365,79 @@ export default function VillasScreen() {
         </View>
       </View>
 
-      {/* ── Search ──────────────────────────────────────── */}
-      <View style={[{ marginBottom: 14 }, widePad]}>
+      {/* ── Search & Filter Icon Bar ───────────────────── */}
+      <View style={[{ marginBottom: 10 }, widePad]}>
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: theme.surface,
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: theme.border,
-          paddingHorizontal: 16,
-          height: 48,
           gap: 10,
         }}>
-          <Search color={theme.textMuted} size={18} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search villas or hosts…"
-            placeholderTextColor={theme.textMuted}
-            style={{ flex: 1, color: theme.text, fontSize: 15 }}
-          />
-        </View>
-      </View>
-
-      {/* ── Filters ─────────────────────────────────────── */}
-      <View style={[{ marginBottom: 14 }, widePad]}>
-        {/* Status row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-          <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginRight: 2 }}>
-            Status
-          </Text>
-          {([
-            { id: 'all', label: 'All' },
-            { id: 'active', label: 'Active', color: theme.green },
-            { id: 'hidden', label: 'Suspended', color: theme.red },
-            { id: 'featured', label: 'Featured', color: theme.gold },
-            { id: 'pending', label: 'Pending', color: theme.amber },
-          ] as { id: Filter; label: string; color?: string }[]).map((f) => (
-            <Chip key={f.id} label={f.label} selected={filter === f.id} onPress={() => setFilter(f.id)} color={f.color ?? theme.gold} />
-          ))}
-        </View>
-
-        {/* Host row (only if multiple hosts) */}
-        {hostOptions.length > 1 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginRight: 2 }}>
-              Host
-            </Text>
-            <Chip label="All hosts" selected={hostFilter === 'all'} onPress={() => setHostFilter('all')} />
-            {hostOptions.map((h) => (
-              <Chip key={h.id} label={h.label} selected={hostFilter === h.id} onPress={() => setHostFilter(h.id)} />
-            ))}
+          <View style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: theme.border,
+            paddingHorizontal: 16,
+            height: 48,
+            gap: 10,
+          }}>
+            <Search color={theme.textMuted} size={18} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search villas or hosts…"
+              placeholderTextColor={theme.textMuted}
+              style={{ flex: 1, color: theme.text, fontSize: 15 }}
+            />
+            {query.length > 0 && (
+              <Pressable onPress={() => setQuery('')} hitSlop={8}>
+                <X color={theme.textMuted} size={16} />
+              </Pressable>
+            )}
           </View>
-        )}
+
+          <Pressable
+            onPress={() => setFilterModalOpen(true)}
+            style={({ pressed }) => [{
+              width: 48,
+              height: 48,
+              borderRadius: 14,
+              backgroundColor: activeFilterCount > 0 ? theme.gold : theme.surface,
+              borderWidth: 1,
+              borderColor: activeFilterCount > 0 ? theme.gold : theme.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.8 : 1,
+            }]}
+          >
+            <SlidersHorizontal color={activeFilterCount > 0 ? '#FFFFFF' : theme.text} size={20} strokeWidth={2} />
+          </Pressable>
+        </View>
       </View>
+
+      {/* ── Active Filters Chips Strip ──────────────────── */}
+      {activeFilterCount > 0 && (
+        <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }, widePad]}>
+          {filter !== 'all' && (
+            <Chip label={`Status: ${filter}`} selected color={theme.gold} onPress={() => setFilter('all')} />
+          )}
+          {hostFilter !== 'all' && (
+            <Chip label={`Host: ${getHostLabel(hostFilter, users)}`} selected color={theme.gold} onPress={() => setHostFilter('all')} />
+          )}
+          {categoryFilter !== 'all' && (
+            <Chip label={`Type: ${categoryFilter}`} selected color={theme.gold} onPress={() => setCategoryFilter('all')} />
+          )}
+          <Pressable onPress={() => { setFilter('all'); setHostFilter('all'); setCategoryFilter('all'); }} style={{ marginLeft: 4 }}>
+            <Text style={{ color: theme.red, fontSize: 12, fontWeight: '700' }}>Clear all</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* ── Divider ─────────────────────────────────────── */}
-      <View style={[{ height: 1, backgroundColor: theme.border, marginBottom: 16, opacity: 0.6 }, widePad]} />
+      <View style={[{ height: 1, backgroundColor: theme.border, marginBottom: 14, opacity: 0.6 }, widePad]} />
 
       {/* ── List ────────────────────────────────────────── */}
       <ScrollView
@@ -506,19 +553,21 @@ export default function VillasScreen() {
 
       {/* ── Approval Checklist Modal ────────────────────── */}
       <Modal visible={checklistModalOpen} animationType="slide" transparent onRequestClose={() => setChecklistModalOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setChecklistModalOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setChecklistModalOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
               maxHeight: '90%',
+              width: '100%',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: -8 },
               shadowOpacity: 0.15,
@@ -526,7 +575,7 @@ export default function VillasScreen() {
               elevation: 24,
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <ShieldAlert color={theme.gold} size={22} />
               <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Property Approval</Text>
@@ -538,75 +587,55 @@ export default function VillasScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
               {/* Bedrooms check */}
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 12,
-                marginBottom: 12,
-                padding: 14,
-                backgroundColor: theme.bg,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: theme.border,
-                borderLeftWidth: 3,
-                borderLeftColor: (selectedApprovalRoom?.bedrooms ?? 0) >= 3 ? theme.green : theme.red,
-              }}>
-                <View style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  backgroundColor: (selectedApprovalRoom?.bedrooms ?? 0) >= 3 ? theme.greenSoft : theme.redSoft,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  {(selectedApprovalRoom?.bedrooms ?? 0) >= 3
-                    ? <Check color={theme.green} size={15} strokeWidth={3} />
-                    : <X color={theme.red} size={15} strokeWidth={3} />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.borderSoft }}>
+                <View>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>3+ Bedrooms Required</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>
+                    Listing has {selectedApprovalRoom?.bedrooms ?? 0} bedrooms
+                  </Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '700' }}>Minimum 3 bedrooms</Text>
-                  <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
-                    Current: {selectedApprovalRoom?.bedrooms ?? 0} bedrooms
+                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: (selectedApprovalRoom?.bedrooms ?? 0) >= 3 ? theme.greenSoft : theme.amberSoft }}>
+                  <Text style={{ color: (selectedApprovalRoom?.bedrooms ?? 0) >= 3 ? theme.green : theme.amber, fontSize: 12, fontWeight: '700' }}>
+                    {(selectedApprovalRoom?.bedrooms ?? 0) >= 3 ? 'PASSED' : 'FAILED'}
                   </Text>
                 </View>
               </View>
 
-              {/* Checklist items */}
-              {([
-                { label: 'Swimming pool required', sub: 'Swimming pool is a mandatory qualification', value: checklistPool, set: setChecklistPool },
-                { label: 'Lawn required', sub: 'Private lawn is a mandatory qualification', value: checklistLawn, set: setChecklistLawn },
-                { label: 'Very clean property', sub: 'Verified cleanliness qualification standards', value: checklistClean, set: setChecklistClean },
-                { label: 'On-property assistance/security', sub: 'Caretaker, butler, or security on site', value: checklistStaff, set: setChecklistStaff },
-              ]).map((item) => (
-                <View
-                  key={item.label}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
-                    padding: 14,
-                    backgroundColor: theme.bg,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: theme.border,
-                    borderLeftWidth: 3,
-                    borderLeftColor: item.value ? theme.green : theme.border,
-                  }}
-                >
-                  <View style={{ flex: 1, paddingRight: 12 }}>
-                    <Text style={{ color: theme.text, fontSize: 15, fontWeight: '700' }}>{item.label}</Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>{item.sub}</Text>
-                  </View>
-                  <Switch
-                    value={item.value}
-                    onValueChange={item.set}
-                    trackColor={{ false: theme.border, true: theme.gold }}
-                    thumbColor={item.value ? theme.textInverse : theme.textMuted}
-                  />
+              {/* Swimming Pool Check */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.borderSoft }}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Swimming Pool</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Operational swimming pool on premise</Text>
                 </View>
-              ))}
+                <Switch value={checklistPool} onValueChange={setChecklistPool} trackColor={{ true: theme.green }} />
+              </View>
+
+              {/* Lawn Check */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.borderSoft }}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Landscaped Lawn</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Maintained private garden / lawn</Text>
+                </View>
+                <Switch value={checklistLawn} onValueChange={setChecklistLawn} trackColor={{ true: theme.green }} />
+              </View>
+
+              {/* Caretaker / Security Staff */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.borderSoft }}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>On-Property Assistance</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Dedicated caretaker or security guard</Text>
+                </View>
+                <Switch value={checklistStaff} onValueChange={setChecklistStaff} trackColor={{ true: theme.green }} />
+              </View>
+
+              {/* General Cleanliness */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 }}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Hygiene & Safety Passed</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>First-aid kit, clean water, fire safety verified</Text>
+                </View>
+                <Switch value={checklistClean} onValueChange={setChecklistClean} trackColor={{ true: theme.green }} />
+              </View>
             </ScrollView>
 
             <View style={{ gap: 10, marginTop: 12 }}>
@@ -637,26 +666,24 @@ export default function VillasScreen() {
 
       {/* ── Rejection Modal ─────────────────────────────── */}
       <Modal visible={rejectionModalOpen} animationType="slide" transparent onRequestClose={() => setRejectionModalOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setRejectionModalOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setRejectionModalOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 24,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+              maxHeight: '85%',
+              width: '100%',
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <AlertTriangle color={theme.red} size={22} />
               <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Reject Listing</Text>
@@ -701,6 +728,125 @@ export default function VillasScreen() {
                   destructive
                 />
                 <SecondaryButton label="Cancel" onPress={() => setRejectionModalOpen(false)} />
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Filter Bottom Sheet Modal ────────────────────── */}
+      <Modal visible={filterModalOpen} animationType="slide" transparent onRequestClose={() => setFilterModalOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setFilterModalOpen(false)}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: theme.surface,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+              maxHeight: '85%',
+              width: '100%',
+            }}
+          >
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <SlidersHorizontal color={theme.gold} size={20} />
+                <Text style={{ color: theme.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>Filter Inventory</Text>
+              </View>
+              <Pressable onPress={() => setFilterModalOpen(false)} hitSlop={10}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: theme.bg, alignItems: 'center', justifyContent: 'center' }}>
+                  <X color={theme.textMuted} size={16} />
+                </View>
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
+              {/* Status Filter */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
+                  Status
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[
+                    { id: 'all', label: 'All Statuses' },
+                    { id: 'active', label: 'Active', color: theme.green },
+                    { id: 'pending', label: 'Pending Approval', color: theme.amber },
+                    { id: 'featured', label: 'Featured', color: theme.gold },
+                    { id: 'hidden', label: 'Suspended', color: theme.red },
+                  ].map((s) => (
+                    <Chip
+                      key={s.id}
+                      label={s.label}
+                      selected={filter === s.id}
+                      onPress={() => setFilter(s.id as Filter)}
+                      color={s.color ?? theme.gold}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              {/* Host Filter */}
+              {hostOptions.length > 1 && (
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
+                    Host Profile
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <Chip label="All Hosts" selected={hostFilter === 'all'} onPress={() => setHostFilter('all')} />
+                    {hostOptions.map((h) => (
+                      <Chip key={h.id} label={h.label} selected={hostFilter === h.id} onPress={() => setHostFilter(h.id)} />
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Property Type Filter */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ color: theme.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
+                  Property Category
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[
+                    { id: 'all', label: 'All Categories' },
+                    { id: 'villa', label: 'Villa' },
+                    { id: 'farmhouse', label: 'Farmhouse' },
+                    { id: 'room', label: 'Room' },
+                  ].map((c) => (
+                    <Chip
+                      key={c.id}
+                      label={c.label}
+                      selected={categoryFilter === c.id}
+                      onPress={() => setCategoryFilter(c.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Action Buttons */}
+            <View style={{ flexDirection: 'row', gap: 12, paddingTop: 14, borderTopWidth: 1, borderTopColor: theme.borderSoft }}>
+              <View style={{ flex: 1 }}>
+                <SecondaryButton
+                  label="Reset"
+                  onPress={() => {
+                    setFilter('all');
+                    setHostFilter('all');
+                    setCategoryFilter('all');
+                  }}
+                />
+              </View>
+              <View style={{ flex: 2 }}>
+                <PrimaryButton
+                  label={`Show ${filtered.length} Villa${filtered.length !== 1 ? 's' : ''}`}
+                  onPress={() => setFilterModalOpen(false)}
+                />
               </View>
             </View>
           </Pressable>

@@ -603,26 +603,24 @@ export default function BookingDetailScreen() {
 
       {/* ── Cancel Sheet ────────────────────────────────── */}
       <Modal visible={cancelOpen} animationType="slide" transparent onRequestClose={() => setCancelOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setCancelOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setCancelOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 24,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+              maxHeight: '85%',
+              width: '100%',
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <XCircle color={theme.red} size={22} />
@@ -702,26 +700,24 @@ export default function BookingDetailScreen() {
 
       {/* ── Dispute Sheet ────────────────────────────────── */}
       <Modal visible={disputeOpen} animationType="slide" transparent onRequestClose={() => setDisputeOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setDisputeOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setDisputeOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 24,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+              maxHeight: '85%',
+              width: '100%',
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               {disputeAction === 'raise'
