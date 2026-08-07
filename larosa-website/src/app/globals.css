@@ -42,10 +42,12 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-brand-gold: hsl(var(--brand-gold));
   --color-brand-navy: hsl(var(--brand-navy));
+  --color-brand-green: #235347;
 }
 
 /* LIGHT MODE - Default theme with placeholder values */
 :root {
+  --brand-green: #235347;
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;

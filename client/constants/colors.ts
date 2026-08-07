@@ -66,18 +66,18 @@ export const darkTheme: ThemeTokens = {
   textInverse: '#0A110E',
 
   // Brand — Forest Green
-  gold: '#317A61',        // primary forest green
-  goldSoft: '#567D6E',    // muted sage
-  goldDim: '#1E4E3E',     // dark accent green
-  goldGlow: 'rgba(49, 122, 97, 0.15)',
+  gold: '#235347',        // primary forest green
+  goldSoft: '#38695E',    // muted sage
+  goldDim: '#16372F',     // dark accent green
+  goldGlow: 'rgba(35, 83, 71, 0.15)',
 
   // Accents
   rose: '#DCA5AD',        // light dusty rose
   roseSoft: 'rgba(220, 165, 173, 0.15)',
 
   // Status
-  green: '#317A61',
-  greenSoft: 'rgba(49, 122, 97, 0.15)',
+  green: '#235347',
+  greenSoft: 'rgba(35, 83, 71, 0.15)',
   amber: '#E0A84A',
   amberSoft: 'rgba(224, 168, 74, 0.15)',
   red: '#D4625A',
@@ -112,18 +112,18 @@ export const lightTheme: ThemeTokens = {
   textInverse: '#FFFFFF',
 
   // Brand — deep forest green
-  gold: '#133B2D',        // Forest green primary brand accent
-  goldSoft: '#8AA399',    // sage green accents
-  goldDim: '#0C2B20',     // dark forest green press/shadow states
-  goldGlow: 'rgba(19, 59, 45, 0.08)', // very light tint for badges
+  gold: '#235347',        // Forest green primary brand accent
+  goldSoft: '#38695E',    // sage green accents
+  goldDim: '#16372F',     // dark forest green press/shadow states
+  goldGlow: 'rgba(35, 83, 71, 0.08)', // very light tint for badges
 
   // Accents
   rose: '#C27D86',        // dusty rose
   roseSoft: '#F0E5E7',
 
   // Status
-  green: '#133B2D',
-  greenSoft: 'rgba(19, 59, 45, 0.08)',
+  green: '#235347',
+  greenSoft: 'rgba(35, 83, 71, 0.08)',
   amber: '#C48A2A',
   amberSoft: 'rgba(196, 138, 42, 0.12)',
   red: '#C44A3E',

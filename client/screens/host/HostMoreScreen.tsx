@@ -25,9 +25,10 @@ interface MenuItemProps {
   onPress: () => void;
   danger?: boolean;
   isGrid?: boolean;
+  isLast?: boolean;
 }
 
-function MenuItem({ icon, label, subtitle, onPress, danger, isGrid }: MenuItemProps) {
+function MenuItem({ icon, label, subtitle, onPress, danger, isGrid, isLast }: MenuItemProps) {
   const { theme } = useTheme();
   return (
     <Pressable
@@ -35,11 +36,11 @@ function MenuItem({ icon, label, subtitle, onPress, danger, isGrid }: MenuItemPr
       style={({ pressed }) => [
         mStyles.menuItem,
         isGrid && mStyles.menuItemGrid,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-        pressed && { opacity: 0.8, transform: [{ translateY: -1 }] },
+        !isLast && !isGrid && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border },
+        pressed && { backgroundColor: 'rgba(201,161,74,0.06)' },
       ]}
     >
-      <View style={[mStyles.menuIcon, { backgroundColor: danger ? 'rgba(229,57,53,0.1)' : theme.goldGlow }]}>
+      <View style={[mStyles.menuIcon, { backgroundColor: danger ? 'rgba(229,57,53,0.1)' : 'rgba(201,161,74,0.12)' }]}>
         {icon}
       </View>
       <View style={{ flex: 1 }}>
@@ -59,10 +60,24 @@ function MenuItem({ icon, label, subtitle, onPress, danger, isGrid }: MenuItemPr
 
 function MenuSection({ title, children, isGrid }: { title: string; children: React.ReactNode; isGrid?: boolean }) {
   const { theme } = useTheme();
+  const childrenArray = React.Children.toArray(children);
+
   return (
     <View style={mStyles.section}>
       <Text style={[mStyles.sectionTitle, { color: theme.textMuted }]}>{title}</Text>
-      <View style={[mStyles.sectionItems, isGrid && mStyles.sectionGrid]}>{children}</View>
+      <View style={[
+        mStyles.sectionCard,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+        isGrid && mStyles.sectionGrid
+      ]}>
+        {childrenArray.map((child, index) => {
+          if (!React.isValidElement(child)) return child;
+          return React.cloneElement(child as any, {
+            isLast: index === childrenArray.length - 1,
+            isGrid: isGrid,
+          });
+        })}
+      </View>
     </View>
   );
 }
@@ -110,13 +125,14 @@ export default function HostMoreScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={isWeb ? [] : ['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Platform.OS === 'android' ? theme.gold : theme.bg }} edges={isWeb ? [] : ['top']}>
       {isWeb && <HostWebHeader />}
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[mStyles.scroll, isWide && mStyles.scrollWide]}
-      >
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[mStyles.scroll, isWide && mStyles.scrollWide]}
+        >
 
         {/* ══ HERO PROFILE CARD ══════════════════════════════════════════════ */}
         <View style={[mStyles.heroCard, { borderColor: theme.border }]}>
@@ -334,6 +350,7 @@ export default function HostMoreScreen() {
           LaRosa Host v1.0.0 · Verified Partner
         </Text>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -385,21 +402,21 @@ const mStyles = StyleSheet.create({
   verifiedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 12, borderWidth: 1, marginBottom: 2,
+    borderRadius: 12, backgroundColor: 'rgba(201,161,74,0.2)', borderWidth: 1, borderColor: 'rgba(201,161,74,0.4)', marginBottom: 2,
   },
-  verifiedBadgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.3 },
+  verifiedBadgeText: { fontSize: 11, fontWeight: '800', color: '#C9A14A', letterSpacing: 0.3 },
   heroName: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4 },
   heroMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  heroMetaText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
+  heroMetaText: { fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
   heroStatsRow: {
     flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingBottom: 20, zIndex: 2,
   },
   heroStatCard: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
   },
   heroStatIcon: {
-    width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(201,161,74,0.22)', alignItems: 'center', justifyContent: 'center',
   },
   heroStatVal: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
   heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
@@ -424,17 +441,24 @@ const mStyles = StyleSheet.create({
   // Menu sections
   section: { marginBottom: 20, marginHorizontal: 20 },
   sectionTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10, marginLeft: 4 },
-  sectionItems: { gap: 10 },
+  sectionCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+  },
   sectionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   menuItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03, shadowRadius: 6, elevation: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: 16, paddingVertical: 14,
   },
   menuItemGrid: { flex: 1, minWidth: 280 },
-  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  menuIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  menuLabel: { fontSize: 14, fontWeight: '700', letterSpacing: -0.2 },
   menuSub: { fontSize: 12, marginTop: 2 },
   versionText: { textAlign: 'center', fontSize: 12, marginTop: 12, marginBottom: 24 },
 });

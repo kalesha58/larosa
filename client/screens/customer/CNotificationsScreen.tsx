@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Bell, CheckCheck } from 'lucide-react-native';
@@ -26,76 +26,79 @@ export default function CNotificationsScreen() {
   const markRead = (id: string) => setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
 
   const unreadCount = notifs.filter((n) => !n.read).length;
+  const isAndroid = Platform.OS === 'android';
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
+      <View style={[styles.header, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
+          <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>Notifications</Text>
           {unreadCount > 0 && (
-            <View style={[styles.unreadBadge, { backgroundColor: theme.gold }]}>
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+            <View style={[styles.unreadBadge, { backgroundColor: isAndroid ? '#FFFFFF' : theme.gold }]}>
+              <Text style={[styles.unreadBadgeText, { color: isAndroid ? theme.gold : '#FFFFFF' }]}>{unreadCount}</Text>
             </View>
           )}
         </View>
         {unreadCount > 0 && (
           <Pressable onPress={markAllRead} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-            <CheckCheck size={20} color={theme.gold} />
+            <CheckCheck size={20} color={isAndroid ? '#FFFFFF' : theme.gold} />
           </Pressable>
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, notifs.length === 0 && styles.emptyScroll]}>
-        {notifs.length === 0 ? (
-          <EmptyState
-            icon={<Bell size={48} color={theme.textMuted} />}
-            title="No notifications"
-            subtitle="You're all caught up! We'll notify you about bookings, offers, and reminders."
-          />
-        ) : (
-          <View style={styles.list}>
-            {notifs.map((notif) => {
-              const baseCfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.system;
-              const cfg = notif.type === 'booking' ? { ...baseCfg, color: theme.gold, bg: theme.goldGlow } : baseCfg;
-              return (
-                <Pressable
-                  key={notif.id}
-                  onPress={() => markRead(notif.id)}
-                  style={({ pressed }) => [
-                    styles.notifCard,
-                    {
-                      backgroundColor: notif.read ? theme.surface : `${cfg.color}08`,
-                      borderColor: notif.read ? theme.border : `${cfg.color}33`,
-                    },
-                    pressed && { opacity: 0.8 },
-                  ]}
-                >
-                  <View style={[styles.notifIcon, { backgroundColor: cfg.bg }]}>
-                    <Text style={styles.notifEmoji}>{cfg.emoji}</Text>
-                  </View>
-                  <View style={styles.notifContent}>
-                    <View style={styles.notifHeader}>
-                      <Text style={[styles.notifTitle, { color: theme.text }]} numberOfLines={1}>
-                        {notif.title}
-                      </Text>
-                      {!notif.read && <View style={[styles.unreadDot, { backgroundColor: cfg.color }]} />}
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, notifs.length === 0 && styles.emptyScroll]}>
+          {notifs.length === 0 ? (
+            <EmptyState
+              icon={<Bell size={48} color={theme.textMuted} />}
+              title="No notifications"
+              subtitle="You're all caught up! We'll notify you about bookings, offers, and reminders."
+            />
+          ) : (
+            <View style={styles.list}>
+              {notifs.map((notif) => {
+                const baseCfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.system;
+                const cfg = notif.type === 'booking' ? { ...baseCfg, color: theme.gold, bg: theme.goldGlow } : baseCfg;
+                return (
+                  <Pressable
+                    key={notif.id}
+                    onPress={() => markRead(notif.id)}
+                    style={({ pressed }) => [
+                      styles.notifCard,
+                      {
+                        backgroundColor: notif.read ? theme.surface : `${cfg.color}08`,
+                        borderColor: notif.read ? theme.border : `${cfg.color}33`,
+                      },
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <View style={[styles.notifIcon, { backgroundColor: cfg.bg }]}>
+                      <Text style={styles.notifEmoji}>{cfg.emoji}</Text>
                     </View>
-                    <Text style={[styles.notifMessage, { color: theme.textSecondary }]} numberOfLines={2}>
-                      {notif.message}
-                    </Text>
-                    <Text style={[styles.notifTime, { color: theme.textMuted }]}>
-                      {formatRelativeTime(notif.createdAt)}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
+                    <View style={styles.notifContent}>
+                      <View style={styles.notifHeader}>
+                        <Text style={[styles.notifTitle, { color: theme.text }]} numberOfLines={1}>
+                          {notif.title}
+                        </Text>
+                        {!notif.read && <View style={[styles.unreadDot, { backgroundColor: cfg.color }]} />}
+                      </View>
+                      <Text style={[styles.notifMessage, { color: theme.textSecondary }]} numberOfLines={2}>
+                        {notif.message}
+                      </Text>
+                      <Text style={[styles.notifTime, { color: theme.textMuted }]}>
+                        {formatRelativeTime(notif.createdAt)}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

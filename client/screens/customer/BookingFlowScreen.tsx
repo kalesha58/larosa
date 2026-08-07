@@ -38,6 +38,7 @@ export default function BookingFlowScreen() {
   const { propertyId, checkIn: initialCheckIn, checkOut: initialCheckOut, guests: initialGuests } = route.params ?? {};
 
   const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
   const property = properties.find((p) => p.id === propertyId) ?? properties[0];
 
   const [step, setStep] = useState<Step>('dates');
@@ -113,24 +114,26 @@ export default function BookingFlowScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
       {isWeb && <WebHeader />}
 
       {/* Header */}
-      <View style={[styles.header, isWeb && styles.webWrap]}>
+      <View style={[styles.header, isWeb && styles.webWrap, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={goBack} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
+          <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>
             {STEP_LABELS[currentStepIndex]}
           </Text>
-          <Text style={[styles.headerSubtitle, { color: theme.textMuted }]}>
+          <Text style={[styles.headerSubtitle, { color: isAndroid ? 'rgba(255,255,255,0.75)' : theme.textMuted }]}>
             Step {currentStepIndex + 1} of {STEPS.length}
           </Text>
         </View>
         <View style={{ width: 24 }} />
       </View>
+
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
 
       {/* Progress bar */}
       <View style={[styles.progressBar, { backgroundColor: theme.border }, isWeb && styles.webWrap]}>
@@ -347,6 +350,7 @@ export default function BookingFlowScreen() {
           </Text>
           <ChevronRight size={18} color={theme.textInverse} />
         </Pressable>
+      </View>
       </View>
     </SafeAreaView>
   );

@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   phone?: string;
+  avatarUrl?: string;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
   hostVerificationStatus?: 'none' | 'pending' | 'verified' | 'rejected';
@@ -38,6 +39,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   loginAsCustomer: (phone: string, otp: string) => Promise<boolean>;
   signupHost: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
+  signupCustomer: (firstName: string, lastName: string, email: string, phone: string, password: string) => Promise<boolean>;
   updateUser: (updates: Partial<AuthUser>) => void;
   logout: () => void;
   dismissAccessDenied: () => void;
@@ -75,6 +77,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isEmailVerified: false,
       isPhoneVerified: false,
       hostVerificationStatus: 'none',
+    });
+    return true;
+  };
+
+  const signupCustomer = async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    password: string
+  ): Promise<boolean> => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    await new Promise<void>((resolve) => setTimeout(resolve, 800));
+    setIsAuthenticating(false);
+
+    setIsAuthenticated(true);
+    setUser({
+      id: 'cust_' + Date.now(),
+      name: `${firstName} ${lastName}`.trim() || 'Guest User',
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      role: 'customer',
+      isEmailVerified: true,
+      isPhoneVerified: true,
     });
     return true;
   };
@@ -206,6 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         loginAsCustomer,
         signupHost,
+        signupCustomer,
         updateUser,
         logout,
         dismissAccessDenied,

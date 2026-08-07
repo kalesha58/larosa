@@ -5,8 +5,10 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AddOnSelector from '../../components/customer/AddOnSelector';
 import {
-  ArrowLeft, Star, Heart, Share2,
+  Share2, Heart, Star, ChevronLeft, ArrowLeft,
+  MapPin, Compass, Navigation, Landmark,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/theme-context';
 import { properties, reviews } from '../../lib/mockData';
@@ -62,9 +64,16 @@ export default function PropertyDetailScreen() {
   const offsetsRef = useRef<Partial<Record<SectionNavId, number>>>({});
   const galleryBottomRef = useRef(0);
 
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [navVisible, setNavVisible] = useState(false);
   const [activeSection, setActiveSection] = useState<SectionNavId>('photos');
   const [webHeaderHeight, setWebHeaderHeight] = useState(56);
+
+  const toggleAddOn = (id: string) => {
+    setSelectedAddOns((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
+    );
+  };
 
   const avgRating = propertyReviews.length > 0
     ? (propertyReviews.reduce((s, r) => s + r.rating, 0) / propertyReviews.length).toFixed(1)
@@ -262,6 +271,11 @@ export default function PropertyDetailScreen() {
 
       {divider}
 
+      {/* Point 2: Luxury Experience Add-ons */}
+      <AddOnSelector selectedIds={selectedAddOns} onToggleAddOn={toggleAddOn} />
+
+      {divider}
+
       <View style={styles.calendarSection}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
           {nights > 0
@@ -334,6 +348,40 @@ export default function PropertyDetailScreen() {
           lat={property.lat}
           lng={property.lng}
         />
+      </View>
+
+      {/* Point 1: Neighborhood Guide */}
+      <View style={[styles.neighborhoodCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.neighborhoodHeader}>
+          <Compass size={18} color={theme.gold} />
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Neighborhood & Nearby Attractions</Text>
+        </View>
+        <Text style={[styles.neighborhoodSub, { color: theme.textMuted }]}>
+          Explore popular spots around {property.city}, {property.state}
+        </Text>
+        <View style={styles.attractionsGrid}>
+          <View style={[styles.attractionItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+            <Landmark size={16} color={theme.gold} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.attractionName, { color: theme.text }]}>{property.city} Promenade & Nature Trail</Text>
+              <Text style={[styles.attractionDist, { color: theme.textMuted }]}>800 m away · 10 min walk</Text>
+            </View>
+          </View>
+          <View style={[styles.attractionItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+            <Navigation size={16} color={theme.gold} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.attractionName, { color: theme.text }]}>Scenic Viewpoint & Sanctuary</Text>
+              <Text style={[styles.attractionDist, { color: theme.textMuted }]}>2.5 km away · 8 min drive</Text>
+            </View>
+          </View>
+          <View style={[styles.attractionItem, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+            <MapPin size={16} color={theme.gold} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.attractionName, { color: theme.text }]}>International Airport & Station</Text>
+              <Text style={[styles.attractionDist, { color: theme.textMuted }]}>45 km away · 60 min drive</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
       {divider}
@@ -699,5 +747,40 @@ const styles = StyleSheet.create({
   thingsAnchor: {
     paddingTop: 4,
     paddingBottom: 24,
+  },
+  neighborhoodCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+    gap: 10,
+    marginTop: 16,
+  },
+  neighborhoodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  neighborhoodSub: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  attractionsGrid: {
+    gap: 10,
+  },
+  attractionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+  },
+  attractionName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  attractionDist: {
+    fontSize: 11,
+    marginTop: 2,
   },
 });

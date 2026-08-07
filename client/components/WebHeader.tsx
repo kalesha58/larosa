@@ -14,7 +14,7 @@ import { properties } from '../lib/mockData';
 import { formatMoney } from '../lib/format';
 
 const SUGGESTED_DESTINATIONS = [
-  { id: 'near',  name: 'Nearby',                       sub: "Find what's around you",                    Icon: Navigation,  accentColor: '#317A61' },
+  { id: 'near',  name: 'Nearby',                       sub: "Find what's around you",                    Icon: Navigation,  accentColor: '#235347' },
   { id: 'hyd',   name: 'Hyderabad, Telangana',          sub: 'For sights like Charminar',                 Icon: Building2,   accentColor: '#026AA2' },
   { id: 'puri',  name: 'Puri, Odisha',                  sub: 'For its seaside allure',                    Icon: Waves,       accentColor: '#175CD3' },
   { id: 'viz',   name: 'Visakhapatnam, Andhra Pradesh', sub: 'Gem of the Eastern Coast',                  Icon: Compass,     accentColor: '#5925DC' },

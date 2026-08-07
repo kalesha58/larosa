@@ -18,6 +18,7 @@ export default function PaymentScreen() {
   const route = useRoute<any>();
   const params = route.params ?? {};
   const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>('upi');
   const [upiId, setUpiId] = useState('');
@@ -64,20 +65,21 @@ export default function PaymentScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top']}>
       {isWeb && <WebHeader />}
-      <View style={[styles.header, isWeb && styles.webWrap]}>
+      <View style={[styles.header, isWeb && styles.webWrap, isAndroid && { backgroundColor: theme.gold }]}>
         <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={isAndroid ? '#FFFFFF' : theme.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Secure Payment</Text>
-        <View style={[styles.secureChip, { backgroundColor: 'rgba(46,125,50,0.1)' }]}>
-          <Lock size={12} color="#2E7D32" />
-          <Text style={[styles.secureText, { color: '#2E7D32' }]}>Secure</Text>
+        <Text style={[styles.headerTitle, { color: isAndroid ? '#FFFFFF' : theme.text }]}>Secure Payment</Text>
+        <View style={[styles.secureChip, { backgroundColor: isAndroid ? 'rgba(255, 255, 255, 0.2)' : 'rgba(46,125,50,0.1)' }]}>
+          <Lock size={12} color={isAndroid ? '#FFFFFF' : '#2E7D32'} />
+          <Text style={[styles.secureText, { color: isAndroid ? '#FFFFFF' : '#2E7D32' }]}>Secure</Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, isWeb && styles.webWrap]}>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, isWeb && styles.webWrap]}>
         {/* Booking summary */}
         <BookingSummary
           propertyTitle={params.propertyTitle || 'Aqua Retreat'}
@@ -181,6 +183,7 @@ export default function PaymentScreen() {
             </>
           )}
         </Pressable>
+      </View>
       </View>
     </SafeAreaView>
   );

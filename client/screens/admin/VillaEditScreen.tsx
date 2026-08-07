@@ -4,6 +4,7 @@ import {
   Check,
   X,
   Plus,
+  UserCheck,
 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
@@ -15,15 +16,15 @@ import {
   TextInput,
   View,
   Image,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
 import { useAuth } from '../../lib/auth-context';
 import { useData } from '../../lib/data-context';
-import type { ThemeTokens } from '../../constants/colors';
-import { Card, Chip, FieldLabel, PrimaryButton, SecondaryButton, Toggle } from '../../components/ui';
+import { FieldLabel, PrimaryButton, SecondaryButton, Toggle } from '../../components/ui';
 import { amenityOptions } from '../../lib/format';
-import type { Room, RoomCategory, RoomStatus } from '../../types';
+import type { RoomCategory, RoomStatus } from '../../types';
 
 export default function VillaEditScreen() {
   const { theme } = useTheme();
@@ -37,8 +38,6 @@ export default function VillaEditScreen() {
     () => rooms.find((r) => r.roomId === Number(roomId)),
     [rooms, roomId]
   );
-
-  const hostUsers = useMemo(() => users.filter((u) => u.role === 'host'), [users]);
 
   const [title, setTitle] = useState<string>(existing?.title ?? '');
   const [category, setCategory] = useState<RoomCategory>(existing?.category ?? 'villa');
@@ -57,9 +56,6 @@ export default function VillaEditScreen() {
   const [airbnbCalendarUrl, setAirbnbCalendarUrl] = useState<string>(existing?.airbnbCalendarUrl ?? '');
   const [syncEnabled, setSyncEnabled] = useState<boolean>(existing?.syncEnabled ?? false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [selectedHostId, setSelectedHostId] = useState<string | undefined>(
-    existing?.hostId ?? (user?.role === 'host' ? user.id : hostUsers[0]?.id)
-  );
 
   // Qualification State Fields
   const [bedrooms, setBedrooms] = useState<string>(existing?.bedrooms ? String(existing.bedrooms) : '3');
@@ -70,6 +66,8 @@ export default function VillaEditScreen() {
   const toggleAmenity = (a: string) => {
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
   };
+
+  const G = '#C9A14A';
 
   const handleSave = () => {
     setSaving(true);
@@ -85,14 +83,13 @@ export default function VillaEditScreen() {
         sizeSqFt: Number(sizeSqFt) || undefined,
         amenities,
         featured,
-        // If a host is saving a new listing, it is hidden by default pending approval
         status: isEdit ? status : (user?.role === 'host' ? 'hidden' as const : 'active' as const),
         airbnbIcalUrl,
         airbnbCalendarUrl,
         syncEnabled,
         deposit: Number(depositAmount) || Number(price) * 2,
         bookingType: bookingMode,
-        hostId: user?.role === 'host' ? user.id : selectedHostId,
+        hostId: existing?.hostId ?? (user?.id ?? 'host_demo'),
         approvedByAdmin: existing?.approvedByAdmin ?? (user?.role === 'admin' ? true : false),
         images: existing?.images && existing.images.length > 0
           ? existing.images
@@ -113,23 +110,59 @@ export default function VillaEditScreen() {
     }, 1000);
   };
 
+  const renderSectionHeader = (titleText: string) => (
+    <View style={styles.sectionHeaderRow}>
+      <View style={[styles.sectionAccentBar, { backgroundColor: G }]} />
+      <Text style={[styles.sectionHeaderText, { color: theme.textMuted }]}>{titleText}</Text>
+    </View>
+  );
+
+  const renderPillChip = (label: string, isSelected: boolean, onPress: () => void) => (
+    <Pressable
+      key={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.pillChip,
+        {
+          backgroundColor: isSelected ? G : theme.surface,
+          borderColor: isSelected ? G : theme.border,
+        },
+        pressed && { opacity: 0.8 },
+      ]}
+    >
+      {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={2.5} />}
+      <Text
+        style={[
+          styles.pillChipText,
+          { color: isSelected ? '#FFFFFF' : theme.text, fontWeight: isSelected ? '700' : '600' },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Platform.OS === 'android' ? theme.gold : theme.bg }} edges={['top']}>
       {/* Header */}
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 16,
-          paddingBottom: 12,
+          paddingTop: Platform.OS === 'android' ? 10 : 4,
+          paddingBottom: 14,
           gap: 8,
+          backgroundColor: Platform.OS === 'android' ? theme.gold : theme.bg,
+          borderBottomLeftRadius: Platform.OS === 'android' ? 18 : 0,
+          borderBottomRightRadius: Platform.OS === 'android' ? 18 : 0,
         }}
       >
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-          <ArrowLeft color={theme.gold} size={24} />
+          <ArrowLeft color={Platform.OS === 'android' ? '#FFFFFF' : G} size={24} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: theme.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>
+          <Text style={{ color: Platform.OS === 'android' ? '#FFFFFF' : theme.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>
             {isEdit ? 'Edit villa' : 'New villa'}
           </Text>
         </View>
@@ -143,401 +176,426 @@ export default function VillaEditScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
-              backgroundColor: theme.gold,
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              paddingVertical: 10,
+              backgroundColor: G,
+              borderRadius: 20,
+              paddingHorizontal: 18,
+              paddingVertical: 9,
             }}
           >
-            <Check color={theme.textInverse} size={18} strokeWidth={2.5} />
-            <Text style={{ color: theme.textInverse, fontSize: 15, fontWeight: '700' }}>Save</Text>
+            <Check color="#FFFFFF" size={16} strokeWidth={2.5} />
+            <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>Save</Text>
           </View>
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 8 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Basics */}
-          <Text style={sectionTitleStyle(theme)}>Basics</Text>
-          <Card style={{ marginBottom: 20, gap: 16 }}>
-            <View>
-              <FieldLabel>Title</FieldLabel>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g. Aqua Retreat"
-                placeholderTextColor={theme.textMuted}
-                style={inputStyle(theme)}
-              />
+      {/* Main Content Body */}
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 12 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ══ SELF HOST BADGE ════════════════════════════════════════════ */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14, backgroundColor: G + '15', borderWidth: 1, borderColor: G + '33', marginTop: 4, marginBottom: 8 }}>
+              <UserCheck size={18} color={G} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: theme.text }}>
+                  Self-Host Listing
+                </Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 1 }}>
+                  This villa will be created & managed under your host profile ({user?.name ?? 'Demo Host'}).
+                </Text>
+              </View>
             </View>
-            {user?.role === 'admin' ? (
+
+            {/* ══ BASICS ════════════════════════════════════════════════════ */}
+            {renderSectionHeader('BASICS')}
+            <View style={styles.formGroupGap}>
               <View>
-                <FieldLabel>Host</FieldLabel>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                  {hostUsers.length === 0 ? (
-                    <Text style={{ color: theme.textMuted, fontSize: 13 }}>No hosts available</Text>
-                  ) : (
-                    hostUsers.map((h) => (
-                      <Chip
-                        key={h.id}
-                        label={h.name}
-                        selected={selectedHostId === h.id}
-                        onPress={() => setSelectedHostId(h.id)}
-                      />
-                    ))
+                <FieldLabel>Title</FieldLabel>
+                <TextInput
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="e.g. Aqua Retreat"
+                  placeholderTextColor={theme.textMuted}
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
+              <View>
+                <FieldLabel>Category</FieldLabel>
+                <View style={styles.chipRow}>
+                  {(['villa', 'room'] as RoomCategory[]).map((c) =>
+                    renderPillChip(c === 'villa' ? 'Villa' : 'Room', category === c, () => setCategory(c))
                   )}
                 </View>
               </View>
-            ) : null}
-            <View>
-              <FieldLabel>Category</FieldLabel>
+
+              <View>
+                <FieldLabel>Type</FieldLabel>
+                <TextInput
+                  value={type}
+                  onChangeText={setType}
+                  placeholder="e.g. Villa, Suite"
+                  placeholderTextColor={theme.textMuted}
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
+              <View>
+                <FieldLabel>Description</FieldLabel>
+                <TextInput
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Describe the property…"
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                  style={[styles.modernInputArea, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+            </View>
+
+            {/* ══ PRICING & CAPACITY ════════════════════════════════════════ */}
+            {renderSectionHeader('PRICING & CAPACITY')}
+            <View style={styles.formGroupGap}>
+              <View>
+                <FieldLabel>Price per night (₹)</FieldLabel>
+                <TextInput
+                  value={price}
+                  onChangeText={setPrice}
+                  placeholder="25000"
+                  placeholderTextColor={theme.textMuted}
+                  keyboardType="numeric"
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                {(['villa', 'room'] as RoomCategory[]).map((c) => (
-                  <Chip
-                    key={c}
-                    label={c === 'villa' ? 'Villa' : 'Room'}
-                    selected={category === c}
-                    onPress={() => setCategory(c)}
+                <View style={{ flex: 1 }}>
+                  <FieldLabel>Capacity</FieldLabel>
+                  <TextInput
+                    value={capacity}
+                    onChangeText={setCapacity}
+                    placeholder="6"
+                    placeholderTextColor={theme.textMuted}
+                    keyboardType="numeric"
+                    style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
                   />
-                ))}
-              </View>
-            </View>
-            <View>
-              <FieldLabel>Type</FieldLabel>
-              <TextInput
-                value={type}
-                onChangeText={setType}
-                placeholder="e.g. Villa, Suite"
-                placeholderTextColor={theme.textMuted}
-                style={inputStyle(theme)}
-              />
-            </View>
-            <View>
-              <FieldLabel>Description</FieldLabel>
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Describe the property…"
-                placeholderTextColor={theme.textMuted}
-                multiline
-                style={[inputStyle(theme), { minHeight: 80, textAlignVertical: 'top' }]}
-              />
-            </View>
-          </Card>
-
-          {/* Pricing & capacity */}
-          <Text style={sectionTitleStyle(theme)}>Pricing & capacity</Text>
-          <Card style={{ marginBottom: 20, gap: 16 }}>
-            <View>
-              <FieldLabel>Price per night (₹)</FieldLabel>
-              <TextInput
-                value={price}
-                onChangeText={setPrice}
-                placeholder="25000"
-                placeholderTextColor={theme.textMuted}
-                keyboardType="numeric"
-                style={inputStyle(theme)}
-              />
-            </View>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <FieldLabel>Capacity</FieldLabel>
-                <TextInput
-                  value={capacity}
-                  onChangeText={setCapacity}
-                  placeholder="6"
-                  placeholderTextColor={theme.textMuted}
-                  keyboardType="numeric"
-                  style={inputStyle(theme)}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <FieldLabel>Bedrooms</FieldLabel>
-                <TextInput
-                  value={bedrooms}
-                  onChangeText={setBedrooms}
-                  placeholder="3"
-                  placeholderTextColor={theme.textMuted}
-                  keyboardType="numeric"
-                  style={inputStyle(theme)}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <FieldLabel>Total units</FieldLabel>
-                <TextInput
-                  value={totalRooms}
-                  onChangeText={setTotalRooms}
-                  placeholder="1"
-                  placeholderTextColor={theme.textMuted}
-                  keyboardType="numeric"
-                  style={inputStyle(theme)}
-                />
-              </View>
-            </View>
-            <View style={{ marginBottom: 12 }}>
-              <FieldLabel>Size (sq ft) — optional</FieldLabel>
-              <TextInput
-                value={sizeSqFt}
-                onChangeText={setSizeSqFt}
-                placeholder="3500"
-                placeholderTextColor={theme.textMuted}
-                keyboardType="numeric"
-                style={inputStyle(theme)}
-              />
-            </View>
-
-            <View style={{ marginBottom: 12 }}>
-              <FieldLabel>Security Deposit Amount (₹)</FieldLabel>
-              <TextInput
-                value={depositAmount}
-                onChangeText={setDepositAmount}
-                placeholder="e.g. 50000 (Defaults to 2x price)"
-                placeholderTextColor={theme.textMuted}
-                keyboardType="numeric"
-                style={inputStyle(theme)}
-              />
-            </View>
-
-            <View>
-              <FieldLabel>Booking Mode</FieldLabel>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {([
-                  { id: 'instant', label: 'Instant Book' },
-                  { id: 'request', label: 'Request to Book' },
-                  { id: 'both', label: 'Both' },
-                ] as { id: 'instant' | 'request' | 'both'; label: string }[]).map((mode) => (
-                  <Chip
-                    key={mode.id}
-                    label={mode.label}
-                    selected={bookingMode === mode.id}
-                    onPress={() => setBookingMode(mode.id)}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FieldLabel>Bedrooms</FieldLabel>
+                  <TextInput
+                    value={bedrooms}
+                    onChangeText={setBedrooms}
+                    placeholder="3"
+                    placeholderTextColor={theme.textMuted}
+                    keyboardType="numeric"
+                    style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
                   />
-                ))}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FieldLabel>Total units</FieldLabel>
+                  <TextInput
+                    value={totalRooms}
+                    onChangeText={setTotalRooms}
+                    placeholder="1"
+                    placeholderTextColor={theme.textMuted}
+                    keyboardType="numeric"
+                    style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                  />
+                </View>
               </View>
-            </View>
-          </Card>
 
-          {/* Admin Qualifications */}
-          <Text style={sectionTitleStyle(theme)}>Admin Qualifications</Text>
-          <Card style={{ marginBottom: 20, gap: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Swimming Pool</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Does this property have a swimming pool?</Text>
-              </View>
-              <Toggle value={hasSwimmingPool} onValueChange={setHasSwimmingPool} />
-            </View>
-            <View style={{ height: 1, backgroundColor: theme.borderSoft, marginVertical: 4 }} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Landscaped Lawn</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Does this property have a private lawn?</Text>
-              </View>
-              <Toggle value={hasLawn} onValueChange={setHasLawn} />
-            </View>
-            <View style={{ height: 1, backgroundColor: theme.borderSoft, marginVertical: 4 }} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>On-Property Assistance</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Dedicated caretaker or security guard on-property?</Text>
-              </View>
-              <Toggle value={hasOnPropertyStaff} onValueChange={setHasOnPropertyStaff} />
-            </View>
-          </Card>
-
-          {/* Amenities */}
-          <Text style={sectionTitleStyle(theme)}>Amenities</Text>
-          <Card style={{ marginBottom: 20 }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {amenityOptions.map((a) => (
-                <Chip
-                  key={a}
-                  label={a}
-                  selected={amenities.includes(a)}
-                  onPress={() => toggleAmenity(a)}
+              <View>
+                <FieldLabel>Size (sq ft) — optional</FieldLabel>
+                <TextInput
+                  value={sizeSqFt}
+                  onChangeText={setSizeSqFt}
+                  placeholder="3500"
+                  placeholderTextColor={theme.textMuted}
+                  keyboardType="numeric"
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
                 />
-              ))}
-            </View>
-          </Card>
+              </View>
 
-          {/* Photos */}
-          <Text style={sectionTitleStyle(theme)}>Photos</Text>
-          <Card style={{ marginBottom: 20 }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              <View>
+                <FieldLabel>Security Deposit Amount (₹)</FieldLabel>
+                <TextInput
+                  value={depositAmount}
+                  onChangeText={setDepositAmount}
+                  placeholder="e.g. 50000 (Defaults to 2x price)"
+                  placeholderTextColor={theme.textMuted}
+                  keyboardType="numeric"
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
+              <View>
+                <FieldLabel>Booking Mode</FieldLabel>
+                <View style={styles.chipRow}>
+                  {([
+                    { id: 'instant', label: 'Instant Book' },
+                    { id: 'request', label: 'Request to Book' },
+                    { id: 'both', label: 'Both' },
+                  ] as { id: 'instant' | 'request' | 'both'; label: string }[]).map((mode) =>
+                    renderPillChip(mode.label, bookingMode === mode.id, () => setBookingMode(mode.id))
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* ══ ADMIN QUALIFICATIONS ══════════════════════════════════════ */}
+            {renderSectionHeader('ADMIN QUALIFICATIONS')}
+            <View style={styles.formGroupGap}>
+              <View style={[styles.toggleRowCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.toggleRowTitle, { color: theme.text }]}>Swimming Pool</Text>
+                  <Text style={[styles.toggleRowSubtitle, { color: theme.textMuted }]}>Does this property have a swimming pool?</Text>
+                </View>
+                <Toggle value={hasSwimmingPool} onValueChange={setHasSwimmingPool} />
+              </View>
+
+              <View style={[styles.toggleRowCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.toggleRowTitle, { color: theme.text }]}>Landscaped Lawn</Text>
+                  <Text style={[styles.toggleRowSubtitle, { color: theme.textMuted }]}>Does this property have a private lawn?</Text>
+                </View>
+                <Toggle value={hasLawn} onValueChange={setHasLawn} />
+              </View>
+
+              <View style={[styles.toggleRowCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.toggleRowTitle, { color: theme.text }]}>On-Property Assistance</Text>
+                  <Text style={[styles.toggleRowSubtitle, { color: theme.textMuted }]}>Dedicated caretaker or security guard on-property?</Text>
+                </View>
+                <Toggle value={hasOnPropertyStaff} onValueChange={setHasOnPropertyStaff} />
+              </View>
+            </View>
+
+            {/* ══ AMENITIES ═════════════════════════════════════════════════ */}
+            {renderSectionHeader('AMENITIES')}
+            <View style={[styles.chipRow, { marginBottom: 22 }]}>
+              {amenityOptions.map((a) => renderPillChip(a, amenities.includes(a), () => toggleAmenity(a)))}
+            </View>
+
+            {/* ══ PHOTOS ════════════════════════════════════════════════════ */}
+            {renderSectionHeader('PHOTOS')}
+            <View style={styles.photoGrid}>
               {existing?.images.map((uri, i) => (
-                <View key={i} style={{ position: 'relative' }}>
-                  <Image
-                    source={{ uri }}
-                    style={{ width: 100, height: 100, borderRadius: 12 }}
-                    resizeMode="cover"
-                  />
-                  <Pressable
-                    style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
-                      backgroundColor: 'rgba(0,0,0,0.6)',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <X color="#fff" size={14} />
+                <View key={i} style={styles.photoWrap}>
+                  <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
+                  <Pressable style={styles.photoRemoveBtn}>
+                    <X color="#FFFFFF" size={14} />
                   </Pressable>
                 </View>
               ))}
-              <Pressable
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 12,
-                  borderWidth: 1.5,
-                  borderColor: theme.border,
-                  borderStyle: 'dashed',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+              <Pressable style={[styles.photoAddBtn, { borderColor: theme.border }]}>
                 <Plus color={theme.textMuted} size={24} />
               </Pressable>
             </View>
-          </Card>
 
-          {/* Visibility */}
-          <Text style={sectionTitleStyle(theme)}>Visibility</Text>
-          <Card style={{ marginBottom: 20, gap: 16 }}>
-            <View>
-              <FieldLabel>Status</FieldLabel>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {(['active', 'hidden'] as RoomStatus[]).map((s) => (
-                  <Chip
-                    key={s}
-                    label={s === 'active' ? 'Active' : 'Hidden'}
-                    selected={status === s}
-                    onPress={() => setStatus(s)}
-                    color={s === 'active' ? theme.green : theme.textMuted}
-                  />
-                ))}
-              </View>
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: 8,
-                borderTopColor: theme.borderSoft,
-                borderTopWidth: 1,
-              }}
-            >
+            {/* ══ VISIBILITY ═════════════════════════════════════════════════ */}
+            {renderSectionHeader('VISIBILITY')}
+            <View style={styles.formGroupGap}>
               <View>
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Featured</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Show on homepage</Text>
+                <FieldLabel>Status</FieldLabel>
+                <View style={styles.chipRow}>
+                  {(['active', 'hidden'] as RoomStatus[]).map((s) =>
+                    renderPillChip(s === 'active' ? 'Active' : 'Hidden', status === s, () => setStatus(s))
+                  )}
+                </View>
               </View>
-              <Toggle value={featured} onValueChange={setFeatured} />
-            </View>
-          </Card>
 
-          {/* Airbnb sync */}
-          <Text style={sectionTitleStyle(theme)}>Airbnb sync</Text>
-          <Card style={{ marginBottom: 20, gap: 16 }}>
-            <View>
-              <FieldLabel>iCal URL</FieldLabel>
-              <TextInput
-                value={airbnbIcalUrl}
-                onChangeText={setAirbnbIcalUrl}
-                placeholder="https://www.airbnb.com/calendar/ical/…"
-                placeholderTextColor={theme.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={inputStyle(theme)}
-              />
-            </View>
-            <View>
-              <FieldLabel>Calendar URL</FieldLabel>
-              <TextInput
-                value={airbnbCalendarUrl}
-                onChangeText={setAirbnbCalendarUrl}
-                placeholder="https://www.airbnb.com/rooms/…"
-                placeholderTextColor={theme.textMuted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={inputStyle(theme)}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: 8,
-                borderTopColor: theme.borderSoft,
-                borderTopWidth: 1,
-              }}
-            >
-              <View>
-                <Text style={{ color: theme.text, fontSize: 15, fontWeight: '500' }}>Sync enabled</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Auto-import Airbnb calendar</Text>
+              <View style={[styles.toggleRowCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.toggleRowTitle, { color: theme.text }]}>Featured</Text>
+                  <Text style={[styles.toggleRowSubtitle, { color: theme.textMuted }]}>Show on homepage explore list</Text>
+                </View>
+                <Toggle value={featured} onValueChange={setFeatured} />
               </View>
-              <Toggle value={syncEnabled} onValueChange={setSyncEnabled} />
             </View>
-            {isEdit && existing?.syncStatus === 'ok' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 }}>
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: theme.green }} />
-                <Text style={{ color: theme.green, fontSize: 12 }}>Synced · {existing.lastSyncedAt ? new Date(existing.lastSyncedAt).toLocaleString() : ''}</Text>
+
+            {/* ══ AIRBNB SYNC ════════════════════════════════════════════════ */}
+            {renderSectionHeader('AIRBNB SYNC')}
+            <View style={styles.formGroupGap}>
+              <View>
+                <FieldLabel>iCal URL</FieldLabel>
+                <TextInput
+                  value={airbnbIcalUrl}
+                  onChangeText={setAirbnbIcalUrl}
+                  placeholder="https://www.airbnb.com/calendar/ical/…"
+                  placeholderTextColor={theme.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
+              <View>
+                <FieldLabel>Calendar URL</FieldLabel>
+                <TextInput
+                  value={airbnbCalendarUrl}
+                  onChangeText={setAirbnbCalendarUrl}
+                  placeholder="https://www.airbnb.com/rooms/…"
+                  placeholderTextColor={theme.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.modernInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
+                />
+              </View>
+
+              <View style={[styles.toggleRowCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.toggleRowTitle, { color: theme.text }]}>Sync Enabled</Text>
+                  <Text style={[styles.toggleRowSubtitle, { color: theme.textMuted }]}>Auto-import Airbnb calendar</Text>
+                </View>
+                <Toggle value={syncEnabled} onValueChange={setSyncEnabled} />
+              </View>
+
+              {isEdit && existing?.syncStatus === 'ok' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: theme.green }} />
+                  <Text style={{ color: theme.green, fontSize: 12 }}>Synced · {existing.lastSyncedAt ? new Date(existing.lastSyncedAt).toLocaleString() : ''}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Quick actions for edit mode */}
+            {isEdit && (
+              <View style={{ gap: 10, marginVertical: 20 }}>
+                <SecondaryButton
+                  label="Open Pricing"
+                  onPress={() => navigation.navigate('Pricing', { roomId: String(roomId) })}
+                />
+                <SecondaryButton
+                  label="Open Calendar"
+                  onPress={() => navigation.navigate('Calendar', { roomId: String(roomId) })}
+                />
               </View>
             )}
-          </Card>
 
-          {/* Quick actions for edit mode */}
-          {isEdit && (
-            <View style={{ gap: 10, marginBottom: 20 }}>
-              <SecondaryButton
-                label="Open pricing"
-                onPress={() => navigation.navigate('Pricing', { roomId: String(roomId) })}
-              />
-              <SecondaryButton
-                label="Open calendar"
-                onPress={() => navigation.navigate('Calendar', { roomId: String(roomId) })}
+            <View style={{ marginTop: 24 }}>
+              <PrimaryButton
+                label={saving ? 'Saving Villa…' : 'Save Villa Details'}
+                onPress={handleSave}
+                loading={saving}
+                disabled={!title || !price}
               />
             </View>
-          )}
-
-          <PrimaryButton
-            label={saving ? 'Saving…' : 'Save'}
-            onPress={handleSave}
-            loading={saving}
-            disabled={!title || !price}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
 
-const sectionTitleStyle = (theme: ThemeTokens) => ({
-  color: theme.textSecondary,
-  fontSize: 12,
-  fontWeight: '700' as const,
-  letterSpacing: 1,
-  textTransform: 'uppercase' as const,
-  marginBottom: 10,
-});
-
-const inputStyle = (theme: ThemeTokens) => ({
-  backgroundColor: theme.bg,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: theme.border,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  color: theme.text,
-  fontSize: 15,
-  height: 50,
+const styles = StyleSheet.create({
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 18,
+    marginBottom: 14,
+  },
+  sectionAccentBar: {
+    width: 3.5,
+    height: 14,
+    borderRadius: 2,
+  },
+  sectionHeaderText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  formGroupGap: {
+    gap: 16,
+    marginBottom: 16,
+  },
+  modernInput: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
+    height: 50,
+  },
+  modernInputArea: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    minHeight: 90,
+    textAlignVertical: 'top',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  pillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  pillChipText: {
+    fontSize: 14,
+  },
+  toggleRowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+  },
+  toggleRowTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  toggleRowSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  photoWrap: {
+    position: 'relative',
+  },
+  photoThumb: {
+    width: 96,
+    height: 96,
+    borderRadius: 14,
+  },
+  photoRemoveBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoAddBtn: {
+    width: 96,
+    height: 96,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

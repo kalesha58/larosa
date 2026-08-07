@@ -32,6 +32,7 @@ function MonthGrid({
   today,
   theme,
   onDayPress,
+  showDual,
 }: {
   year: number;
   month: number;
@@ -41,6 +42,7 @@ function MonthGrid({
   today: Date;
   theme: any;
   onDayPress: (year: number, month: number, day: number) => void;
+  showDual?: boolean;
 }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -50,7 +52,7 @@ function MonthGrid({
   ];
 
   return (
-    <View style={styles.monthBlock}>
+    <View style={[styles.monthBlock, showDual && { flex: 1 }]}>
       <Text style={[styles.monthLabel, { color: theme.text }]}>
         {MONTHS[month]} {year}
       </Text>
@@ -158,6 +160,7 @@ export default function CalendarPicker({
           today={today}
           theme={theme}
           onDayPress={handleDayPress}
+          showDual={showDual}
         />
         {showDual && (
           <MonthGrid
@@ -169,6 +172,7 @@ export default function CalendarPicker({
             today={today}
             theme={theme}
             onDayPress={handleDayPress}
+            showDual={showDual}
           />
         )}
       </View>
@@ -205,7 +209,6 @@ const styles = StyleSheet.create({
     gap: 32,
   },
   monthBlock: {
-    flex: 1,
     gap: 10,
     minWidth: 260,
   },

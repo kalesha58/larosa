@@ -568,27 +568,24 @@ export default function UsersScreen() {
 
       {/* ── Host Verification Modal ─────────────────────── */}
       <Modal visible={verificationModalOpen} animationType="slide" transparent onRequestClose={() => setVerificationModalOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setVerificationModalOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setVerificationModalOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
               maxHeight: '90%',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 24,
+              width: '100%',
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
 
             <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
               Host Onboarding Review
@@ -672,26 +669,24 @@ export default function UsersScreen() {
 
       {/* ── Host Rejection Modal ────────────────────────── */}
       <Modal visible={hostRejectionModalOpen} animationType="slide" transparent onRequestClose={() => setHostRejectionModalOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setHostRejectionModalOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setHostRejectionModalOpen(false)}>
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
               backgroundColor: theme.surface,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
-              borderTopColor: theme.borderSoft,
-              paddingHorizontal: 24,
-              paddingTop: 16,
-              paddingBottom: 40,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              elevation: 24,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: theme.border,
+              borderBottomWidth: 0,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+              maxHeight: '85%',
+              width: '100%',
             }}
           >
-            <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: theme.border, alignSelf: 'center', marginBottom: 20 }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: theme.textMuted + '44', alignSelf: 'center', marginBottom: 16 }} />
 
             <Text style={{ color: theme.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
               Reject Host Onboarding

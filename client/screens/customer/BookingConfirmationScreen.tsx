@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ScrollView,
+  View, Text, Pressable, StyleSheet, ScrollView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +15,7 @@ export default function BookingConfirmationScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const [showContent, setShowContent] = useState(false);
+  const isAndroid = Platform.OS === 'android';
 
   const {
     bookingId = `BK${Date.now()}`,
@@ -26,24 +27,27 @@ export default function BookingConfirmationScreen() {
     payNow = 62700,
     remaining = 50000,
     total = 112700,
-    paymentMethod = 'upi',
+    paymentMethod = 'UPI',
   } = route.params ?? {};
 
   useEffect(() => {
-    const t = setTimeout(() => setShowContent(true), 300);
-    return () => clearTimeout(t);
+    setShowContent(true);
   }, []);
 
   const PAYMENT_LABELS: Record<string, string> = {
     upi: 'UPI',
-    card: 'Credit/Debit Card',
+    card: 'Credit / Debit Card',
     netbanking: 'Net Banking',
     cash: 'Cash at Check-in',
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: isAndroid ? theme.gold : theme.bg }]} edges={['top', 'bottom']}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: theme.bg }}
+        contentContainerStyle={styles.scroll}
+      >
         {/* Success Animation area */}
         <View style={styles.heroSection}>
           <View style={[styles.successRing, { borderColor: 'rgba(46,125,50,0.15)' }]}>
